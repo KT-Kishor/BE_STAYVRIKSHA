@@ -19,6 +19,7 @@ app.use(cors({
 
 const { getDepartmentRule, SalaryDetailsFunction, getMessagesBetweenUsers } = require('./Controller/CommonController');
 
+const { MasterData } = require("./Controller/MasterDataController");
 const { HM_Rooms } = require("./Controller/HM_Rooms");
 const { HM_Customer } = require("./Controller/HM_Customer");
 const { HM_Booking } = require("./Controller/HM_Booking");
