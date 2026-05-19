@@ -262,8 +262,8 @@ app.get("/HM_CouponFacilityCount", authenticate, HM_Coupon.getHM_CouponMaxUsesFa
 app.get("/HM_CouponBookingCount", authenticate, HM_Coupon.getHM_CouponMaxUsesBookingCheck);
 
 
-app.listen(3001, () => {
-  console.log(`Server running at http://localhost:3001`);
+app.listen(3000, () => {
+  console.log(`Server running at http://localhost:3000`);
 });
 
 module.exports = app;
