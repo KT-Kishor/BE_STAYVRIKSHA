@@ -19,7 +19,6 @@ app.use(cors({
 
 const { getDepartmentRule, SalaryDetailsFunction, getMessagesBetweenUsers } = require('./Controller/CommonController');
 
-const { Functions } = require("./Controller/Functions");
 const { HM_Rooms } = require("./Controller/HM_Rooms");
 const { HM_Customer } = require("./Controller/HM_Customer");
 const { HM_Booking } = require("./Controller/HM_Booking");
@@ -264,8 +263,8 @@ app.get("/HM_CouponFacilityCount", authenticate, HM_Coupon.getHM_CouponMaxUsesFa
 app.get("/HM_CouponBookingCount", authenticate, HM_Coupon.getHM_CouponMaxUsesBookingCheck);
 
 
-app.listen(3001, () => {
-  console.log(`Server running at http://localhost:3001`);
+app.listen(3000, () => {
+  console.log(`Server running at http://localhost:3000`);
 });
 
 module.exports = app;
