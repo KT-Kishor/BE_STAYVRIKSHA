@@ -29,7 +29,6 @@ const { HM_CustomerDocument } = require("./Controller/HM_CustomerDocument");
 const { HM_BedType } = require("./Controller/HM_BedType");
 const { HM_ExtraFacilities } = require("./Controller/HM_ExtraFacilities");
 const { HM_BookingFacilityItems } = require("./Controller/HM_BookingFacilityItems");
-const { CustomerFeedback } = require("./Controller/FeedBackController");
 const { HM_BedTypeDetails } = require("./Controller/HM_BedTypeDetails");
 const { HM_Facilities } = require("./Controller/HM_Facilities");
 const { HM_ManageInvoice } = require("./Controller/HM_ManageInvoice");
@@ -38,7 +37,6 @@ const { HM_Complaint } = require("./Controller/HM_Complaint");
 const { HM_Damage } = require("./Controller/HM_Damage");
 const { HM_Support } = require("./Controller/HM_Support");
 const { HM_Bug } = require("./Controller/HM_Bug");
-const { RaiseBug } = require("./Controller/RaiseBug");
 const { HM_MemberDocument } = require("./Controller/HM_MemberCustomerDocument");
 const { HM_Advertisement } = require("./Controller/HM_Advertisement");
 
