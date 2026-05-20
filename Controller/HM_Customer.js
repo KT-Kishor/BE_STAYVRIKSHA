@@ -661,22 +661,9 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-    await CommonSendEmail(
-      req,
-      from,
-      fromName,
-      to,
-      toName,
-      subject,
-      body,
-      CC,
-      replyTo,
-      attachments,
-    );
+   await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
   } catch (error) {
-    return res
-      .status(500)
-      .send({ success: false, message: "Internal server error" });
+    return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
 
@@ -940,21 +927,9 @@ async function BookingCancelledEmail(req, res, next) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-    await CommonSendEmail(
-      req,
-      from,
-      fromName,
-      to,
-      toName,
-      subject,
-      body,
-      CC,
-      replyTo,
-    );
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
   } catch (error) {
-    return res
-      .status(500)
-      .send({ success: false, message: "Internal server error" });
+    return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
 
@@ -989,23 +964,9 @@ async function CheckoutCompletedEmail(req, res, next) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-    await CommonSendEmail(
-      req,
-      from,
-      fromName,
-      to,
-      toName,
-      subject,
-      body,
-      CC,
-      replyTo,
-    );
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
   } catch (error) {
-    return res.status(500).send({
-      success: false,
-      message: "Checkout mail failed",
-      error: error.message,
-    });
+    return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
 

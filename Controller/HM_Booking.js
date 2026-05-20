@@ -57,39 +57,193 @@ async function postHM_Booking(req, res, next) {
 
 async function putHM_Booking(req, res, next) {
   try {
+    const data = req.body.data;
+
+    const customerEmail = data.CustomerEmail || "";
+    const guests = data.Guests || "";
+    const pdfAttachment = data.pdfAttachment;
+
+    // Remove Non-DB Fields Before Update
+    delete data.CustomerEmail;
+    delete data.Guests;
+    delete data.pdfAttachment;
+
+    // Prepare Email Payload
+    const emailPayload = {
+      CustomerName: data.CustomerName,
+      BookingID: data.BookingID,
+      CustomerEmail: customerEmail,
+      BedType: data.BedType,
+      RentPrice: formatAmount(data.RentPrice),
+      BookingDate: formatDate(data.BookingDate),
+      StartDate: data.StartDate,
+      EndDate: data.EndDate,
+      Guests: guests,
+      MemberID: data.MemberID,
+      RejectDesc: data.RejectDesc || ""
+    };
+
+    // Update Booking Table First
     req.body.tableName = "HM_Booking";
-    await CommonUpdateCall(req, res, next);
-    res.status(200).send({
+
+    req.body.data = data;
+    req.body.filters = {
+      BookingID: data.BookingID
+    };
+
+    const updateResponse = await CommonUpdateCall(req, res, next, pdfAttachment);
+
+    // Send Email Only After Successful Update
+    if (updateResponse && updateResponse.success !== false) {
+
+      req.body = emailPayload;
+
+      if (data.Status === "Confirmed") {
+
+        await BookingConfirmEmail(req, res, next, pdfAttachment);
+
+      } else if (data.Status === "Rejected") {
+
+        await BookingRejectEmail(req, res, next);
+      }
+    }
+
+    return res.status(200).send({
       success: true,
-      message: "Booking details updated!",
+      message: "Booking details updated successfully!"
     });
+
   } catch (error) {
-    res.status(500).send({
+
+    return res.status(500).send({
       success: false,
-      message: error || "Technical error, please contact the administrator",
+      message:
+        error.message ||
+        "Technical error, please contact the administrator"
     });
   }
 }
 
-// function formatAmount(amount) {
-//   if (!amount) return "0.00";
+async function BookingConfirmEmail(req, res, next, pdfAttachment) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "BookingConfirm" };
 
-//   return Number(amount).toLocaleString("en-IN", {
-//     minimumFractionDigits: 2,
-//     maximumFractionDigits: 2
-//   });
-// }
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res.status(404).send({ success: false, message: "Email content not found" });
+    }
 
-// function formatDate(dateString) {
-//   const date = new Date(dateString);
-//   if (isNaN(date)) return ""; // return empty if invalid date
+    var emailContent = emailContentData[0];
 
-//   const day = String(date.getDate()).padStart(2, "0");
-//   const month = String(date.getMonth() + 1).padStart(2, "0");
-//   const year = date.getFullYear();
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
 
-//   return `${day}/${month}/${year}`;
-// }
+    const to = [req.body.CustomerEmail];
+    const toName = req.body.CustomerName;
+
+    const subject = emailContent.Subject;
+    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString(
+      "base64",
+    );
+
+    let attachments = [];
+
+    if (pdfAttachment && pdfAttachment.content) {
+      attachments.push({
+        filename: pdfAttachment.fileName || "BookingVoucher.pdf",
+        content: Buffer.from(pdfAttachment.content, "base64"),
+        contentType: pdfAttachment.mimeType || "application/pdf",
+      });
+    }
+
+    // Ensure replacements are applied
+    let body = `<p>Dear ${req.body.CustomerName},</p>
+                    <p>${emailContent.Body}</p>`;
+
+    body = body
+      .replaceAll("<BookingID>", req.body.BookingID)
+      .replaceAll("<CustomerName>", req.body.CustomerName)
+      .replaceAll("<BookingDate>", req.body.BookingDate)
+      .replaceAll("<StartDate>", req.body.StartDate)
+      .replaceAll("<EndDate>", req.body.EndDate)
+      .replaceAll("<RentPrice>", req.body.RentPrice)
+      .replaceAll("<BedType>", req.body.BedType)
+      .replaceAll("<Guests>", req.body.Guests)
+      .replaceAll("<EncodedCustomerID>", encodedCustomerID);
+
+    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
+
+async function BookingRejectEmail(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "BookingReject" };
+
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res.status(404).send({ success: false, message: "Email content not found" });
+    }
+
+    var emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+    const to = [req.body.CustomerEmail];
+    const toName = req.body.CustomerName;
+
+    const subject = emailContent.Subject;
+    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString(
+      "base64",
+    );
+
+    // Ensure replacements are applied
+    let body = `<p>Dear ${req.body.CustomerName},</p>
+                    <p>${emailContent.Body}</p>`;
+
+    body = body
+    .replaceAll("<BookingID>", req.body.BookingID)
+    .replaceAll("<CustomerName>", req.body.CustomerName)
+    .replaceAll("<BookingDate>", req.body.BookingDate)
+    .replaceAll("<StartDate>", req.body.StartDate)
+    .replaceAll("<EndDate>", req.body.EndDate)
+    .replaceAll("<RejectDesc>", req.body.RejectDesc || "");
+
+    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
+
+function formatAmount(amount) {
+  if (!amount) return "0.00";
+
+  return Number(amount).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  if (isNaN(date)) return ""; // return empty if invalid date
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
 
 // async function BookingAssignedEmail(req, res, next) {
 //   try {
@@ -115,7 +269,7 @@ async function putHM_Booking(req, res, next) {
 //       .replaceAll("<BookingDate>", req.body.BookingDate || "")
 //       .replaceAll("<StartDate>", req.body.StartDate || "")
 //       .replaceAll("<EndDate>", req.body.EndDate || "")
-//       .replaceAll("<RentPrice>", req.body.RentPrice || "")
+//       .replaceAll("<RoomNo>", req.body.RoomNo || "")
 //       .replaceAll("<BedType>", req.body.BedType || "")
 //       .replaceAll("<Guests>", req.body.Guests || "1");
 
@@ -469,6 +623,7 @@ async function putHM_Bookingdeposit(req, res, next) {
       BranchCode,
       UserID,
       CustomerEmail,
+      MemberID
     } = req.body.data;
 
     const { BookingID, flag } = req.body.filters;
@@ -480,17 +635,17 @@ async function putHM_Bookingdeposit(req, res, next) {
       });
     }
 
-    if (!UserID) {
+    if (!MemberID) {
       return res.status(400).send({
         success: false,
-        message: "UserID is required for document validation",
+        message: "MemberID is required for document validation",
       });
     }
 
     req.body = {
       tableName: "HM_CustomerDocument",
       filters: {
-        UserID,
+        MemberID
       },
     };
 

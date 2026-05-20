@@ -59,7 +59,6 @@ async function getHM_MemberDocument(req, res, next) {
         });
 
     } catch (err) {
-        console.error(err);
         return res.status(500).send({
             success: false,
             message: err.message || "Technical error, please contact administrator"
