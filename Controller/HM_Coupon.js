@@ -32,40 +32,6 @@ async function getHM_Coupon(req, res, next) {
     }
 }
 
-// async function postHM_Coupon(req, res, next) {
-//     try {
-//         // Generate 10-character random coupon code
-//         function generateCouponCode() {
-//             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-//             let code = "";
-//             for (let i = 0; i < 10; i++) {
-//                 code += chars.charAt(Math.floor(Math.random() * chars.length));
-//             }
-//             return code;
-//         }
-
-//         let data = req.body.data;
-//         if (!data) data = {};
-
-//         let code = generateCouponCode();
-
-//         data.CouponCode = code;
-
-//         req.body.filters = {};
-//         req.body.tableName = "HM_Coupon";
-//         req.body.data = data;
-
-//         await CommonCreateCall(req, res, next);
-
-//         res.status(200).send({ success: true, message: "Coupon created successfully!", couponCode: code });
-//     } catch (err) {
-//         res.status(500).send({
-//             success: false,
-//             message: err.message || "Technical error, please contact the administrator"
-//         });
-//     }
-// }
-
 async function postHM_Coupon(req, res, next) {
     try {
         let data = req.body.data;

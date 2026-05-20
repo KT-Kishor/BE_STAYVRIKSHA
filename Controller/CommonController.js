@@ -1,81 +1,15 @@
 const nodemailer = require("nodemailer");
-var dbKalTecProduction = require("../sqlKalTecProduction");
-var dbKvrTecProduction = require("../sqlKvrTecProduction");
-var dbDevelopment = require("../sqlDevelopment");
 var Stayvriksha = require("../sqlStayvriksha");
 var DemoStayvriksha = require("../sqlDevstayvriksha");
 
-// async function ReadDataBaseConnection(req, res, next) {
-//   try {
-//     const { ClientID } = req.body;
-
-//     let query = "SELECT * FROM NewCustomer WHERE 1=1";
-//     let queryParams = [];
-
-//     if (ClientID) {
-//       query += " AND ClientID = ?";
-//       queryParams.push(ClientID);
-//     }
-
-//     dbConnCust.getConnection((err, connection) => {
-//       if (err) {
-//         return res.status(500).send({success: false,message: "Connection error. Please contact the administrator.",error: err.message,});
-//       }
-
-//       connection.query(query, queryParams, function (err, rows) {
-//         connection.release();
-//         if (err) {
-//           return res.status(500).send({results: err.message,message: "Technical error. Please contact the administrator.",});
-//         }
-
-//         if (rows.length === 0) {
-//           return res.status(404).send({ message: "No data found for the provided ClientID." });
-//         }
-
-//         const { DatabaseHost, Database, DatabaseUser, DatabasePassword } = rows[0];
-
-//         try {
-//           if (!dbConnProd) {
-//             dbConnProd = mysql.createPool({
-//               host: DatabaseHost,
-//               database: Database,
-//               user: DatabaseUser,
-//               password: DatabasePassword,
-//               waitForConnections: true,
-//               connectionLimit: 1000,
-//               queueLimit: 5,
-//             });
-
-//             return res.send({ message: "Database connection pool initialized successfully.",results: rows });
-//           } else {
-//             return res.send({ message: "Database connection pool already exists.",results: rows });
-//           }
-//         } catch (poolError) {
-//           return res.status(500).send({
-//             message: "Failed to create database connection pool.",
-//             error: poolError.message,
-//           });
-//         }
-//       });
-//     });
-//   } catch (error) {
-//     res.status(500).send({ error: "Technical error. Please contact the administrator." });
-//   }
-// }
 
 async function CommonReadCall(req, res, next) {
 	try {
 		const origin = req.get("origin") || "";
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
 		} else {
-			dbConnProd = dbDevelopment;
+			dbConnProd = DemoStayvriksha;
 		}
 
 		const { tableName, filters } = req.body;
@@ -141,16 +75,10 @@ function CommonCreateCall(req, res, next) {
 		try {
 			const origin = req.get("origin") || "";
 
-			if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-				dbConnProd = dbKvrTecProduction;
-			} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-				dbConnProd = dbKalTecProduction;
-			} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+			if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 				dbConnProd = Stayvriksha;
-			} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-				dbConnProd = DemoStayvriksha;
 			} else {
-				dbConnProd = dbDevelopment;
+				dbConnProd = DemoStayvriksha;
 			}
 
 			const {
@@ -238,16 +166,10 @@ function CommonUpdateCall(req) {
 	return new Promise((resolve, reject) => {
 		const origin = req.get("origin") || "";
 
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
 		} else {
-			dbConnProd = dbDevelopment;
+			dbConnProd = DemoStayvriksha;
 		}
 
 		const {
@@ -297,16 +219,10 @@ function CommounMultipalUpdate(req, res, next) {
 		try {
 			const origin = req.get("origin") || "";
 
-			if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-				dbConnProd = dbKvrTecProduction;
-			} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-				dbConnProd = dbKalTecProduction;
-			} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+			if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 				dbConnProd = Stayvriksha;
-			} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-				dbConnProd = DemoStayvriksha;
 			} else {
-				dbConnProd = dbDevelopment;
+				dbConnProd = DemoStayvriksha;
 			}
 
 			const {
@@ -409,16 +325,10 @@ async function CommonDeleteCall(req, res, next) {
 	try {
 		const origin = req.get("origin") || "";
 
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
 		} else {
-			dbConnProd = dbDevelopment;
+			dbConnProd = DemoStayvriksha;
 		}
 
 		const {
@@ -483,16 +393,10 @@ async function CommonDeleteCallWithMutiple(req, res, next) {
 	try {
 		const origin = req.get("origin") || "";
 
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
 		} else {
-			dbConnProd = dbDevelopment;
+			dbConnProd = DemoStayvriksha;
 		}
 
 		const {
@@ -556,384 +460,14 @@ async function CommonDeleteCallWithMutiple(req, res, next) {
 	}
 }
 
-async function getDepartmentRule(req, res, next) {
-	try {
-		const origin = req.get("origin") || "";
-
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
-			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
-		} else {
-			dbConnProd = dbDevelopment;
-		}
-
-		const {
-			BranchCode
-		} = req.query;
-
-		if (!BranchCode) {
-			return res.status(400).send({
-				success: false,
-				message: "Missing required query parameters: BranchCode",
-			});
-		}
-
-		var query = `SELECT EmployeeDetails.EmployeeID, EmployeeDetails.EmployeeName, 
-                        EmployeeDetails.Department, EmployeeDetails.Gender,  EmployeeDetails.AccountNo,  EmployeeDetails.IFSCCode, 
-                        DepartmentRule.CheckIn, DepartmentRule.CheckOut,
-                        DepartmentRule.Grace, DepartmentRule.WeekDays
-                 FROM DepartmentRule
-                 RIGHT JOIN EmployeeDetails
-                 ON DepartmentRule.Department = EmployeeDetails.Department
-                 AND DepartmentRule.Gender = EmployeeDetails.Gender
-                 WHERE EmployeeDetails.BranchCode = ?`;
-
-		// Using query parameters to prevent SQL injection
-		const queryParams = [BranchCode];
-
-		dbConnProd.getConnection((err, connection) => {
-			if (err) {
-				return res.status(500).send({
-					success: false,
-					message: "Connection error, please contact administrator",
-					error: err.message,
-				});
-			}
-
-			connection.query(query, queryParams, function (err, rows) {
-				connection.release();
-				if (err) {
-					return res.status(500).send({
-						success: false,
-						message: "Technical error, please contact administrator",
-						error: err.message,
-					});
-				}
-				res.send({
-					success: true,
-					results: rows
-				});
-			});
-		});
-	} catch (error) {
-		res.status(500).send({
-			success: false,
-			message: "Technical error, please contact administrator",
-			error: error.message,
-		});
-	}
-}
-
-async function SalaryDetailsFunction(req, res, next) {
-	try {
-		const origin = req.get("origin") || "";
-
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
-			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
-		} else {
-			dbConnProd = dbDevelopment;
-		}
-
-		let query = "SELECT * FROM SalaryDetails WHERE 1=1";
-		let queryParams = [];
-		const filters = ["AppraisalDate", "EffectiveDate", "JoiningDate"];
-
-		if (req.query.EmployeeID) {
-			try {
-				const employeeIds = JSON.parse(req.query.EmployeeID); // Convert string to array
-				if (Array.isArray(employeeIds) && employeeIds.length > 0) {
-					const placeholders = employeeIds.map(() => "?").join(",");
-					query += ` AND EmployeeID IN (${placeholders})`;
-					queryParams.push(...employeeIds);
-				}
-			} catch (error) {
-				return res
-					.status(400)
-					.send({
-						success: false,
-						message: "Invalid EmployeeID format"
-					});
-			}
-		}
-
-		filters.forEach((filter) => {
-			if (req.query[filter]) {
-				query += ` AND ${filter} = ?`;
-				queryParams.push(req.query[filter]);
-			}
-		});
-
-		dbConnProd.getConnection((err, connection) => {
-			if (err)
-				return res.status(500).send({
-					success: false,
-					message: "Connection error, please contact the administrator",
-					error: err.message,
-				});
-
-			connection.query(query, queryParams, function (err, rows) {
-				connection.release();
-				if (err) return res.status(500).send({
-					error: err.message
-				});
-
-				if (Array.isArray(rows)) {
-					const today = new Date(
-						req.query.Year,
-						parseInt(req.query.Month) - 1,
-						"25"
-					);
-					const latestRecords = {};
-
-					rows.forEach((row) => {
-						try {
-							const employeeId = row.EmployeeID;
-							const appraisalDate = new Date(row.EffectiveDate);
-
-							if (!appraisalDate) return;
-
-							if (appraisalDate > today) return;
-
-							if (
-								!latestRecords[employeeId] ||
-								appraisalDate > latestRecords[employeeId].parsedDate
-							) {
-								latestRecords[employeeId] = {
-									...row,
-									parsedDate: appraisalDate,
-								};
-							}
-						} catch (error) { }
-					});
-					const filteredRows = Object.values(latestRecords).map(
-						({
-							parsedDate,
-							...row
-						}) => row
-					);
-
-					if (filteredRows.length === 0) {
-						return res
-							.status(500)
-							.send({
-								success: false,
-								message: "No salary details found"
-							});
-					} else {
-						res.send({
-							success: true,
-							results: filteredRows
-						});
-					}
-				}
-			});
-		});
-	} catch (error) {
-		res.status(500).send({
-			success: false,
-			message: "Technical error, please contact the administrator",
-			error: error.message,
-		});
-	}
-}
-
-async function getMessagesBetweenUsers(req, res, next) {
-	try {
-		const origin = req.get("origin") || "";
-
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
-			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
-		} else {
-			dbConnProd = dbDevelopment;
-		}
-
-		const {
-			SenderID,
-			ReceiverID,
-			GroupID,
-			IsSeen
-		} = req.query;
-
-		if (!GroupID && !SenderID && !ReceiverID) {
-			return res.status(400).send({
-				success: false,
-				message: "Provide either GroupID for group chat or both SenderID and ReceiverID for private chat",
-			});
-		}
-
-		let query = "";
-		let queryParams = [];
-
-		if (GroupID) {
-			// Group chat query
-			query = `SELECT 
-        m.MessageID,
-        m.MessageText,
-        m.SentAt,
-        m.Attachment,
-        m.AttachmentType,
-        m.AttachmentName,
-        m.ReplyText,
-        m.IsSeen,
-        m.SenderID,
-        m.ReceiverID,
-        m.Forwarded,
-        m.ReplySender,
-        m.GroupID,
-        m.Edited,
-        u.EmployeeName AS Sender
-      FROM Messages m
-      JOIN EmployeeDetails u ON m.SenderID = u.EmployeeID
-      WHERE m.GroupID = ?
-      ORDER BY m.SentAt`;
-
-			queryParams = [GroupID];
-		} else if (SenderID && ReceiverID) {
-			query = `SELECT 
-        m.MessageID,
-        u1.EmployeeName AS Sender,
-        u2.EmployeeName AS Receiver,
-        m.MessageText,
-        m.SentAt,
-        m.Attachment,
-        m.AttachmentType,
-        m.AttachmentName,
-        m.ReplyText,
-        m.Forwarded,
-        m.Edited,
-        m.ReplySender,
-        m.IsSeen,
-        m.SenderID,
-        m.GroupID,
-        m.ReceiverID
-      FROM Messages m
-      JOIN EmployeeDetails u1 ON m.SenderID = u1.EmployeeID
-      JOIN EmployeeDetails u2 ON m.ReceiverID = u2.EmployeeID
-      WHERE 
-         (m.SenderID = ? AND m.ReceiverID = ?)
-   OR (m.SenderID = ? AND m.ReceiverID = ?)
-  ORDER BY m.SentAt`;
-
-			queryParams = [SenderID, ReceiverID, ReceiverID, SenderID];
-		} else {
-			// One-to-one chat query
-			query = `
-    SELECT 
-    m.MessageID,
-    u1.EmployeeName AS Sender,
-    u2.EmployeeName AS Receiver,
-    m.MessageText,
-    m.SentAt,
-    m.Attachment,
-    m.AttachmentType,
-    m.AttachmentName,
-    m.ReplyText,
-    m.Forwarded,
-    m.Edited,
-    m.SenderID,
-    m.ReceiverID,
-    m.GroupID,
-    m.ReplySender,
-    m.IsSeen
-FROM Messages m
-JOIN EmployeeDetails u1 ON m.SenderID = u1.EmployeeID
-LEFT JOIN EmployeeDetails u2 ON m.ReceiverID = u2.EmployeeID
-WHERE 1=1
-`;
-			queryParams = [];
-
-			// Add filters only if values are provided
-			if (SenderID != null) {
-				query += ` AND m.SenderID = ?`;
-				queryParams.push(SenderID);
-			}
-
-			if (ReceiverID != null) {
-				query += ` AND m.ReceiverID = ?`;
-				queryParams.push(ReceiverID);
-			}
-
-			if (IsSeen != null) {
-				query += ` AND m.IsSeen = ?`;
-				queryParams.push(IsSeen);
-			}
-
-			// Order results
-			query += ` ORDER BY m.SentAt;`;
-
-			// queryParams = [SenderID, SenderID, ReceiverID, ReceiverID, IsSeen, IsSeen];
-		}
-
-		dbConnProd.getConnection((err, connection) => {
-			if (err) {
-				return res.status(500).send({
-					success: false,
-					message: "Connection error, please contact administrator",
-					error: err.message,
-				});
-			}
-
-			connection.query(query, queryParams, (err, rows) => {
-				connection.release();
-				if (err) {
-					return res.status(500).send({
-						success: false,
-						message: "Technical error, please contact administrator",
-						error: err.message,
-					});
-				}
-
-				rows.forEach((item) => {
-					if (item.Attachment && Buffer.isBuffer(item.Attachment)) {
-						item.Attachment = item.Attachment.toString("base64");
-					}
-				});
-
-				res.send({
-					success: true,
-					results: rows
-				});
-			});
-		});
-	} catch (error) {
-		res.status(500).send({
-			success: false,
-			message: "Technical error, please contact administrator",
-			error: error.message,
-		});
-	}
-}
 
 async function CommonTabledataReadCall(req) {
 	const origin = req.get("origin") || "";
 
-	if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-		dbConnProd = dbKvrTecProduction;
-	} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-		dbConnProd = dbKalTecProduction;
-	} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+	if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 		dbConnProd = Stayvriksha;
-	} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-		dbConnProd = DemoStayvriksha;
 	} else {
-		dbConnProd = dbDevelopment;
+		dbConnProd = DemoStayvriksha;
 	}
 
 	const {
@@ -995,16 +529,10 @@ async function CommonReadWithFilters(req, res, next) {
 
 		const origin = req.get("origin") || "";
 
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
 		} else {
-			dbConnProd = dbDevelopment;
+			dbConnProd = DemoStayvriksha;
 		}
 
 		const { tableName, top, skip, selectedFields } = req.body;
@@ -1137,22 +665,16 @@ async function CommonReadWithJoins(req) {
 
 		const origin = req.get("origin") || "";
 
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
 		} else {
-			dbConnProd = dbDevelopment;
+			dbConnProd = DemoStayvriksha;
 		}
 
 		// -----------------------------
 		// Request body
 		// -----------------------------
-		const {tableName,joins,top,skip,selectedFields,filters = {},sort = {}} = req.body;
+		const { tableName, joins, top, skip, selectedFields, filters = {}, sort = {} } = req.body;
 
 		if (!tableName) {
 			throw new Error("Table name is required");
@@ -1282,16 +804,10 @@ function CommonBulkUpdateWithIn(req) {
 
 		const origin = req.get("origin") || "";
 
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
 			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
 		} else {
-			dbConnProd = dbDevelopment;
+			dbConnProd = DemoStayvriksha;
 		}
 
 		const { tableName, data, filters } = req.body;
@@ -1360,26 +876,6 @@ function CommonBulkUpdateWithIn(req) {
 
 // Email transporter configurations for different domains
 
-const KalpavrikshaTechnologies = nodemailer.createTransport({
-	host: "smtppro.zoho.in",
-	port: 465,
-	secure: true,
-	auth: {
-		user: "admin-no-reply@kalpavrikshatechnologies.com",
-		pass: "Admin@KT108",
-	},
-});
-
-const KvrikshaTechnologies = nodemailer.createTransport({
-	host: "smtp.hostinger.com",
-	port: 465,
-	secure: true,
-	auth: {
-		user: "no-reply@kvrikshatechnologies.com",
-		pass: "Admin@smtp2025",
-	},
-});
-
 const StayvrikshaEmail = nodemailer.createTransport({
 	host: "smtp.hostinger.com",
 	port: 465,
@@ -1431,29 +927,13 @@ const CommonSendEmail = async (req, from, fromName, to, toName, subject, body, C
 		};
 
 		const origin = req.get("origin") || "";
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			transporter = KvrikshaTechnologies;
-		} else if (
-			origin.split("//")[1] === "kt.kvrikshatechnologies.com" ||
-			origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" ||
-			origin.split("//")[1] === "www.kalpavrikshatechnologies.com" ||
-			origin.split("//")[1] === "kalpavrikshatechnologies.com"
-		) {
-			transporter = KalpavrikshaTechnologies;
-		} else if (
-			origin.split("//")[1] === "stayvriksha.in" ||
-			origin.split("//")[1] === "www.stayvriksha.in" ||
-			origin.split("//")[1] === "demo.stayvriksha.in" ||
-			origin.split("//")[1] === "www.demo.stayvriksha.in"
-		) {
-			transporter = StayvrikshaEmail;
-		} else {
-			transporter = KalpavrikshaTechnologies;
-		}
+
+		transporter = StayvrikshaEmail;
+
 		var emaildata = await transporter.sendMail(mailOptions);
-		return {success: true,message: emaildata};
+		return { success: true, message: emaildata };
 	} catch (error) {
-		return {success: false,error: error};
+		return { success: false, error: error };
 	}
 };
 
@@ -1467,13 +947,9 @@ module.exports = {
 	CommonSendEmail,
 	CommonDeleteCall,
 	CommonDeleteCallWithMutiple,
-	getDepartmentRule,
-	SalaryDetailsFunction,
 	CommounMultipalUpdate,
-	getMessagesBetweenUsers,
 	CommonTabledataReadCall,
 	CommonReadWithFilters,
 	CommonReadWithJoins,
 	CommonBulkUpdateWithIn
-	// ReadDataBaseConnection
 };

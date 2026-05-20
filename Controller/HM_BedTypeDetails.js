@@ -1,6 +1,4 @@
-const {
-    randomUUID
-} = require("crypto");
+const { randomUUID } = require("crypto");
 const {
     CommonReadCall,
     CommonCreateCall,

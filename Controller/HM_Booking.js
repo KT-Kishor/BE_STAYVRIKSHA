@@ -209,12 +209,12 @@ async function BookingRejectEmail(req, res, next) {
                     <p>${emailContent.Body}</p>`;
 
     body = body
-    .replaceAll("<BookingID>", req.body.BookingID)
-    .replaceAll("<CustomerName>", req.body.CustomerName)
-    .replaceAll("<BookingDate>", req.body.BookingDate)
-    .replaceAll("<StartDate>", req.body.StartDate)
-    .replaceAll("<EndDate>", req.body.EndDate)
-    .replaceAll("<RejectDesc>", req.body.RejectDesc || "");
+      .replaceAll("<BookingID>", req.body.BookingID)
+      .replaceAll("<CustomerName>", req.body.CustomerName)
+      .replaceAll("<BookingDate>", req.body.BookingDate)
+      .replaceAll("<StartDate>", req.body.StartDate)
+      .replaceAll("<EndDate>", req.body.EndDate)
+      .replaceAll("<RejectDesc>", req.body.RejectDesc || "");
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
@@ -508,10 +508,10 @@ async function BookingBedTypeRoomReadCall(req, res, next) {
       typeof req.query.ACType === "string" && req.query.ACType.trim() !== "";
     const roomsForCount = hasACTypeFilter
       ? (HM_RoomsData || []).filter(
-          (room) =>
-            room.BedTypeName &&
-            room.BedTypeName.endsWith(`- ${req.query.ACType}`),
-        )
+        (room) =>
+          room.BedTypeName &&
+          room.BedTypeName.endsWith(`- ${req.query.ACType}`),
+      )
       : HM_RoomsData || [];
 
     const roomCountMap = {};

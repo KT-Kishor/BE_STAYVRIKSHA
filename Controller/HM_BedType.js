@@ -1,6 +1,4 @@
-const {
-    randomUUID
-} = require("crypto");
+const { randomUUID } = require("crypto");
 const {
     CommonCreateCall,
     CommonUpdateCall,
@@ -8,9 +6,6 @@ const {
     CommonReadWithFilters
 } = require("./CommonController");
 
-// var dbKalTecProduction = require("../sqlKalTecProduction");
-// var dbKvrTecProduction = require("../sqlKvrTecProduction");
-// var dbDevelopment = require("../sqlDevelopment");
 
 async function getHM_BedType(req, res, next) {
     try {

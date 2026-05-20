@@ -7,9 +7,6 @@ const {
     CommonReadWithFilters
 } = require("./CommonController");
 
-var dbKalTecProduction = require("../sqlKalTecProduction");
-var dbKvrTecProduction = require("../sqlKvrTecProduction");
-var dbDevelopment = require("../sqlDevelopment");
 var Stayvriksha = require("../sqlStayvriksha");
 var DemoStayvriksha = require("../sqlDevstayvriksha");
 
@@ -18,17 +15,11 @@ async function getHM_Facilities(req, res, next) {
   try {
     const origin = req.get("origin") || "";
 
-		if (origin.split("//")[1] === "kvrikshatechnologies.com" || origin.split("//")[1] === "www.kvrikshatechnologies.com") {
-			dbConnProd = dbKvrTecProduction;
-		} else if (origin.split("//")[1] === "kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" || origin.split("//")[1] === "www.kalpavrikshatechnologies.com" || origin.split("//")[1] === "kalpavrikshatechnologies.com") {
-			dbConnProd = dbKalTecProduction;
-		} else if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
-			dbConnProd = Stayvriksha;
-		} else if (origin.split("//")[1] === "demo.stayvriksha.in" || origin.split("//")[1] === "www.demo.stayvriksha.in") {
-			dbConnProd = DemoStayvriksha;
-		} else {
-			dbConnProd = dbDevelopment;
-		}
+		if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+				dbConnProd = Stayvriksha;
+			} else {
+				dbConnProd = DemoStayvriksha;
+			}
 
     // Step 1: Read from HM_ExtraFacilities
     req.body.filters = {};

@@ -10,9 +10,6 @@ const {
   CommonReadWithFilters,
 } = require("./CommonController");
 
-var dbKalTecProduction = require("../sqlKalTecProduction");
-var dbKvrTecProduction = require("../sqlKvrTecProduction");
-var dbDevelopment = require("../sqlDevelopment");
 var Stayvriksha = require("../sqlStayvriksha");
 var DemoStayvriksha = require("../sqlDevstayvriksha");
 
@@ -21,31 +18,11 @@ async function getHM_Customer(req, res, next) {
     // 🔹 Step 1: Determine which DB to use
     const origin = req.get("origin") || "";
 
-    if (
-      origin.split("//")[1] === "kvrikshatechnologies.com" ||
-      origin.split("//")[1] === "www.kvrikshatechnologies.com"
-    ) {
-      dbConnProd = dbKvrTecProduction;
-    } else if (
-      origin.split("//")[1] === "kt.kvrikshatechnologies.com" ||
-      origin.split("//")[1] === "www.kt.kvrikshatechnologies.com" ||
-      origin.split("//")[1] === "www.kalpavrikshatechnologies.com" ||
-      origin.split("//")[1] === "kalpavrikshatechnologies.com"
-    ) {
-      dbConnProd = dbKalTecProduction;
-    } else if (
-      origin.split("//")[1] === "stayvriksha.in" ||
-      origin.split("//")[1] === "www.stayvriksha.in"
-    ) {
-      dbConnProd = Stayvriksha;
-    } else if (
-      origin.split("//")[1] === "demo.stayvriksha.in" ||
-      origin.split("//")[1] === "www.demo.stayvriksha.in"
-    ) {
-      dbConnProd = DemoStayvriksha;
-    } else {
-      dbConnProd = dbDevelopment;
-    }
+    if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
+				dbConnProd = Stayvriksha;
+			} else {
+				dbConnProd = DemoStayvriksha;
+			}
 
     if (req.query.BranchCode === "" && req.query.Role === "Admin")
       return res.status(200).send({ success: true, Customers: [] });
