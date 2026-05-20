@@ -974,7 +974,7 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
       }
 
       // ONCE_PER_BOOKING
-      else if (chargeType === "Entire_Booking") {
+      else if (chargeType === "ENTIRE_BOOKING") {
         if (invoiceIndex > 0) return;
 
         facilityAmount = truncate2(price);
