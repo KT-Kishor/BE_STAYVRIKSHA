@@ -642,26 +642,42 @@ async function putHM_Bookingdeposit(req, res, next) {
       });
     }
 
-    req.body = {
-      tableName: "HM_CustomerDocument",
-      filters: {
-        MemberID
-      },
-    };
+    // Split all Member IDs
+    const aMemberIDs = String(MemberID).split(",").map(id => id.trim()).filter(Boolean);
 
-    const oDocResult = await CommonReadCall(req, res, next);
+    let aMissingMembers = [];
 
-    if (!oDocResult || oDocResult.length === 0) {
-      let finalEmailID = CustomerEmail;
-      if (finalEmailID) {
+    for (const sMemberID of aMemberIDs) {  // Check document for every member
+
+      req.body = {
+        tableName: "HM_CustomerDocument",
+        filters: {
+          MemberID: sMemberID
+        },
+      };
+
+      const oDocResult = await CommonReadCall(req, res, next);
+
+      // Store missing members
+      if (!oDocResult || oDocResult.length === 0) {
+        aMissingMembers.push(sMemberID);
+      }
+    }
+
+    // If any member document missing
+    if (aMissingMembers.length > 0) {
+
+      if (CustomerEmail) {
         try {
-          ((req.body = {
+          req.body = {
             CustomerEmail,
             CustomerName,
             UserID,
             BookingID,
-          }),
-            await documentUploadEmail(req, res, next));
+          };
+
+          await documentUploadEmail(req, res, next);
+
         } catch (emailError) {
           console.error("Email sending failed:", emailError);
         }
@@ -671,7 +687,7 @@ async function putHM_Bookingdeposit(req, res, next) {
         success: false,
         document: false,
         message:
-          "Customer document not found. Please upload the document to assign the room.",
+          `Documents are missing for one or more members. Please upload the required documents to assign the room.`,
       });
     }
 
@@ -716,7 +732,6 @@ async function putHM_Bookingdeposit(req, res, next) {
           : "Booking updated and Deposit created successfully!",
     });
   } catch (error) {
-    console.error(error);
     res.status(500).send({
       success: false,
       message: error.message || "Technical error, please contact administrator",
