@@ -306,6 +306,8 @@ async function postHM_Customer(req, res, next) {
   try {
     let customerList = req.body.data;
     const pdfAttachment = req.body.pdfAttachment;
+    const propertyName =  req.body.data[0].Area || "";
+    delete req.body.data[0].Area;
     req.body.tableName = "HM_Customer";
 
     if (!Array.isArray(customerList) || customerList.length === 0)
@@ -543,7 +545,8 @@ async function postHM_Customer(req, res, next) {
         StartDate: formatDate(data.StartDate),
         EndDate: formatDate(data.EndDate),
         Guests: data.NoOfPersons || "1",
-        MemberID : data.MemberID || ""
+        MemberID : data.MemberID || "",
+        PropertyName : propertyName || ""
       };
 
       await BookingSubmitEmail(req, res, next, pdfAttachment);
@@ -604,7 +607,9 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
     const to = [req.body.toEmailID];
     const toName = req.body.UserName;
 
-    const subject = emailContent.Subject;
+    let subject = emailContent.Subject;
+    subject = subject.replaceAll("<PropertyName>", req.body.PropertyName || "");
+    
     const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString(
       "base64",
     );
@@ -633,6 +638,7 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
       .replaceAll("<BedType>", req.body.BedType)
       .replaceAll("<Guests>", req.body.Guests)
       .replaceAll("<MemberID>", req.body.MemberID)
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
       .replaceAll("<EncodedCustomerID>", encodedCustomerID);
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];

@@ -62,11 +62,13 @@ async function putHM_Booking(req, res, next) {
     const customerEmail = data.CustomerEmail || "";
     const guests = data.Guests || "";
     const pdfAttachment = data.pdfAttachment;
+    const propertyName = data.PropertyName || "";
 
     // Remove Non-DB Fields Before Update
     delete data.CustomerEmail;
     delete data.Guests;
     delete data.pdfAttachment;
+    delete data.PropertyName;
 
     // Prepare Email Payload
     const emailPayload = {
@@ -80,7 +82,8 @@ async function putHM_Booking(req, res, next) {
       EndDate: data.EndDate,
       Guests: guests,
       MemberID: data.MemberID,
-      RejectDesc: data.RejectDesc || ""
+      RejectDesc: data.RejectDesc || "",
+      PropertyName: propertyName
     };
 
     // Update Booking Table First
@@ -142,10 +145,10 @@ async function BookingConfirmEmail(req, res, next, pdfAttachment) {
     const to = [req.body.CustomerEmail];
     const toName = req.body.CustomerName;
 
-    const subject = emailContent.Subject;
-    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString(
-      "base64",
-    );
+    let subject = emailContent.Subject;
+    subject = subject.replaceAll("<PropertyName>", req.body.PropertyName || "");
+
+    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
 
     let attachments = [];
 
@@ -170,6 +173,7 @@ async function BookingConfirmEmail(req, res, next, pdfAttachment) {
       .replaceAll("<RentPrice>", req.body.RentPrice)
       .replaceAll("<BedType>", req.body.BedType)
       .replaceAll("<Guests>", req.body.Guests)
+      .replaceAll("<PropertyName>", req.body.PropertyName)
       .replaceAll("<EncodedCustomerID>", encodedCustomerID);
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
@@ -199,10 +203,10 @@ async function BookingRejectEmail(req, res, next) {
     const to = [req.body.CustomerEmail];
     const toName = req.body.CustomerName;
 
-    const subject = emailContent.Subject;
-    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString(
-      "base64",
-    );
+    let subject = emailContent.Subject;
+    subject = subject.replaceAll("<PropertyName>", req.body.PropertyName || "");
+
+    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
 
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.CustomerName},</p>
@@ -214,6 +218,7 @@ async function BookingRejectEmail(req, res, next) {
       .replaceAll("<BookingDate>", req.body.BookingDate)
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
+      .replaceAll("<PropertyName>", req.body.PropertyName)
       .replaceAll("<RejectDesc>", req.body.RejectDesc || "");
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
