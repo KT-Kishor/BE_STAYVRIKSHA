@@ -309,6 +309,7 @@ async function postHM_Customer(req, res, next) {
     const propertyName =  req.body.data[0].Area || "";
     const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}`;
     const propertyEmail = req.body.data[0].PropertyEmail 
+    const memberID = req.body.data?.[0]?.Booking?.[0]?.MemberID || "";
     delete req.body.data[0].Area;
     delete req.body.data[0].PropertySTD;
     delete req.body.data[0].PropertyMobileNo;
@@ -613,9 +614,12 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
 
     const to = [req.body.toEmailID];
     const toName = req.body.UserName;
-
     let subject = emailContent.Subject;
-    subject = subject.replaceAll("<PropertyName>", req.body.PropertyName || "");
+
+    subject = subject
+        .replaceAll("<PropertyName>", req.body.PropertyName || "")
+        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+
     
     const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
     const encodedMemberID  = Buffer.from(String(req.body.MemberID)).toString("base64");
@@ -647,6 +651,7 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
       .replaceAll("<Guests>", req.body.Guests)
       .replaceAll("<MemberID>", req.body.MemberID)
       .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "")
       .replaceAll("<PropertyMobileNo>", propertyMobileNo || "+91 123456789")
       .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
       .replaceAll("<EncodedMemberID>", encodedMemberID)
