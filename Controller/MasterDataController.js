@@ -211,7 +211,7 @@ async function HM_BranchData(req, res, next) {
   try {
     req.body.tableName = "HM_Branch";
     req.body.filters = {};
-    req.body.selectedFields = ["Name", "BranchID", "City", "Country", "LandMark", "Address", "Type", "Value", "GSTIN", "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType"];
+    req.body.selectedFields = ["Name", "BranchID", "City", "Country", "LandMark", "Address", "Type", "Value", "GSTIN", "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact"];
     if (req.query.Name) req.body.filters.Name = req.query.Name;
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;

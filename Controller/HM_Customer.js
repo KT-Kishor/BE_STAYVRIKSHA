@@ -307,7 +307,12 @@ async function postHM_Customer(req, res, next) {
     let customerList = req.body.data;
     const pdfAttachment = req.body.pdfAttachment;
     const propertyName =  req.body.data[0].Area || "";
+    const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}`;
+    const propertyEmail = req.body.data[0].PropertyEmail 
     delete req.body.data[0].Area;
+    delete req.body.data[0].PropertySTD;
+    delete req.body.data[0].PropertyMobileNo;
+    delete req.body.data[0].PropertyEmail;
     req.body.tableName = "HM_Customer";
 
     if (!Array.isArray(customerList) || customerList.length === 0)
@@ -546,7 +551,9 @@ async function postHM_Customer(req, res, next) {
         EndDate: formatDate(data.EndDate),
         Guests: data.NoOfPersons || "1",
         MemberID : data.MemberID || "",
-        PropertyName : propertyName || ""
+        PropertyName: propertyName || "",
+        PropertyMobileNo: propertyMobileNo || "",
+        PropertyEmail: propertyEmail || ""
       };
 
       await BookingSubmitEmail(req, res, next, pdfAttachment);
@@ -610,9 +617,8 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
     let subject = emailContent.Subject;
     subject = subject.replaceAll("<PropertyName>", req.body.PropertyName || "");
     
-    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString(
-      "base64",
-    );
+    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
+    const encodedMemberID  = Buffer.from(String(req.body.MemberID)).toString("base64");
 
     let attachments = [];
 
@@ -624,6 +630,8 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
       });
     }
 
+    let propertyMobileNo = req.body.PropertyMobileNo || "";
+    
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.UserName},</p>
                     <p>${emailContent.Body}</p>`;
@@ -639,6 +647,9 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
       .replaceAll("<Guests>", req.body.Guests)
       .replaceAll("<MemberID>", req.body.MemberID)
       .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "+91 123456789")
+      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
+      .replaceAll("<EncodedMemberID>", encodedMemberID)
       .replaceAll("<EncodedCustomerID>", encodedCustomerID);
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
