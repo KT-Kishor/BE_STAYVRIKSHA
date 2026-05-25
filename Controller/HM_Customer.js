@@ -878,7 +878,7 @@ async function putHM_Customer(req, res, next) {
       for (const booking of payload.Booking) {
 
         // ✅ Skip email when AdminUpdated = YES
-        if (booking.AdminUpdated === "YES") {
+        if (booking?.AdminUpdated === "YES") {
           continue;
         }
 
