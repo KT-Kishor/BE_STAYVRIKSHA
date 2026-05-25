@@ -40,8 +40,8 @@ async function getHM_Login(req, res, next) {
     if (req.query.OTP) {
       const isOTPValid = await bcrypt.compare(req.query.OTP, user.OTP);
       if (isOTPValid) {
-        data[0]._x9A1p = await bcrypt.hash(data[0].EmployeeID, saltRounds);
-        data[0]._k7LmQ = await bcrypt.hash(data[0].EmployeeName, saltRounds);
+        data[0]._x9A1p = await bcrypt.hash(data[0].UserID, saltRounds);
+        data[0]._k7LmQ = await bcrypt.hash(data[0].UserName, saltRounds);
         return res.send({ success: true, message: "OTP verified", data });
       } else {
         return res.status(400).send({ success: false, message: "Incorrect OTP" });
@@ -49,8 +49,8 @@ async function getHM_Login(req, res, next) {
     } else if (req.query.Password) {
       const isPasswordValid = await bcrypt.compare(atob(req.query.Password), user.Password);
       if (isPasswordValid) {
-        data[0]._x9A1p = await bcrypt.hash(data[0].EmployeeID, saltRounds);
-        data[0]._k7LmQ = await bcrypt.hash(data[0].EmployeeName, saltRounds);
+        data[0]._x9A1p = await bcrypt.hash(data[0].UserID, saltRounds);
+        data[0]._k7LmQ = await bcrypt.hash(data[0].UserName, saltRounds);
         return res.send({ success: true, message: "Password verified", data });
       } else {
         return res.status(400).send({ success: false, message: "Incorrect Password" });
