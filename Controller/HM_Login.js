@@ -22,7 +22,7 @@ async function getHM_Login(req, res, next) {
 
     if (req.query.EmailID) req.body.filters.EmailID = req.query.EmailID;
 
-    const data = await CommonReadCall(req, res, next);
+    var data = await CommonReadCall(req, res, next);
 
     if (data.length === 0) return res.status(400).send({ success: false, message: "Invalid credentials. Please try again", });
 
@@ -32,9 +32,16 @@ async function getHM_Login(req, res, next) {
         item.FileContent = item.FileContent.toString('base64');
       }
     });
+
+    if (!req.query.OTP && !req.query.Password) {
+      return res.send({ success: true, data: user });
+    }
+
     if (req.query.OTP) {
       const isOTPValid = await bcrypt.compare(req.query.OTP, user.OTP);
       if (isOTPValid) {
+        data[0]._x9A1p = await bcrypt.hash(data[0].EmployeeID, saltRounds);
+        data[0]._k7LmQ = await bcrypt.hash(data[0].EmployeeName, saltRounds);
         return res.send({ success: true, message: "OTP verified", data });
       } else {
         return res.status(400).send({ success: false, message: "Incorrect OTP" });
@@ -42,6 +49,8 @@ async function getHM_Login(req, res, next) {
     } else if (req.query.Password) {
       const isPasswordValid = await bcrypt.compare(atob(req.query.Password), user.Password);
       if (isPasswordValid) {
+        data[0]._x9A1p = await bcrypt.hash(data[0].EmployeeID, saltRounds);
+        data[0]._k7LmQ = await bcrypt.hash(data[0].EmployeeName, saltRounds);
         return res.send({ success: true, message: "Password verified", data });
       } else {
         return res.status(400).send({ success: false, message: "Incorrect Password" });
@@ -66,7 +75,7 @@ async function postHM_Login(req, res, next) {
     delete data.Documents;
     req.body.tableName = "HM_Login";
     req.body.filters = {};
-    
+
     if (data.EmailID) req.body.filters.EmailID = data.EmailID;
 
     var LoginData = await CommonReadCall(req, res, next);
@@ -109,19 +118,19 @@ async function postHM_Login(req, res, next) {
     if (data.Role === "Customer") {
       {
         req.body.data = {
-          MemberID : data.UserID,
-          UserID : data.UserID,
-          Salutation : data.Salutation,
+          MemberID: data.UserID,
+          UserID: data.UserID,
+          Salutation: data.Salutation,
           Name: data.UserName,
-          Relation : "SELF",
-          Gender : data.Gender,
-          DateOfBirth : data.DateOfBirth
-      }
+          Relation: "SELF",
+          Gender: data.Gender,
+          DateOfBirth: data.DateOfBirth
+        }
 
-      req.body.tableName = "HM_Members";
-      await CommonCreateCall(req, res, next);
+        req.body.tableName = "HM_Members";
+        await CommonCreateCall(req, res, next);
+      }
     }
-   }
 
     if (VenderDocuments.length > 0) {
       VenderDocuments.forEach(doc => {
@@ -141,13 +150,13 @@ async function postHM_Login(req, res, next) {
       UserID: data.UserID || "",
       UserName: data.UserName || "",
       toEmailID: data.EmailID || "",
-      BranchName: branchNameForMail 
+      BranchName: branchNameForMail
     }
 
     if (data.Type !== "Vendor" && data.Role !== "Customer") await HostelSignupEmail(req, res, next);
     if (data.Role === "Customer") await CustomerSignupEmail(req, res, next);
     if (data.Type === "Vendor") await VendorRegistrationMail(req, res, next);
-    
+
     res.status(200).send({ success: true, message: "Login saved successfully!", RoomID: data.ID, });
   } catch (error) {
     res.status(500).send({
@@ -212,8 +221,8 @@ async function HostelSignupEmail(req, res, next) {
     const subject = emailContent.Subject;
 
     const formattedBranch = req.body.BranchName
-    ? req.body.BranchName.split(",").map(b => b.trim()).join(", ")
-    : "";
+      ? req.body.BranchName.split(",").map(b => b.trim()).join(", ")
+      : "";
 
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.UserName},</p>
@@ -407,7 +416,7 @@ async function deleteHM_Login(req, res, next) {
 async function HostelSendOTPEmail(req, res, next) {
   try {
     req.body.filters = {};
-    req.body.tableName = "HM_Login";  
+    req.body.tableName = "HM_Login";
     if (req.body.UserID) req.body.filters.UserID = req.body.UserID;
     if (req.body.UserName) req.body.filters.UserName = req.body.UserName;
     if (req.body.EmailID) req.body.filters.EmailID = req.body.EmailID;
@@ -417,7 +426,7 @@ async function HostelSendOTPEmail(req, res, next) {
       if (!LoginData[0].EmailID) {
         return res.status(400).send({ success: false, message: "Email ID is required. Please provide a valid email address." });
       }
-       // ✅ Vendor approval validation
+      // ✅ Vendor approval validation
       if (LoginData[0].Type === "Vendor" && LoginData[0].Status !== "Approved" && LoginData[0].Status !== "Active") {
         return res.status(403).send({
           success: false,
@@ -425,36 +434,36 @@ async function HostelSendOTPEmail(req, res, next) {
         });
       }
       // if (req.body.UserID === LoginData[0].UserID && req.body.UserName === LoginData[0].UserName) {
-        // Fetch EmailContent for OTP email body
-        req.body.tableName = "EmailContent";
-        if (req.body.Type) {
-          req.body.filters = { Type: req.body.Type };
-        }
-        var emailContentData = await CommonReadCall(req, res, next);
+      // Fetch EmailContent for OTP email body
+      req.body.tableName = "EmailContent";
+      if (req.body.Type) {
+        req.body.filters = { Type: req.body.Type };
+      }
+      var emailContentData = await CommonReadCall(req, res, next);
 
-        // Generate OTP
-        var OTP = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate OTP
+      var OTP = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Update LoginDetails with OTP and timestamp
-        req.body.data = {
-          OTP: await bcrypt.hash(OTP, saltRounds),
-          TimeDate: new Date().getTime(),
-        };
-        req.body.filters = { EmailID: LoginData[0].EmailID };
-        req.body.tableName = "HM_Login";
-        await CommonUpdateCall(req, res, next);
-        // Prepare email details
-        var emailContent = emailContentData[0];
-        const from = emailContent.FormEmailId;
-        const fromName = emailContent.FormName;
-        const to = [LoginData[0].EmailID , emailContent.CCEmailId];
-        const toName = LoginData[0].UserName;
-        const subject = emailContent.Subject;
-        var body = `<p>Dear ${LoginData[0].UserName || ''},</p>
+      // Update LoginDetails with OTP and timestamp
+      req.body.data = {
+        OTP: await bcrypt.hash(OTP, saltRounds),
+        TimeDate: new Date().getTime(),
+      };
+      req.body.filters = { EmailID: LoginData[0].EmailID };
+      req.body.tableName = "HM_Login";
+      await CommonUpdateCall(req, res, next);
+      // Prepare email details
+      var emailContent = emailContentData[0];
+      const from = emailContent.FormEmailId;
+      const fromName = emailContent.FormName;
+      const to = [LoginData[0].EmailID, emailContent.CCEmailId];
+      const toName = LoginData[0].UserName;
+      const subject = emailContent.Subject;
+      var body = `<p>Dear ${LoginData[0].UserName || ''},</p>
                       <p>${emailContent.Body.replaceAll("<OTPCODE>", OTP)}</p>`;
 
-        await CommonSendEmail(req, from, fromName, to, toName, subject, body);
-        res.send({ success: true, message: "Email sent successfully", OTP: OTP });
+      await CommonSendEmail(req, from, fromName, to, toName, subject, body);
+      res.send({ success: true, message: "Email sent successfully", OTP: OTP });
       // } 
       // else {
       //   res.status(400).send({ success: false, message: "Invalid credentials. Please try again.", });
@@ -525,7 +534,7 @@ async function HM_StaffContact(req, res, next) {
       BranchCode: employee.BranchCode,
       DateOfBirth: employee.DateOfBirth,
       Status: employee.Status,
-      Type : employee.Type
+      Type: employee.Type
     }));
     res.send({ success: true, data: filteredData });
   } catch (err) {
@@ -611,45 +620,45 @@ async function HM_LoginReadCall(req, res, next) {
 async function OTPEmail(req, res, next) {
   try {
     req.body.filters = {};
-    req.body.tableName = "HM_Customer";  
-    if (req.body.BookingID ) req.body.filters.BookingID  = req.body.BookingID ;
+    req.body.tableName = "HM_Customer";
+    if (req.body.BookingID) req.body.filters.BookingID = req.body.BookingID;
     if (req.body.CustomerEmail) req.body.filters.CustomerEmail = req.body.CustomerEmail;
 
     var LoginData = await CommonReadCall(req, res, next);
 
     // if (LoginData.length > 0) {
-        // Fetch EmailContent for OTP email body
-        req.body.tableName = "EmailContent";
-        if (req.body.Type) {
-          req.body.filters = { Type: req.body.Type };
-        }
-        var emailContentData = await CommonReadCall(req, res, next);
+    // Fetch EmailContent for OTP email body
+    req.body.tableName = "EmailContent";
+    if (req.body.Type) {
+      req.body.filters = { Type: req.body.Type };
+    }
+    var emailContentData = await CommonReadCall(req, res, next);
 
-        // Generate OTP
-        var OTP = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate OTP
+    var OTP = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Update LoginDetails with OTP and timestamp
-        req.body.data = {
-          OTP: await bcrypt.hash(OTP, saltRounds),
-          TimeDate: new Date().getTime(),
-        };
-        req.body.filters = { CustomerEmail: LoginData[0].CustomerEmail, BookingID : LoginData[0].BookingID  };
-        req.body.tableName = "HM_Customer";
-        await CommonUpdateCall(req, res, next);
+    // Update LoginDetails with OTP and timestamp
+    req.body.data = {
+      OTP: await bcrypt.hash(OTP, saltRounds),
+      TimeDate: new Date().getTime(),
+    };
+    req.body.filters = { CustomerEmail: LoginData[0].CustomerEmail, BookingID: LoginData[0].BookingID };
+    req.body.tableName = "HM_Customer";
+    await CommonUpdateCall(req, res, next);
 
-        // Prepare email details
-        var emailContent = emailContentData[0];
-        const from = emailContent.FormEmailId;
-        const fromName = emailContent.FormName;
-        const to = [LoginData[0].CustomerEmail];
-        const toName = LoginData[0].CustomerName;
-        const subject = emailContent.Subject;
-        var body = `<p>Dear ${LoginData[0].CustomerName || ''},</p>
+    // Prepare email details
+    var emailContent = emailContentData[0];
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [LoginData[0].CustomerEmail];
+    const toName = LoginData[0].CustomerName;
+    const subject = emailContent.Subject;
+    var body = `<p>Dear ${LoginData[0].CustomerName || ''},</p>
                       <p>${emailContent.Body.replaceAll("<OTPCODE>", OTP)}</p>`;
 
 
-        await CommonSendEmail(req, from, fromName, to, toName, subject, body);
-        res.send({ success: true, message: "Email sent successfully", OTP: OTP });
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body);
+    res.send({ success: true, message: "Email sent successfully", OTP: OTP });
     // } else {
     //   res.status(400).send({ success: false, message: "Invalid credentials. Please try again.", });
     // }
