@@ -671,7 +671,7 @@ async function putHM_Customer(req, res, next) {
   try {
     const payload = req.body.data?.[0];
     const filters = req.body.filters;
-    // const pdfAttachment = req.body.pdfAttachment;
+    const pdfAttachment = req.body.data?.[0].pdfAttachment || "";
     const propertyName =  req.body.data[0].Area || "";
     const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}` || "";
     const propertyEmail = req.body.data[0].PropertyEmail || "";
@@ -902,7 +902,7 @@ async function putHM_Customer(req, res, next) {
         const originalBody = req.body;
         req.body = emailPayload;
 
-        await BookingEditEmail(req, res, next);
+        await BookingEditEmail(req, res, next, pdfAttachment);
 
         req.body = originalBody;
       }
@@ -921,7 +921,7 @@ async function putHM_Customer(req, res, next) {
   }
 }
 
-async function BookingEditEmail(req, res, next) {
+async function BookingEditEmail(req, res, next, pdfAttachment) {
   try {
     req.body.tableName = "EmailContent";
     req.body.filters = { Type: "BookingEdit" };
@@ -941,6 +941,16 @@ async function BookingEditEmail(req, res, next) {
     const to = [req.body.toEmailID];
     const toName = req.body.UserName;
     let subject = emailContent.Subject;
+
+    let attachments = [];
+
+    if (pdfAttachment && pdfAttachment.content) {
+      attachments.push({
+        filename: pdfAttachment.fileName || "BookingVoucher.pdf",
+        content: Buffer.from(pdfAttachment.content, "base64"),
+        contentType: pdfAttachment.mimeType || "application/pdf",
+      });
+    }
 
     subject = subject
         .replaceAll("<PropertyName>", req.body.PropertyName || "")
@@ -976,7 +986,7 @@ async function BookingEditEmail(req, res, next) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-   await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+   await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
   } catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
