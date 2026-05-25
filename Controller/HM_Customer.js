@@ -672,6 +672,14 @@ async function putHM_Customer(req, res, next) {
     const payload = req.body.data?.[0];
     const filters = req.body.filters;
     // const pdfAttachment = req.body.pdfAttachment;
+    const propertyName =  req.body.data[0].Area || "";
+    const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}` || "";
+    const propertyEmail = req.body.data[0].PropertyEmail || "";
+    const memberID = req.body.data?.[0]?.Booking?.[0]?.MemberID || "";
+    delete req.body.data[0].Area;
+    delete req.body.data[0].PropertySTD;
+    delete req.body.data[0].PropertyMobileNo;
+    delete req.body.data[0].PropertyEmail;
 
     if (!payload) {
       return res.status(400).send({
@@ -865,24 +873,40 @@ async function putHM_Customer(req, res, next) {
       await CheckoutCompletedEmail(req, res, next);
     }
 
-    // if (payload.Booking && payload.Booking.length > 0) {
-    //   for (const booking of payload.Booking) {
-    //     req.body = {
-    //       UserName: payload.CustomerName || "Customer",
-    //       BookingID: booking.BookingID,
-    //       toEmailID: payload.CustomerEmail || "",
-    //       BedType: booking.BedType,
-    //       RentPrice: formatAmount(booking.RentPrice),
-    //       BookingDate: formatDate(booking.BookingDate),
-    //       StartDate: formatDate(booking.StartDate),
-    //       EndDate: formatDate(booking.EndDate),
-    //       Guests: booking.NoOfPersons || "1",
-    //       MemberID : booking.MemberID || ""
-    //     };
+    if (payload.Booking && payload.Booking.length > 0) {
 
-    //     await BookingSubmitEmail(req, res, next, pdfAttachment);
-    //   }
-    // }
+      for (const booking of payload.Booking) {
+
+        // ✅ Skip email when AdminUpdated = YES
+        if (booking.AdminUpdated === "YES") {
+          continue;
+        }
+
+        const emailPayload = {
+          UserName: payload.CustomerName || "Customer",
+          BookingID: booking.BookingID,
+          toEmailID: payload.CustomerEmail || "",
+          BedType: booking.BedType,
+          RentPrice: formatAmount(booking.RentPrice),
+          BookingDate: formatDate(booking.BookingDate),
+          StartDate: formatDate(booking.StartDate),
+          EndDate: formatDate(booking.EndDate),
+          Guests: booking.NoOfPersons || "1",
+          MemberID: booking.MemberID || "",
+          PropertyName: propertyName || "",
+          PropertyMobileNo: propertyMobileNo || "",
+          PropertyEmail: propertyEmail || "",
+          PropertyType: booking.PropertyType
+        };
+
+        const originalBody = req.body;
+        req.body = emailPayload;
+
+        await BookingEditEmail(req, res, next);
+
+        req.body = originalBody;
+      }
+    }
 
     return res.status(200).send({
       success: true,
@@ -894,6 +918,67 @@ async function putHM_Customer(req, res, next) {
       message: "Technical error, please contact admin",
       error: error.message,
     });
+  }
+}
+
+async function BookingEditEmail(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "BookingEdit" };
+
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res
+        .status(404)
+        .send({ success: false, message: "Email content not found" });
+    }
+
+    var emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+    const to = [req.body.toEmailID];
+    const toName = req.body.UserName;
+    let subject = emailContent.Subject;
+
+    subject = subject
+        .replaceAll("<PropertyName>", req.body.PropertyName || "")
+        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+
+    
+    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
+    const encodedMemberID  = Buffer.from(String(req.body.MemberID)).toString("base64");
+
+    let propertyMobileNo = req.body.PropertyMobileNo || "";
+    
+    // Ensure replacements are applied
+    let body = `<p>Dear ${req.body.UserName},</p>
+                    <p>${emailContent.Body}</p>`;
+
+    body = body
+      .replaceAll("<BookingID>", req.body.BookingID)
+      .replaceAll("<CustomerName>", req.body.UserName)
+      .replaceAll("<BookingDate>", req.body.BookingDate)
+      .replaceAll("<StartDate>", req.body.StartDate)
+      .replaceAll("<EndDate>", req.body.EndDate)
+      .replaceAll("<RentPrice>", req.body.RentPrice)
+      .replaceAll("<BedType>", req.body.BedType)
+      .replaceAll("<Guests>", req.body.Guests)
+      .replaceAll("<MemberID>", req.body.MemberID)
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "")
+      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
+      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
+      .replaceAll("<EncodedMemberID>", encodedMemberID)
+      .replaceAll("<EncodedCustomerID>", encodedCustomerID);
+
+    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+   await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
 
