@@ -63,12 +63,17 @@ async function putHM_Booking(req, res, next) {
     const guests = data.Guests || "";
     const pdfAttachment = data.pdfAttachment;
     const propertyName = data.PropertyName || "";
+    const propertyMobileNo = `${data.PropertySTD || ""} ${data.PropertyMobileNo || ""}`;
+    const propertyEmail = data.PropertyEmail 
 
     // Remove Non-DB Fields Before Update
     delete data.CustomerEmail;
     delete data.Guests;
     delete data.pdfAttachment;
     delete data.PropertyName;
+    delete data.PropertySTD;
+    delete data.PropertyMobileNo;
+    delete data.PropertyEmail;
 
     // Prepare Email Payload
     const emailPayload = {
@@ -83,7 +88,10 @@ async function putHM_Booking(req, res, next) {
       Guests: guests,
       MemberID: data.MemberID,
       RejectDesc: data.RejectDesc || "",
-      PropertyName: propertyName
+      PropertyName: propertyName,
+      PropertyMobileNo: propertyMobileNo || "",
+      PropertyEmail: propertyEmail || "",
+      PropertyType : data.PropertyType
     };
 
     // Update Booking Table First
@@ -144,11 +152,14 @@ async function BookingConfirmEmail(req, res, next, pdfAttachment) {
 
     const to = [req.body.CustomerEmail];
     const toName = req.body.CustomerName;
-
     let subject = emailContent.Subject;
-    subject = subject.replaceAll("<PropertyName>", req.body.PropertyName || "");
+
+    subject = subject
+        .replaceAll("<PropertyName>", req.body.PropertyName || "")
+        .replaceAll("<PropertyType>", req.body.PropertyType || "");
 
     const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
+    const encodedMemberID  = Buffer.from(String(req.body.MemberID)).toString("base64");
 
     let attachments = [];
 
@@ -159,6 +170,8 @@ async function BookingConfirmEmail(req, res, next, pdfAttachment) {
         contentType: pdfAttachment.mimeType || "application/pdf",
       });
     }
+
+    let propertyMobileNo = req.body.PropertyMobileNo || "";
 
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.CustomerName},</p>
@@ -173,7 +186,11 @@ async function BookingConfirmEmail(req, res, next, pdfAttachment) {
       .replaceAll("<RentPrice>", req.body.RentPrice)
       .replaceAll("<BedType>", req.body.BedType)
       .replaceAll("<Guests>", req.body.Guests)
-      .replaceAll("<PropertyName>", req.body.PropertyName)
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "")
+      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
+      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
+      .replaceAll("<EncodedMemberID>", encodedMemberID)
       .replaceAll("<EncodedCustomerID>", encodedCustomerID);
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
@@ -204,9 +221,12 @@ async function BookingRejectEmail(req, res, next) {
     const toName = req.body.CustomerName;
 
     let subject = emailContent.Subject;
-    subject = subject.replaceAll("<PropertyName>", req.body.PropertyName || "");
 
-    const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
+    subject = subject
+        .replaceAll("<PropertyName>", req.body.PropertyName || "")
+        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+        
+    let propertyMobileNo = req.body.PropertyMobileNo || "";
 
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.CustomerName},</p>
@@ -218,7 +238,10 @@ async function BookingRejectEmail(req, res, next) {
       .replaceAll("<BookingDate>", req.body.BookingDate)
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
-      .replaceAll("<PropertyName>", req.body.PropertyName)
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "")
+      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
+      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
       .replaceAll("<RejectDesc>", req.body.RejectDesc || "");
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];

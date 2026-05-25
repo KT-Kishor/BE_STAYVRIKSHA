@@ -554,7 +554,8 @@ async function postHM_Customer(req, res, next) {
         MemberID : data.MemberID || "",
         PropertyName: propertyName || "",
         PropertyMobileNo: propertyMobileNo || "",
-        PropertyEmail: propertyEmail || ""
+        PropertyEmail: propertyEmail || "",
+        PropertyType : data.PropertyType
       };
 
       await BookingSubmitEmail(req, res, next, pdfAttachment);
@@ -652,7 +653,7 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
       .replaceAll("<MemberID>", req.body.MemberID)
       .replaceAll("<PropertyName>", req.body.PropertyName || "")
       .replaceAll("<PropertyType>", req.body.PropertyType || "")
-      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "+91 123456789")
+      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
       .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
       .replaceAll("<EncodedMemberID>", encodedMemberID)
       .replaceAll("<EncodedCustomerID>", encodedCustomerID);
