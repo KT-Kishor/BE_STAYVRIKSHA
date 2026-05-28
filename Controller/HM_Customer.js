@@ -675,6 +675,7 @@ async function putHM_Customer(req, res, next) {
     const propertyName =  req.body.data[0].Area || "";
     const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}` || "";
     const propertyEmail = req.body.data[0].PropertyEmail || "";
+    const propertyType = req.body.data[0].PropertyType || "";
     const memberID = req.body.data?.[0]?.Booking?.[0]?.MemberID || "";
     delete req.body.data[0].Area;
     delete req.body.data[0].PropertySTD;
@@ -855,6 +856,10 @@ async function putHM_Customer(req, res, next) {
         StartDate: formatDate(booking.StartDate),
         EndDate: formatDate(booking.EndDate),
         Guests: booking.NoOfPersons || "1",
+        PropertyName: propertyName || "",
+        PropertyMobileNo: propertyMobileNo || "",
+        PropertyEmail: propertyEmail || "",
+        PropertyType: propertyType || ""
       };
 
       await BookingCancelledEmail(req, res, next);
@@ -868,6 +873,10 @@ async function putHM_Customer(req, res, next) {
         BookingID: booking.BookingID,
         RoomNo: booking.RoomNo,
         CheckoutDate: formatDate(booking.EndDate),
+        PropertyName: propertyName || "",
+        PropertyMobileNo: propertyMobileNo || "",
+        PropertyEmail: propertyEmail || "",
+        PropertyType: propertyType || ""
       };
 
       await CheckoutCompletedEmail(req, res, next);
@@ -880,6 +889,21 @@ async function putHM_Customer(req, res, next) {
         // ✅ Skip email when AdminUpdated = YES
         if (booking?.AdminUpdated === "YES") {
           continue;
+        }
+
+        // Skip cancel bookings
+        if (booking.Status === "Cancelled") {
+            continue;
+        }
+
+        // Skip completed bookings
+        if (booking.Status === "Completed") {
+            continue;
+        }
+
+         // Skip Assigned bookings
+        if (booking.Status === "Assigned") {
+            continue;
         }
 
         const emailPayload = {
@@ -1006,10 +1030,16 @@ async function BookingCancelledEmail(req, res, next) {
     const fromName = emailContent.FormName;
     const to = [req.body.toEmailID];
     const toName = req.body.UserName;
-    const subject = emailContent.Subject;
+    let subject = emailContent.Subject;
+
+    subject = subject
+        .replaceAll("<PropertyName>", req.body.PropertyName || "")
+        .replaceAll("<PropertyType>", req.body.PropertyType || "");
 
     let body = `<p>Dear ${req.body.UserName},</p>
                 <p>${emailContent.Body}</p>`;
+
+    let propertyMobileNo = req.body.PropertyMobileNo || "";
 
     body = body
       .replaceAll("<BookingDate>", req.body.BookingDate)
@@ -1017,7 +1047,11 @@ async function BookingCancelledEmail(req, res, next) {
       .replaceAll("<EndDate>", req.body.EndDate)
       .replaceAll("<RentPrice>", req.body.RentPrice)
       .replaceAll("<BedType>", req.body.BedType)
-      .replaceAll("<Guests>", req.body.Guests || "1");
+      .replaceAll("<Guests>", req.body.Guests || "1")
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "")
+      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
+      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "");
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
@@ -1042,19 +1076,30 @@ async function CheckoutCompletedEmail(req, res, next) {
     const fromName = emailContent.FormName;
     const to = [req.body.toEmailID];
     const toName = req.body.CustomerName;
-    const subject = emailContent.Subject;
+    let subject = emailContent.Subject;
+
+    subject = subject
+        .replaceAll("<PropertyName>", req.body.PropertyName || "")
+        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+
     const encodedBookingID = Buffer.from(String(req.body.BookingID)).toString(
       "base64",
     );
 
     let body = emailContent.Body;
 
+    let propertyMobileNo = req.body.PropertyMobileNo || "";
+
     body = body
       .replaceAll("<CustomerName>", req.body.CustomerName)
       .replaceAll("<BookingID>", encodedBookingID)
       .replaceAll("<RoomNo>", req.body.RoomNo)
       .replaceAll("<CheckoutDate>", req.body.CheckoutDate)
-      .replaceAll("<Booking>", req.body.BookingID);
+      .replaceAll("<Booking>", req.body.BookingID)
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "")
+      .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
+      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "");
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
