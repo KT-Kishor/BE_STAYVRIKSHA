@@ -91,9 +91,11 @@ async function getSubscription(req, res, next) {
 async function postSubscription(req, res, next) {
     try {
         req.body.tableName = "Subscription";
+        var SubscriptionID = randomUUID();
+        req.body.data.SubscriptionID = SubscriptionID;
         await CommonCreateCall(req, res, next);
 
-        res.send({success: true,message: "Subscription created successfully"});
+        res.send({success: true,message: "Subscription created successfully",SubscriptionID});
     } catch (error) {
         res.status(500).send({success: false,message: error.message});
     }
