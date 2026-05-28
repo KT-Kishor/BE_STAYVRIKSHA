@@ -162,28 +162,57 @@ async function getSubscriptionPayment(req, res, next) {
 }
 
 async function postSubscriptionPayment(req, res, next) {
+
     try {
+
         req.body.tableName = "Subscription_Payment";
+
         var data = req.body.data;
+
+        var LoginRole = data.LoginRole;
+        var UserID = data.UserID;
+        var UserName = data.UserName;
+
+        // REMOVE EXTRA FIELDS
+        delete data.UserID;
+        delete data.UserName;
+        delete data.LoginRole;
+
+        // SAVE PAYMENT
+        req.body.data = data;
 
         await CommonCreateCall(req, res, next);
 
-        // Update Subscription Status
+        // UPDATE SUBSCRIPTION
         req.body.tableName = "Subscription";
+
         req.body.filters = {
             SubscriptionID: data.SubscriptionID
         };
 
         req.body.data = {
-            SubscriptionID: data.SubscriptionID,
             PaymentStatus: data.PaymentStatus,
-            SubscriptionStatus: data.PaymentStatus === "Success" ? "Active" : "Pending"
+            SubscriptionStatus:data.PaymentStatus === "Success" ? "Active" : "Pending"
         };
 
         await CommonUpdateCall(req, res, next);
-        res.send({ success: true, message: "Payment saved successfully" });
+
+        // UPDATE USER ROLE
+        req.body.tableName = "LoginDetails";
+
+        req.body.filters = {
+            UserID: UserID
+        };
+
+        req.body.data = {
+            Role: LoginRole
+        };
+
+        await CommonUpdateCall(req, res, next);
+        return res.send({success: true,message: "Payment saved successfully"});
     } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
+        return res.status(500).send({success: false,message:error.message ||"Technical error, please contact administrator"
+        });
     }
 }
 
