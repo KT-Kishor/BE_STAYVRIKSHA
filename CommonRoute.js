@@ -40,6 +40,8 @@ const { HM_Support } = require("./Controller/HM_Support");
 const { HM_Bug } = require("./Controller/HM_Bug");
 const { HM_MemberDocument } = require("./Controller/HM_MemberCustomerDocument");
 const { HM_Advertisement } = require("./Controller/HM_Advertisement");
+const { Razorpay } = require("./Controller/RazorpayController");
+const { Subscription } = require("./Controller/SubscriptionController");
 
 
 const authenticate = async (req, res, next) => {
@@ -68,6 +70,24 @@ app.get("/HM_Rooms", authenticate, HM_Rooms.getHM_Rooms);
 app.post("/HM_Rooms", authenticate, HM_Rooms.postHM_Rooms);
 app.put("/HM_Rooms", authenticate, HM_Rooms.putHM_Rooms);
 app.delete("/HM_Rooms", authenticate, HM_Rooms.deleteHM_Rooms);
+
+//Rezorpay Services
+app.post("/create-order", authenticate, Razorpay.createOrder);
+app.post("/verify-payment", authenticate, Razorpay.verifyPayment);
+
+//Subscription Services
+app.get("/Subscription", authenticate, Subscription.getSubscription);
+app.post("/Subscription", authenticate, Subscription.postSubscription);
+app.put("/Subscription", authenticate, Subscription.putSubscription);
+app.delete("/Subscription", authenticate, Subscription.deleteSubscription);
+app.get("/SubscriptionPayment", authenticate, Subscription.getSubscriptionPayment);
+app.post("/SubscriptionPayment", authenticate, Subscription.postSubscriptionPayment);
+app.put("/SubscriptionPayment", authenticate, Subscription.putSubscriptionPayment);
+app.delete("/SubscriptionPayment", authenticate, Subscription.deleteSubscriptionPayment);
+app.get("/Package", authenticate, Subscription.getPackage);
+app.post("/Package", authenticate, Subscription.postPackage);
+app.put("/Package", authenticate, Subscription.putPackage);
+app.delete("/Package", authenticate, Subscription.deletePackage);
 
 app.get("/HM_Customer", authenticate, HM_Customer.getHM_Customer);
 app.post("/HM_Customer", authenticate, HM_Customer.postHM_Customer);
