@@ -198,7 +198,7 @@ async function postSubscriptionPayment(req, res, next) {
         await CommonUpdateCall(req, res, next);
 
         // UPDATE USER ROLE
-        req.body.tableName = "LoginDetails";
+        req.body.tableName = "HM_Login";
 
         req.body.filters = {
             UserID: UserID
