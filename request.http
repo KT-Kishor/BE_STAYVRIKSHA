@@ -4492,3 +4492,22 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
     "ID": "3e12717a-49d4-11f1-b6d7-013c2b222a6e"
  }
 }
+
+#####
+POST  http://localhost:3001/SubscriptionPayment
+Content-Type: application/json
+name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
+password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
+
+{
+  "data": {
+    "SubscriptionID": "06956520-1556-4a6b-9c0f-667d906c65ad",
+    "TransactionID": "pay_SujYtHBqutJG09",
+    "Amount": 200,
+    "PaymentMethod": "UPI",
+    "PaymentGateway": "Razorpay",
+    "PaymentStatus": "Success",
+    "PaymentDate": "2026-05-28",
+    "GatewayResponse": "{\"razorpay_payment_id\":\"pay_SujYtHBqutJG09\",\"razorpay_order_id\":\"order_SujYhaI43RgSWF\",\"razorpay_signature\":\"e344450834457358b149a177754348c4b9b36258c700db69d45847327810f3e1\"}"
+  }
+}

@@ -37,9 +37,9 @@ async function postPackage(req, res, next) {
 
         await CommonCreateCall(req, res, next);
 
-        res.send({success: true,message: "Package created successfully"});
+        res.send({ success: true, message: "Package created successfully" });
     } catch (error) {
-        res.status(500).send({success: false,message: error.message});
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
@@ -47,9 +47,9 @@ async function putPackage(req, res, next) {
     try {
         req.body.tableName = "Package";
         await CommonUpdateCall(req, res, next);
-        res.send({success: true,message: "Package updated successfully"});
+        res.send({ success: true, message: "Package updated successfully" });
     } catch (error) {
-        res.status(500).send({success: false,message: error.message});
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
@@ -57,9 +57,9 @@ async function deletePackage(req, res, next) {
     try {
         req.body.tableName = "Package";
         const data = await CommonDeleteCall(req, res, next);
-        res.send({success: true,data});
+        res.send({ success: true, data });
     } catch (error) {
-        res.status(500).send({success: false,message: error.message});
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
@@ -82,9 +82,9 @@ async function getSubscription(req, res, next) {
 
         const data = await CommonReadWithFilters(req, res, next);
 
-        res.send({success: true,data});
+        res.send({ success: true, data });
     } catch (error) {
-        res.status(500).send({success: false,message: error.message});
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
@@ -95,9 +95,9 @@ async function postSubscription(req, res, next) {
         req.body.data.SubscriptionID = SubscriptionID;
         await CommonCreateCall(req, res, next);
 
-        res.send({success: true,message: "Subscription created successfully",SubscriptionID});
+        res.send({ success: true, message: "Subscription created successfully", SubscriptionID });
     } catch (error) {
-        res.status(500).send({success: false,message: error.message});
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
@@ -139,8 +139,6 @@ async function deleteSubscription(req, res, next) {
     }
 }
 
-
-
 // =============================
 // PAYMENT CRUD
 // =============================
@@ -157,50 +155,35 @@ async function getSubscriptionPayment(req, res, next) {
 
         const data = await CommonReadWithFilters(req, res, next);
 
-        res.send({
-            success: true,
-            data
-        });
-
+        res.send({success: true,data});
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message
-        });
+        res.status(500).send({success: false,message: error.message});
     }
 }
 
 async function postSubscriptionPayment(req, res, next) {
     try {
         req.body.tableName = "Subscription_Payment";
-        req.body.data = paymentData;
+        var data = req.body.data;
 
         await CommonCreateCall(req, res, next);
 
         // Update Subscription Status
         req.body.tableName = "Subscription";
+        req.body.filters = {
+            SubscriptionID: data.SubscriptionID
+        };
 
         req.body.data = {
-            SubscriptionID: paymentData.SubscriptionID,
-            PaymentStatus: paymentData.PaymentStatus,
-            SubscriptionStatus:
-                paymentData.PaymentStatus === "Success"
-                    ? "Active"
-                    : "Pending"
+            SubscriptionID: data.SubscriptionID,
+            PaymentStatus: data.PaymentStatus,
+            SubscriptionStatus: data.PaymentStatus === "Success" ? "Active" : "Pending"
         };
 
         await CommonUpdateCall(req, res, next);
-
-        res.send({
-            success: true,
-            message: "Payment saved successfully"
-        });
-
+        res.send({ success: true, message: "Payment saved successfully" });
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message
-        });
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
