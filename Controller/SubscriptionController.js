@@ -205,7 +205,7 @@ async function postSubscriptionPayment(req, res, next) {
         };
 
         req.body.data = {
-            Role: LoginRole
+            Subscription_Role: LoginRole
         };
 
         await CommonUpdateCall(req, res, next);
