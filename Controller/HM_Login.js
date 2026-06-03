@@ -122,7 +122,7 @@ async function postHM_Login(req, res, next) {
           UserID: data.UserID,
           Salutation: data.Salutation,
           Name: data.UserName,
-          Relation: "SELF",
+          Relation: "Self",
           Gender: data.Gender,
           DateOfBirth: data.DateOfBirth
         }
@@ -658,7 +658,7 @@ async function OTPEmail(req, res, next) {
 
 
     await CommonSendEmail(req, from, fromName, to, toName, subject, body);
-    res.send({ success: true, message: "Email sent successfully", OTP: OTP });
+    res.send({ success: true, message: "Email sent successfully"});
     // } else {
     //   res.status(400).send({ success: false, message: "Invalid credentials. Please try again.", });
     // }
