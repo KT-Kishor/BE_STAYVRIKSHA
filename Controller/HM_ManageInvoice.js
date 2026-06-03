@@ -904,191 +904,154 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
   return result;
 }
 
-  function calculateFacilityCycleAmounts(items,cycleStart,cycleEnd,invoiceIndex) {
-  const result = [];
+ function calculateFacilityCycleAmounts(items, cycleStart, cycleEnd, invoiceIndex) {
+    const result = [];
+    items.forEach((item) => {
+        const sDate = new Date(item.StartDate);
+        const eDate = new Date(item.EndDate);
+        sDate.setHours(0, 0, 0, 0);
+        eDate.setHours(0, 0, 0, 0);
 
-  items.forEach((item) => {
-    const sDate = new Date(item.StartDate);
-    const eDate = new Date(item.EndDate);
-    sDate.setHours(0, 0, 0, 0);
-    eDate.setHours(0, 0, 0, 0);
+        const unit = item.UnitText?.toLowerCase();
+        const selectionMode = item.SelectionMode?.toUpperCase();
+        const chargeType = item.FacilityChargeType?.toUpperCase();
+        const bookingUnit = item.PaymentType?.toLowerCase();
 
-    const overlaps = !(eDate < cycleStart || sDate > cycleEnd);
-    if (!overlaps) return;
+        const qty = Number(item.Quantity) || 1;
+        const price = Number(item.BasicFacilityPrice) || 0;
+        const totalPrice = Number(item.FacilitiPrice) || price;
+        const totalHour = Number(item.TotalHour) || 1;
 
-    const effectiveStart = sDate > cycleStart ? sDate : cycleStart;
-    const effectiveEnd = eDate < cycleEnd ? eDate : cycleEnd;
+        let effectiveStart = sDate;
+        let effectiveEnd = eDate;
+        let facilityAmount = 0;
 
-    const usedDays = calculateDays(effectiveStart, effectiveEnd);
-    const useddaysforday = calculateDaysforday(effectiveStart, effectiveEnd);
-    const totalusedDays = calculateDaysforday(sDate, eDate);
+        if (bookingUnit !== "per day") {
+            const overlaps = !(eDate < cycleStart || sDate > cycleEnd);
+            if (!overlaps) return;
 
-    const unit = item.UnitText?.toLowerCase();
-    const selectionMode = item.SelectionMode?.toUpperCase();
-    const chargeType = item.FacilityChargeType?.toUpperCase();
-    const bookingUnit = item.PaymentType?.toLowerCase();
-
-    const qty = Number(item.Quantity) || 1;
-    const unitPrice = Number(item.UnitPrice) || 0;
-    const price = Number(item.BasicFacilityPrice) || 0;
-    const totalprice = Number(item.FacilitiPrice) || price;
-    const totalHour = Number(item.TotalHour) || 1;
-    let facilityAmount = 0;
-
-    // PERSON_QTY
-    if (selectionMode === "PERSON_QTY") {
-      if (chargeType === "DAILY") {
-        // PER DAY
-        if (bookingUnit === "per day") {
-          facilityAmount = truncate2(price * useddaysforday); // Qty only for display
-          item.CalculatedUnits = qty;
+            effectiveStart = sDate > cycleStart ? sDate : cycleStart;
+            effectiveEnd = eDate < cycleEnd ? eDate : cycleEnd;
         }
 
-        // PER MONTH
-        else if (bookingUnit === "per month") {
-          facilityAmount = truncate2(price * useddaysforday); // Qty only for display
-          item.CalculatedUnits = qty;
+        const calcStart = bookingUnit === "per day" ? sDate : effectiveStart;
+        const calcEnd = bookingUnit === "per day" ? eDate : effectiveEnd;
+
+        const usedDays = calculateDays(calcStart, calcEnd);
+        const usedDaysForDay = calculateDaysforday(calcStart, calcEnd);
+
+        const calculateYearAmount = (multiplier = 1) => {
+            const years = Math.ceil(calculateTotalMonths(sDate, eDate) / 12);
+            const yearlyPrice = totalPrice / years;
+            const overlapDays = calculateDays(calcStart, calcEnd);
+
+            if (overlapDays >= 364) {
+                return round2(multiplier * yearlyPrice);
+            }
+
+            return round2(
+                multiplier * (yearlyPrice / 365) * overlapDays
+            );
+        };
+
+        // PERSON_QTY
+        if (selectionMode === "PERSON_QTY") {
+
+            if (chargeType === "DAILY") {
+
+                if (bookingUnit === "per year") {
+                    facilityAmount = calculateYearAmount();
+                } else {
+                    facilityAmount = truncate2(price * usedDaysForDay);
+                }
+
+                item.CalculatedUnits = qty;
+            }
+
+            else if (chargeType === "ENTIRE BOOKING") {
+
+                if (invoiceIndex > 0) return;
+
+                facilityAmount = truncate2(price);
+                item.CalculatedUnits = qty;
+
+                item.StartDate = formatDateLocal(sDate);
+                item.EndDate = formatDateLocal(eDate);
+            }
         }
 
-        // PER YEAR
-        else if (bookingUnit === "per year") {
-          const years = Math.ceil(calculateTotalMonths(sDate, eDate) / 12);
+        // QTY
+        else if (selectionMode === "QTY") {
 
-          const yearlyPrice = totalprice / years;
+            if (invoiceIndex > 0) return;
 
-          const overlapDays = calculateDays(effectiveStart, effectiveEnd);
+            switch (unit) {
 
-          if (overlapDays >= 364) {
-            facilityAmount = round2(yearlyPrice);
-          } else {
-            const dailyRate = yearlyPrice / 365;
+                case "unit price":
+                    facilityAmount = truncate2(qty * price);
+                    break;
 
-            facilityAmount = round2(dailyRate * overlapDays);
-          }
+                case "per day":
+                    facilityAmount = truncate2(qty * price * usedDaysForDay);
+                    break;
 
-          // qty only for display
-          item.CalculatedUnits = qty;
+                case "per hour":
+                    facilityAmount = truncate2(
+                        qty * price * totalHour * usedDaysForDay
+                    );
+                    break;
+
+                case "per month":
+                    facilityAmount = truncate2(
+                        qty * price * calculateTotalMonths(calcStart, calcEnd)
+                    );
+                    break;
+
+                case "per year":
+                    facilityAmount = calculateYearAmount(qty);
+                    break;
+            }
+
+            item.CalculatedQty = qty;
         }
-        item.StartDate = formatDateLocal(effectiveStart);
-        item.EndDate = formatDateLocal(effectiveEnd);
-      }
 
-      // ONCE_PER_BOOKING
-      else if (chargeType === "ENTIRE BOOKING") {
-        if (invoiceIndex > 0) return;
+        // SINGLE / PERSON
+        else if (selectionMode === "SINGLE" || selectionMode === "PERSON") {
 
-        facilityAmount = truncate2(price);
+            switch (unit) {
 
-        item.CalculatedUnits = qty;
+                case "per day":
+                    facilityAmount = truncate2(price * usedDaysForDay);
+                    break;
 
-        // USE ORIGINAL DATES
-        item.StartDate = formatDateLocal(item.StartDate);
-        item.EndDate = formatDateLocal(item.EndDate);
-      }
+                case "per hour":
+                    facilityAmount = truncate2(
+                        price * totalHour * usedDaysForDay
+                    );
+                    break;
 
-      item.UsedDays = usedDays;
-      item.FacilityPrice = facilityAmount;
-      result.push(item);
-      return;
-    }
+                case "per month":
+                    facilityAmount = truncate2(
+                        price * calculateTotalMonths(calcStart, calcEnd)
+                    );
+                    break;
 
-    // QTY
-    if (selectionMode === "QTY") {
-      // ONLY FIRST INVOICE
-      if (invoiceIndex > 0) return;
-
-      // -------- UNIT PRICE --------
-      if (unit === "unit price") {
-        facilityAmount = truncate2(qty * price);
-      }
-
-      // -------- PER DAY --------
-      else if (unit === "per day") {
-        facilityAmount = truncate2(qty * price * totalusedDays);
-      }
-
-      // -------- PER HOUR --------
-      else if (unit === "per hour") {
-        facilityAmount = truncate2(qty * price * totalHour * totalusedDays);
-      }
-
-      // -------- PER MONTH --------
-      else if (unit === "per month") {
-        const usedMonths = calculateTotalMonths(sDate, eDate);
-
-        facilityAmount = truncate2(qty * price * usedMonths);
-      }
-
-      // -------- PER YEAR --------
-      else if (unit === "per year") {
-        const years = Math.ceil(calculateTotalMonths(sDate, eDate) / 12);
-
-        const yearlyPrice = totalprice / years;
-
-        const overlapDays = calculateDays(effectiveStart, effectiveEnd);
-
-        if (overlapDays >= 364) {
-          facilityAmount = round2(qty * yearlyPrice);
-        } else {
-          const dailyRate = yearlyPrice / 365;
-
-          facilityAmount = round2(qty * dailyRate * overlapDays);
+                case "per year":
+                    facilityAmount = calculateYearAmount();
+                    break;
+            }
         }
-      }
 
-      // USE ORIGINAL DATES
-      item.StartDate = formatDateLocal(item.StartDate);
-      item.EndDate = formatDateLocal(item.EndDate);
-      item.UsedDays = usedDays;
-      item.FacilityPrice = facilityAmount;
-      item.CalculatedQty = qty;
-      result.push(item);
-      return;
-    }
-
-    // SINGLE / PERSON
-    if (selectionMode === "SINGLE" || selectionMode === "PERSON") {
-      //  PER DAY
-      if (unit === "per day") {
-        facilityAmount = truncate2(price * useddaysforday);
-      }
-
-      //  PER HOUR
-      else if (unit === "per hour") {
-        facilityAmount = truncate2(price * totalHour * useddaysforday);
-      }
-
-      //  PER MONTH
-      else if (unit === "per month") {
-        const usedMonths = calculateTotalMonths(effectiveStart, effectiveEnd);
-
-        facilityAmount = truncate2(price * usedMonths);
-      }
-
-      //  PER YEAR
-      else if (unit === "per year") {
-        const years = Math.ceil(calculateTotalMonths(sDate, eDate) / 12);
-        const yearlyPrice = totalprice / years;
-        const overlapDays = calculateDays(effectiveStart, effectiveEnd);
-
-        if (overlapDays >= 364) {
-          facilityAmount = round2(yearlyPrice);
-        } else {
-          const dailyRate = yearlyPrice / 365;
-          facilityAmount = round2(dailyRate * overlapDays);
+       if (!(selectionMode === "PERSON_QTY" && chargeType === "ENTIRE BOOKING")) {
+            item.StartDate = formatDateLocal(calcStart);
+            item.EndDate = formatDateLocal(calcEnd);
         }
-      }
 
-      item.StartDate = formatDateLocal(effectiveStart);
-      item.EndDate = formatDateLocal(effectiveEnd);
-      item.UsedDays = usedDays;
-      item.FacilityPrice = facilityAmount;
-      result.push(item);
-      return;
-    }
-  });
-
-  return result;
+        item.UsedDays = usedDays;
+        item.FacilityPrice = facilityAmount;
+        result.push(item);
+    });
+    return result;
 }
 
 function round2(value) {
