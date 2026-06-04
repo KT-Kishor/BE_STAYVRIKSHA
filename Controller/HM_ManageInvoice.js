@@ -904,6 +904,14 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
   return result;
 }
 
+function getDaysInMonth(date) {
+    return new Date(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        0
+    ).getDate();
+}
+
  function calculateFacilityCycleAmounts(items, cycleStart, cycleEnd, invoiceIndex) {
     const result = [];
     items.forEach((item) => {
@@ -964,10 +972,11 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
                 } else if (bookingUnit === "per day") {
                     facilityAmount = truncate2(price * usedDaysForDay);
                 } else if (bookingUnit === "per month") {
-                    facilityAmount = truncate2(
-                        price * calculateTotalMonths(calcStart, calcEnd)
-                    );
-                } 
+                      const daysInMonth = getDaysInMonth(calcStart);
+                      facilityAmount = truncate2(
+                          price * daysInMonth * calculateTotalMonths(calcStart, calcEnd)
+                      );
+                  }
 
                 item.CalculatedUnits = qty;
             }
