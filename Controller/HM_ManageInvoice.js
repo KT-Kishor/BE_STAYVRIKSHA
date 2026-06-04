@@ -961,9 +961,13 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
 
                 if (bookingUnit === "per year") {
                     facilityAmount = calculateYearAmount();
-                } else {
+                } else if (bookingUnit === "per day") {
                     facilityAmount = truncate2(price * usedDaysForDay);
-                }
+                } else if (bookingUnit === "per month") {
+                    facilityAmount = truncate2(
+                        price * calculateTotalMonths(calcStart, calcEnd)
+                    );
+                } 
 
                 item.CalculatedUnits = qty;
             }
