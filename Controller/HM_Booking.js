@@ -702,6 +702,7 @@ async function putHM_Bookingdeposit(req, res, next) {
             CustomerName,
             UserID,
             BookingID,
+            MemberID
           };
 
           await documentUploadEmail(req, res, next);
@@ -791,15 +792,15 @@ async function documentUploadEmail(req, res, next) {
 
     const subject = emailContent.Subject;
 
-    const encodedBookingID = Buffer.from(String(req.body.BookingID)).toString(
-      "base64",
-    );
+    const encodedBookingID = Buffer.from(String(req.body.BookingID)).toString("base64");
+    const encodedMemberID  = Buffer.from(String(req.body.MemberID)).toString("base64");
 
     let body = emailContent.Body;
 
     body = body
       .replaceAll("<BookingID>", req.body.BookingID || "")
       .replaceAll("<CustomerName>", req.body.CustomerName || "Customer")
+      .replaceAll("<EncodedMemberID>", encodedMemberID)
       .replaceAll("<EncodedBookingID>", encodedBookingID);
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
