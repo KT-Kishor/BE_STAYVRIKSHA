@@ -4019,16 +4019,17 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 }
 
 #####
-GET http://localhost:3001/getHM_DamageBoth
+GET http://localhost:3001/HM_MemberDoc
 Content-Type: application/json
 name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
-
 {
- "UserID": "00016"
+  "MemberIDs": [
+    "00003",
+    "00003_01"
+  ]
 }
-
 
 #####
 POST http://localhost:3001/EmployeeOnboardEmail

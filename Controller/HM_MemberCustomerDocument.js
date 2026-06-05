@@ -268,9 +268,66 @@ async function deleteHM_MemberDocument(req, res, next) {
   }
 }
 
+async function getHM_MemberDoc(req, res, next) {
+    try {
+        const { MemberIDs } = req.body;
+
+        if (!Array.isArray(MemberIDs) || MemberIDs.length === 0) {
+            return res.status(400).send({
+                success: false,
+                message: "MemberIDs array is required"
+            });
+        }
+
+        // ================= MEMBER DATA =================
+        req.body = {
+            tableName: "HM_Members",
+            filters: {
+                MemberID: MemberIDs
+            }
+        };
+
+        const memberData = await CommonReadWithFilters(req, res, next);
+
+        // ================= MEMBER DOCUMENTS =================
+        req.body = {
+            tableName: "HM_CustomerDocument",
+            filters: {
+                MemberID: MemberIDs
+            }
+        };
+
+        const documentData = await CommonReadWithFilters(req, res, next);
+
+        // ================= MERGE DATA =================
+        const mergedData = (memberData || []).map(member => {
+            const memberDocs = (documentData || []).filter(
+                doc => doc.MemberID === member.MemberID
+            );
+
+            return {
+                ...member,
+                Documents: memberDocs
+            };
+        });
+
+        return res.status(200).send({
+            success: true,
+            data: mergedData
+        });
+
+    } catch (err) {
+        return res.status(500).send({
+            success: false,
+            message: err.message || "Technical error, please contact administrator"
+        });
+    }
+}
+
 exports.HM_MemberDocument = {
   getHM_MemberDocument,
   postHM_MemberDocument,
   putHM_MemberDocument,
-  deleteHM_MemberDocument
+  deleteHM_MemberDocument,
+  getHM_MemberDoc
 };
