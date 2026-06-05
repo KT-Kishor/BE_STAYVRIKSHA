@@ -667,6 +667,91 @@ async function OTPEmail(req, res, next) {
   }
 }
 
+async function VerifyCustomerOTP(req, res, next) {
+  try {
+    req.body.filters = {};
+    req.body.tableName = "HM_Customer";
+
+    if (req.query.BookingID) {
+      req.body.filters.BookingID = req.query.BookingID;
+    }
+
+    if (req.query.CustomerEmail) {
+      req.body.filters.CustomerEmail = req.query.CustomerEmail;
+    }
+
+    const data = await CommonReadCall(req, res, next);
+
+    if (!data || data.length === 0) {
+      return res.status(400).send({
+        success: false,
+        message: "Customer not found"
+      });
+    }
+
+    const customer = data[0];
+
+    if (!req.query.OTP) {
+      return res.status(400).send({
+        success: false,
+        message: "OTP is required"
+      });
+    }
+
+    // Verify OTP
+    const isOTPValid = await bcrypt.compare(
+      req.query.OTP.trim(),
+      customer.OTP
+    );
+
+    if (!isOTPValid) {
+      return res.status(400).send({
+        success: false,
+        message: "Incorrect OTP"
+      });
+    }
+
+    // OTP Expiry Check (10 minutes)
+    const currentTime = Date.now();
+    const otpAge = currentTime - Number(customer.TimeDate);
+
+    if (otpAge > 10 * 60 * 1000) {
+      return res.status(400).send({
+        success: false,
+        message: "OTP has expired"
+      });
+    }
+
+    // Remove OTP from response
+    delete data[0].OTP;
+
+    // Generate tokens
+    data[0]._x9A1p = await bcrypt.hash(
+      String(data[0].UserID),
+      saltRounds
+    );
+
+    data[0]._k7LmQ = await bcrypt.hash(
+      String(data[0].CustomerName),
+      saltRounds
+    );
+
+    return res.send({
+      success: true,
+      message: "OTP verified",
+      data
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+}
+
 exports.HM_Login = {
   getHM_Login,
   postHM_Login,
@@ -676,5 +761,6 @@ exports.HM_Login = {
   HM_CustomerContact,
   HM_StaffContact,
   HM_LoginReadCall,
-  OTPEmail
+  OTPEmail,
+  VerifyCustomerOTP
 };
