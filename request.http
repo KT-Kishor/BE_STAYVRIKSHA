@@ -4025,10 +4025,8 @@ name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
-  "MemberIDs": [
-    "00003",
-    "00003_01"
-  ]
+  "MemberIDs": "00003,00003_01"
+  
 }
 
 #####

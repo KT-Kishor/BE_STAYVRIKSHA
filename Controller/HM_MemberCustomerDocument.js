@@ -270,14 +270,8 @@ async function deleteHM_MemberDocument(req, res, next) {
 
 async function getHM_MemberDoc(req, res, next) {
     try {
-        const { MemberIDs } = req.body;
-
-        if (!Array.isArray(MemberIDs) || MemberIDs.length === 0) {
-            return res.status(400).send({
-                success: false,
-                message: "MemberIDs array is required"
-            });
-        }
+        var MemberIDs;
+        if(req.query.MemberIDs) MemberIDs = req.query.MemberIDs.split(",");
 
         // ================= MEMBER DATA =================
         req.body = {
