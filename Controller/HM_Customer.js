@@ -189,22 +189,23 @@ async function getHM_Customer(req, res, next) {
       }
     }
 
-    let documentsQuery = "SELECT * FROM HM_CustomerDocument";
-    let bookingsQuery = "SELECT * FROM HM_Booking";
-    let paymentsQuery = "SELECT * FROM HM_Payment";
-    let facilityQuery = "SELECT * FROM HM_BookingFacilityItems";
-    let membersQuery = "SELECT * FROM HM_Members";
+    // 🔹 CRITICAL CHANGE: Avoid full table scans. Default queries to empty state.
+    let documentsQuery = "SELECT * FROM HM_CustomerDocument WHERE 1=0";
+    let bookingsQuery = "SELECT * FROM HM_Booking WHERE 1=0";
+    let paymentsQuery = "SELECT * FROM HM_Payment WHERE 1=0";
+    let facilityQuery = "SELECT * FROM HM_BookingFacilityItems WHERE 1=0";
+    let membersQuery = "SELECT * FROM HM_Members WHERE 1=0";
 
-    // 🔹 Booking filter
+    // 🔹 Extract Booking IDs safely
     const bookingIDs = customers
-      .map((c) => `'${c.BookingID}'`)
-      .filter(Boolean)
-      .join(",");
+      .map((c) => c.BookingID)
+      .filter(Boolean);
 
-    if (bookingIDs) {
-      bookingsQuery += ` WHERE BookingID IN (${bookingIDs})`;
-      paymentsQuery += ` WHERE BookingID IN (${bookingIDs})`;
-      facilityQuery += ` WHERE BookingID IN (${bookingIDs})`;
+    if (bookingIDs.length > 0) {
+      const bookingInClause = bookingIDs.map(id => `'${id}'`).join(",");
+      bookingsQuery = `SELECT * FROM HM_Booking WHERE BookingID IN (${bookingInClause})`;
+      paymentsQuery = `SELECT * FROM HM_Payment WHERE BookingID IN (${bookingInClause})`;
+      facilityQuery = `SELECT * FROM HM_BookingFacilityItems WHERE BookingID IN (${bookingInClause})`;
     }
 
     let ids = [];
@@ -217,7 +218,6 @@ async function getHM_Customer(req, res, next) {
     }
 
     let memberCondition = "";
-
     if (ids.length > 0) {
       const conditions = ids.map((id) => {
         if (id.includes("_")) {
@@ -226,13 +226,12 @@ async function getHM_Customer(req, res, next) {
           return `TRIM(MemberID) LIKE '${id}'`; 
         }
       });
-
       memberCondition = conditions.join(" OR ");
     }
 
     if (memberCondition) {
-      documentsQuery += ` WHERE (${memberCondition})`;
-      membersQuery += ` WHERE (${memberCondition})`;
+      documentsQuery = `SELECT * FROM HM_CustomerDocument WHERE (${memberCondition})`;
+      membersQuery = `SELECT * FROM HM_Members WHERE (${memberCondition})`;
     }
 
     const [documents, bookings, payments, facility, members] =
@@ -251,13 +250,33 @@ async function getHM_Customer(req, res, next) {
       }
     });
 
+    // 🔹 OPTIMIZATION STEP: Group array results into Map objects ($O(N)$ lookup speed instead of $O(N^2)$)
+    const bookingsMap = new Map();
+    bookings.forEach(b => {
+      if(!bookingsMap.has(b.BookingID)) bookingsMap.set(b.BookingID, []);
+      bookingsMap.get(b.BookingID).push(b);
+    });
+
+    const paymentsMap = new Map();
+    payments.forEach(p => {
+      if(!paymentsMap.has(p.BookingID)) paymentsMap.set(p.BookingID, []);
+      paymentsMap.get(p.BookingID).push(p);
+    });
+
+    const facilityMap = new Map();
+    facility.forEach(f => {
+      if(!facilityMap.has(f.BookingID)) facilityMap.set(f.BookingID, []);
+      facilityMap.get(f.BookingID).push(f);
+    });
+
+    // 🔹 Merge data instantly using Map.get()
     const mergedData = customers.map((cust) => ({
       ...cust,
       Documents: documents,
       Members: members,
-      Bookings: bookings.filter((b) => b.BookingID === cust.BookingID),
-      Payments: payments.filter((p) => p.BookingID === cust.BookingID),
-      FacilityItems: facility.filter((f) => f.BookingID === cust.BookingID),
+      Bookings: bookingsMap.get(cust.BookingID) || [],
+      Payments: paymentsMap.get(cust.BookingID) || [],
+      FacilityItems: facilityMap.get(cust.BookingID) || [],
     }));
 
     return res.send({
