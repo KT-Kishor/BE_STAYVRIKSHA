@@ -759,7 +759,7 @@ async function getAllInvoiceData(req, res, next) {
       const ManagePayment = await CommonReadCall(req, res, next);
 
       PerMonthTotalRent = ManagePayment.reduce(
-        (sum, pay) => sum + (Number(pay.Amount) || 0),
+        (sum, pay) => sum + (parseFloat(pay.Amount) || 0),
         0,
       );
     }
@@ -812,22 +812,22 @@ function getYearlyCycle(baseDate, index) {
 }
 
 function calculateTotalMonths(startDate, endDate) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-  let months =
-    (end.getFullYear() - start.getFullYear()) * 12 +
-    (end.getMonth() - start.getMonth());
+    let months =
+        (end.getFullYear() - start.getFullYear()) * 12 +
+        (end.getMonth() - start.getMonth());
 
-  if (months === 0) {
-    return 1;
-  }
+    if (months === 0) {
+        return 1;
+    }
 
-  if (end.getDate() >= start.getDate()) {
-    months += 1;
-  }
+    if (end.getDate() >= start.getDate()) {
+        months += 1;
+    }
 
-  return months;
+    return months;
 }
 
 function calculateDays(start, end) {
@@ -861,14 +861,14 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
 
       let amount = 0;
       if (unit === "per day") {
-        amount = truncate2((Number(booking.RoomPrice) || 0) * usedDays);
+        amount = truncate2((parseFloat(booking.RoomPrice) || 0) * usedDays);
       }
 
       booking.StartDate = formatDateLocal(sDate);
       booking.EndDate = formatDateLocal(eDate);
       booking.UsedDays = usedDays;
       booking.BookingPrice = amount;
-      booking.Discount = Number(booking.Discount) || 0;
+      booking.Discount = parseFloat(booking.Discount) || 0;
       result.push(booking);
       return;
     }
@@ -883,14 +883,14 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
     // ========= PER MONTH =========
     if (unit === "per month") {
       const totalMonths = calculateTotalMonths(sDate, eDate);
-      bookingAmount = truncate2(Number(booking.TotalRoomprice) / totalMonths);
+      bookingAmount = truncate2(parseFloat(booking.TotalRoomprice) / totalMonths);
     }
 
     // ========= PER YEAR (YEAR-WISE) =========
     else if (unit === "per year") {
       const totalYears = Math.ceil(calculateTotalMonths(sDate, eDate) / 12);
       if (invoiceIndex >= totalYears) return;
-      bookingAmount = truncate2(Number(booking.TotalRoomprice) / totalYears);
+      bookingAmount = truncate2(parseFloat(booking.TotalRoomprice) / totalYears);
     }
 
     booking.StartDate = formatDateLocal(effectiveStart);
@@ -898,7 +898,7 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
     booking.UsedDays = Math.floor((effectiveEnd - effectiveStart) / 86400000);
 
     booking.BookingPrice = bookingAmount;
-    booking.Discount = invoiceIndex === 0 ? Number(booking.Discount) || 0 : 0;
+    booking.Discount = invoiceIndex === 0 ? parseFloat(booking.Discount) || 0 : 0;
     result.push(booking);
   });
 
@@ -926,10 +926,12 @@ function getDaysInMonth(date) {
         const chargeType = item.FacilityChargeType?.toUpperCase();
         const bookingUnit = item.PaymentType?.toLowerCase();
 
-        const qty = Number(item.Quantity) || 1;
-        const price = Number(item.BasicFacilityPrice) || 0;
-        const totalPrice = Number(item.FacilitiPrice) || price;
-        const totalHour = Number(item.TotalHour) || 1;
+        const qty = parseFloat(item.Quantity ?? 1) || 1;
+        const unitPrice = parseFloat(item.UnitPrice ?? 0) || 0;
+        const basicPrice = parseFloat(item.BasicFacilityPrice ?? 0) || 0;
+        const price = basicPrice > 0 ? basicPrice : unitPrice;
+        const totalPrice = parseFloat(item.FacilitiPrice ?? price) || price;
+        const totalHour = parseFloat(item.TotalHour ?? 1) || 1;
 
         let effectiveStart = sDate;
         let effectiveEnd = eDate;
@@ -1069,11 +1071,11 @@ function getDaysInMonth(date) {
 }
 
 function round2(value) {
-  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+    return Math.round((parseFloat(value) + Number.EPSILON) * 100) / 100;
 }
 
 function truncate2(value) {
-  return Math.floor((Number(value) + Number.EPSILON) * 100) / 100;
+    return Math.floor((parseFloat(value) + Number.EPSILON) * 100) / 100;
 }
 
 function formatDateLocal(date) {
