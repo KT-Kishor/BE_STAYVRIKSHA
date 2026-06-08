@@ -970,7 +970,7 @@ function getDaysInMonth(date) {
 
             if (chargeType === "DAILY") {
               if (unit === "package price") {
-                  facilityAmount = truncate2(price * qty * usedDaysForDay);
+                  facilityAmount = truncate2(price * usedDaysForDay);
               } else if (bookingUnit === "per year") {
                     facilityAmount = calculateYearAmount();
                 } else if (bookingUnit === "per day") {
