@@ -177,8 +177,7 @@ async function putHM_MemberDocument(req, res, next) {
                         DateOfBirth,
                         Relation,
                         Gender,
-                        UserID,
-                        Status
+                        UserID
                     },
                     filters: {
                         MemberID
@@ -196,8 +195,7 @@ async function putHM_MemberDocument(req, res, next) {
                         FileType,
                         MemberID: DocMemberID,
                         UserID: DocUserID,
-                        File,
-                        Status
+                        File
                     } = doc;
 
                     let documentData = {
