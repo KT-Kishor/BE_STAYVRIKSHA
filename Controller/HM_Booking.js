@@ -621,6 +621,7 @@ async function HM_CustomerReadCall(req, res, next) {
       Status: book.Status,
       BookingID: book.BookingID,
       CustomerName: customerMap[String(book.BookingID)] || null,
+      EndDate : book.EndDate
     }));
 
     res.send({
