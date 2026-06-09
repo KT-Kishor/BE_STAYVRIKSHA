@@ -4,7 +4,8 @@ const {
   CommonCreateCall,
   CommonUpdateCall,
   CommonDeleteCall,
-  CommonReadWithFilters
+  CommonReadWithFilters,
+  CommounMultipalUpdate
 } = require("./CommonController");
 
 async function getHM_MemberDocument(req, res, next) {
@@ -318,10 +319,190 @@ async function getHM_MemberDoc(req, res, next) {
     }
 }
 
+async function putHM_Document(req, res, next) {
+    try {
+
+        const payload = req.body.data;
+
+        if (!Array.isArray(payload)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid data format. Expected array."
+            });
+        }
+
+        const aMemberUpdates = [];
+        const aDocumentUpdates = [];
+        const aDocumentCreates = [];
+
+        for (const entry of payload) {
+
+            const members = entry.Members || [];
+
+            for (const member of members) {
+
+                const {
+                    MemberID,
+                    Salutation,
+                    Name,
+                    DateOfBirth,
+                    Relation,
+                    Gender,
+                    UserID,
+                    Status,
+                    Documents = []
+                } = member;
+
+                if (!MemberID) {
+                    return res.status(400).send({
+                        success: false,
+                        message: "MemberID is required"
+                    });
+                }
+
+                // Member Update Data
+                const memberData = {
+                    Salutation,
+                    Name,
+                    DateOfBirth,
+                    Relation,
+                    Gender,
+                    UserID
+                };
+
+                if (
+                    Status !== undefined &&
+                    Status !== null &&
+                    Status !== ""
+                ) {
+                    memberData.Status = Status;
+                }
+
+                aMemberUpdates.push({
+                    data: memberData,
+                    filters: {
+                        MemberID
+                    }
+                });
+
+                // Document Processing
+                for (const doc of Documents) {
+
+                    const {
+                        DocumentID,
+                        DocumentType,
+                        FileName,
+                        FileType,
+                        MemberID: DocMemberID,
+                        UserID: DocUserID,
+                        File,
+                        Status: DocStatus
+                    } = doc;
+
+                    const documentData = {
+                        DocumentType,
+                        FileName,
+                        FileType,
+                        MemberID: DocMemberID,
+                        UserID: DocUserID
+                    };
+
+                    if (File) {
+                        documentData.File = Buffer.from(File, "base64");
+                    }
+
+                    if (
+                        DocStatus !== undefined &&
+                        DocStatus !== null &&
+                        DocStatus !== ""
+                    ) {
+                        documentData.Status = DocStatus;
+                    }
+
+                    // Existing Document -> Update
+                    if (DocumentID) {
+
+                        aDocumentUpdates.push({
+                            data: documentData,
+                            filters: {
+                                DocumentID
+                            }
+                        });
+
+                    } else {
+
+                        // New Document -> Create
+                        aDocumentCreates.push({
+                            ...documentData,
+                            DocumentID: randomUUID()
+                        });
+                    }
+                }
+            }
+        }
+
+        // ==========================
+        // Bulk Update Members
+        // ==========================
+        if (aMemberUpdates.length > 0) {
+
+            req.body = {
+                tableName: "HM_Members",
+                data: aMemberUpdates
+            };
+
+            await CommounMultipalUpdate(req, res, next);
+        }
+
+        // ==========================
+        // Bulk Update Documents
+        // ==========================
+        if (aDocumentUpdates.length > 0) {
+
+            req.body = {
+                tableName: "HM_CustomerDocument",
+                data: aDocumentUpdates
+            };
+
+            console.log("Document Updates:", JSON.stringify(aDocumentUpdates, null, 2));
+
+            await CommounMultipalUpdate(req, res, next);
+        }
+
+        // ==========================
+        // Create New Documents
+        // ==========================
+        for (const document of aDocumentCreates) {
+
+            req.body = {
+                tableName: "HM_CustomerDocument",
+                data: document
+            };
+
+            await CommonCreateCall(req, res, next);
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Members and Documents updated successfully"
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(error.status || 500).send({
+            success: false,
+            message: error.message || "Technical error"
+        });
+    }
+}
+
 exports.HM_MemberDocument = {
   getHM_MemberDocument,
   postHM_MemberDocument,
   putHM_MemberDocument,
   deleteHM_MemberDocument,
-  getHM_MemberDoc
+  getHM_MemberDoc,
+  putHM_Document
 };

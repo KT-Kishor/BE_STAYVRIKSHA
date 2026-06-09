@@ -1055,7 +1055,8 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
   }
 }
 
-PUT http://localhost:3001/HM_MemberDocument
+#####
+PUT http://localhost:3001/HM_Document
 Content-Type: application/json
 name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
@@ -1072,7 +1073,6 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
           "Relation": "Self",
           "Gender": "Male",
           "UserID": "USR001",
-          "Status": "Approved",
           "Documents": [
             {
               "DocumentID": "DOC001",
@@ -1081,15 +1081,8 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
               "FileType": "application/pdf",
               "MemberID": "MEM001",
               "UserID": "USR001",
-              "File": "VGVzdCBGaWxl"
-            },
-            {
-              "DocumentType": "PAN",
-              "FileName": "pan.pdf",
-              "FileType": "application/pdf",
-              "MemberID": "MEM001",
-              "UserID": "USR001",
-              "File": "VGVzdCBGaWxl"
+              "File": "VGVzdCBGaWxl",
+              "Status": "Updated"
             }
           ]
         },
@@ -1109,7 +1102,8 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
               "FileType": "application/pdf",
               "MemberID": "MEM002",
               "UserID": "USR001",
-              "File": "VGVzdCBGaWxl"
+              "File": "VGVzdCBGaWxl",
+              "Status": "Updated"
             }
           ]
         }

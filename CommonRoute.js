@@ -172,6 +172,7 @@ app.post("/HM_MemberDocument", authenticate, HM_MemberDocument.postHM_MemberDocu
 app.put("/HM_MemberDocument", authenticate, HM_MemberDocument.putHM_MemberDocument);
 app.delete("/HM_MemberDocument", authenticate, HM_MemberDocument.deleteHM_MemberDocument);
 app.get("/HM_MemberDoc", authenticate, HM_MemberDocument.getHM_MemberDoc);
+app.put("/HM_Document", authenticate, HM_MemberDocument.putHM_Document);
 
 app.get('/HM_Damage', authenticate, HM_Damage.getHM_Damage);
 app.post('/HM_Damage', authenticate, HM_Damage.postHM_Damage);
