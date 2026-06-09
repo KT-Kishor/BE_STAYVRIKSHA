@@ -441,9 +441,7 @@ async function putHM_Document(req, res, next) {
             }
         }
 
-        // ==========================
         // Bulk Update Members
-        // ==========================
         if (aMemberUpdates.length > 0) {
 
             req.body = {
@@ -454,9 +452,7 @@ async function putHM_Document(req, res, next) {
             await CommounMultipalUpdate(req, res, next);
         }
 
-        // ==========================
         // Bulk Update Documents
-        // ==========================
         if (aDocumentUpdates.length > 0) {
 
             req.body = {
@@ -464,14 +460,10 @@ async function putHM_Document(req, res, next) {
                 data: aDocumentUpdates
             };
 
-            console.log("Document Updates:", JSON.stringify(aDocumentUpdates, null, 2));
-
             await CommounMultipalUpdate(req, res, next);
         }
-
-        // ==========================
+ 
         // Create New Documents
-        // ==========================
         for (const document of aDocumentCreates) {
 
             req.body = {
@@ -488,9 +480,6 @@ async function putHM_Document(req, res, next) {
         });
 
     } catch (error) {
-
-        console.error(error);
-
         return res.status(error.status || 500).send({
             success: false,
             message: error.message || "Technical error"
