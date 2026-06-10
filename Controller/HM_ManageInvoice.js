@@ -789,7 +789,6 @@ function getMonthlyCycle(baseDate, index) {
 
   const cycleEnd = new Date(cycleStart);
   cycleEnd.setMonth(cycleEnd.getMonth() + 1);
-  cycleEnd.setDate(cycleEnd.getDate() - 1);
 
   cycleStart.setHours(0, 0, 0, 0);
   cycleEnd.setHours(0, 0, 0, 0);
@@ -803,7 +802,6 @@ function getYearlyCycle(baseDate, index) {
 
   const cycleEnd = new Date(cycleStart);
   cycleEnd.setFullYear(cycleEnd.getFullYear() + 1);
-  cycleEnd.setDate(cycleEnd.getDate() - 1);
 
   cycleStart.setHours(0, 0, 0, 0);
   cycleEnd.setHours(0, 0, 0, 0);
@@ -819,15 +817,11 @@ function calculateTotalMonths(startDate, endDate) {
         (end.getFullYear() - start.getFullYear()) * 12 +
         (end.getMonth() - start.getMonth());
 
-    if (months === 0) {
-        return 1;
-    }
-
-    if (end.getDate() >= start.getDate()) {
+    if (end.getDate() > start.getDate()) {
         months += 1;
     }
 
-    return months;
+    return Math.max(months, 1);
 }
 
 function calculateDays(start, end) {
@@ -976,9 +970,8 @@ function getDaysInMonth(date) {
                 } else if (bookingUnit === "per day") {
                     facilityAmount = truncate2(price * usedDaysForDay);
                 } else if (bookingUnit === "per month") {
-                      const daysInMonth = getDaysInMonth(calcStart);
                       facilityAmount = truncate2(
-                          price * daysInMonth * calculateTotalMonths(calcStart, calcEnd)
+                          price * calculateTotalMonths(calcStart, calcEnd)
                       );
                   }
 
