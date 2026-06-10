@@ -993,11 +993,12 @@ function getDaysInMonth(date) {
         // QTY
         else if (selectionMode === "QTY") {
 
-            if (invoiceIndex > 0) return;
-
             switch (unit) {
 
                 case "unit price":
+                    if (invoiceIndex > 0) {
+                        return 0;
+                    }
                     facilityAmount = truncate2(qty * price);
                     break;
 
