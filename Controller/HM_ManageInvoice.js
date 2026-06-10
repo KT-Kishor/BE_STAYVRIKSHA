@@ -877,6 +877,9 @@ function calculateBookingCycleAmounts(bookings,cycleStart,cycleEnd,invoiceIndex)
     // ========= PER MONTH =========
     if (unit === "per month") {
       const totalMonths = calculateTotalMonths(sDate, eDate);
+       if (invoiceIndex >= totalMonths) {
+          return;
+      }
       bookingAmount = truncate2(parseFloat(booking.TotalRoomprice) / totalMonths);
     }
 
@@ -932,7 +935,7 @@ function getDaysInMonth(date) {
         let facilityAmount = 0;
 
         if (bookingUnit !== "per day") {
-            const overlaps = !(eDate < cycleStart || sDate > cycleEnd);
+            const overlaps = !(eDate <= cycleStart || sDate >= cycleEnd);
             if (!overlaps) return;
 
             effectiveStart = sDate > cycleStart ? sDate : cycleStart;
@@ -973,6 +976,9 @@ function getDaysInMonth(date) {
                       facilityAmount = truncate2(
                           price * calculateTotalMonths(calcStart, calcEnd)
                       );
+                      if (invoiceIndex >= totalMonths) {
+                          return;
+                      }
                   }
 
                 item.CalculatedUnits = qty;
