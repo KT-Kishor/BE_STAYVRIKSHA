@@ -143,8 +143,12 @@ async function getBranch(req, res, next) {
     if (req.query.top) req.body.top = req.query.top;
     if (req.query.skip) req.body.skip = req.query.skip;
 
-    if (req.query.BranchID === "" && req.query.Role === "Admin")
-      return res.status(200).send({ success: true, data: [] });
+    if (req.query.BranchID === "" && req.query.Role === "Admin") {
+      return res.status(200).send({
+        success: true,
+        data: []
+      });
+    }
 
     delete req.query.Role;
 
@@ -152,30 +156,31 @@ async function getBranch(req, res, next) {
       req.body.filters.BranchID = req.query.BranchID.split(",");
     }
 
-    // ---------- 1. Fetch Branch ----------
-    const data = await CommonReadWithFilters(req, res, next);
+    // ---------- Fetch Branches ----------
+    let data = await CommonReadWithFilters(req, res, next);
 
     delete req.body.top;
     delete req.body.skip;
 
-    // const HM_RoomCount = data.length;
-
     let feedbackMap = {};
 
     if (req.query.flag === "true" && data.length > 0) {
-
       const branchCodes = data.map(b => b.BranchID);
 
-      // ---------- 2. Fetch Feedback ----------
       req.body.tableName = "HM_Feedback";
-      req.body.filters = { BranchCode: branchCodes };
-      const allFeedback = await CommonReadWithFilters(req, res, next) || [];
+      req.body.filters = { BranchCode: branchCodes};
 
-      // ---------- 3. Aggregate feedback (ONE loop) ----------
+      const allFeedback =
+        (await CommonReadWithFilters(req, res, next)) || [];
+
       for (const row of allFeedback) {
         if (!feedbackMap[row.BranchCode]) {
-          feedbackMap[row.BranchCode] = { total: 0, count: 0 };
+          feedbackMap[row.BranchCode] = {
+            total: 0,
+            count: 0
+          };
         }
+
         if (row.OverallRating && !isNaN(row.OverallRating)) {
           feedbackMap[row.BranchCode].total += Number(row.OverallRating);
           feedbackMap[row.BranchCode].count++;
@@ -183,22 +188,32 @@ async function getBranch(req, res, next) {
       }
     }
 
-    // ---------- 4. Attach rating + convert buffer (ONE loop) ----------
+    // ---------- Format Data ----------
     for (const branch of data) {
+
+      // Convert landmark to proper case
+      if (branch.LandMark) {
+        branch.LandMark =
+          branch.LandMark.charAt(0).toUpperCase() +
+          branch.LandMark.slice(1).toLowerCase();
+      }
+
       const stat = feedbackMap[branch.BranchID];
       branch.AverageRating = stat ? Number((stat.total / stat.count).toFixed(2)) : 0;
       branch.TotalFeedbacks = stat ? stat.count : 0;
-      // buffer convert
+
       for (const key in branch) {
         if (
-          (key.startsWith("Photo") || key.startsWith("Attachment")) &&
-          Buffer.isBuffer(branch[key])
+          (key.startsWith("Photo") ||
+            key.startsWith("Attachment")) &&
+            Buffer.isBuffer(branch[key])
         ) {
           branch[key] = branch[key].toString("base64");
         }
       }
     }
-    return res.send({ success: true, data });
+
+    return res.send({success: true, data});
   } catch (error) {
     return res.status(500).send({
       success: false,
