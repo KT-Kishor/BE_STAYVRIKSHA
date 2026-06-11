@@ -886,6 +886,14 @@ async function HM_GetCurrentYearStatusBarChart(req, res, next) {
         Status: "New",
       },
       {
+        Count: bookingData.filter((book) => book.Status === "Confirmed").length,
+        Status: "Confirmed",
+      },
+      {
+        Count: bookingData.filter((book) => book.Status === "Rejected").length,
+        Status: "Rejected",
+      },
+      {
         Count: bookingData.filter((book) => book.Status === "Assigned").length,
         Status: "Assigned",
       },
