@@ -1111,3 +1111,21 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
     }
   ]
 }
+
+#####
+POST  http://localhost:3001/HM_Advertisement
+Content-Type: application/json
+name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
+password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
+
+{
+  "data": {
+    "URL": "www.google.com",
+    "Photo1": "iVBOuQmCC",
+    "Photo1Type": "image/jpeg",
+    "Photo1Name": "Advertisement 1.png",
+    "Photo2": "iVBNSAAAAElFTkSuQmCC",
+    "Photo2Type": "image/jpeg",
+    "Photo2Name": "Advertisement 2.png"
+  }
+}

@@ -46,8 +46,14 @@ async function postHM_Advertisement(req, res, next) {
         data[key] = Buffer.from(data[key], "base64");
       }
     });
-    req.body.data = { ...data };
-    const createResult = await CommonCreateCall(req, res, next);
+    const IDBed = randomUUID();
+
+    req.body.data = {
+      ...data,
+      ID: IDBed,
+    };
+
+    await CommonCreateCall(req, res, next);
     res.status(200).send({
       success: true,
       message: "Advertisement saved successfully!",
