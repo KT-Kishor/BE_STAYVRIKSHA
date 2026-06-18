@@ -151,6 +151,7 @@ app.get("/HM_VerifyOTP", authenticate, HM_Login.VerifyCustomerOTP);
 app.get("/HM_CustomerContact", authenticate, HM_Login.HM_CustomerContact);
 app.get("/HM_StaffContact", authenticate, HM_Login.HM_StaffContact);
 app.get("/HM_LoginReadCall", authenticate, HM_Login.HM_LoginReadCall);
+app.get("/HM_Logindata", authenticate, HM_Login.HM_Customerdata);
 
 app.get("/HM_CustomerDocument", authenticate, HM_CustomerDocument.getHM_CustomerDocument);
 app.post("/HM_CustomerDocument", authenticate, HM_CustomerDocument.postHM_CustomerDocument);

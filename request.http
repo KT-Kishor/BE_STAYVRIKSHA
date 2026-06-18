@@ -1014,6 +1014,15 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
   "UserID": "00013"
 }
 
+#####
+GET http://localhost:3001/HM_Logindata
+Content-Type: application/json
+name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
+password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
+
+{
+  "BranchCode": "MYSKK4"
+}
 
 ####
 PUT http://localhost:3001/HM_CustomerDocument

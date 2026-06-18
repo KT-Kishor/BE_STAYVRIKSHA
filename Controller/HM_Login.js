@@ -752,6 +752,63 @@ async function VerifyCustomerOTP(req, res, next) {
   }
 }
 
+async function HM_Customerdata(req, res, next) {
+  try {
+    // Step 1: Read Booking Data
+    req.body.filters = {};
+
+    if (req.query.BranchCode) {
+      req.body.filters.BranchCode = req.query.BranchCode.split(",");
+    }
+
+    req.body.tableName = "HM_Booking";
+
+    const bookingResponse = await CommonReadWithFilters(req, res, next);
+    const bookingData = bookingResponse?.value || bookingResponse || [];
+
+    // Step 2: Collect UserIDs
+    const userIds = [
+      ...new Set(
+        bookingData
+          .map(item => item.UserID)
+          .filter(userId => userId)
+      )
+    ];
+
+    // No users found
+    if (userIds.length === 0) {
+      return res.send({
+        success: true,
+        data: []
+      });
+    }
+
+    // Step 3: Read Login Data
+    req.body.filters = {
+      UserID: userIds
+    };
+
+    req.body.tableName = "HM_Login";
+
+    const loginResponse = await CommonReadWithFilters(req, res, next);
+    const loginData = loginResponse?.value || loginResponse || [];
+
+    // Step 4: Return Login Details
+    return res.send({
+      success: true,
+      data: loginData
+    });
+
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message:
+        error?.message ||
+        "Technical error, please contact the administrator"
+    });
+  }
+}
+
 exports.HM_Login = {
   getHM_Login,
   postHM_Login,
@@ -762,5 +819,6 @@ exports.HM_Login = {
   HM_StaffContact,
   HM_LoginReadCall,
   OTPEmail,
-  VerifyCustomerOTP
+  VerifyCustomerOTP,
+  HM_Customerdata
 };
