@@ -228,6 +228,7 @@ app.post("/HM_HostelFeatures", authenticate, MasterData.postHM_HostelFeatures);
 app.put("/HM_HostelFeatures", authenticate, MasterData.putHM_HostelFeatures);
 app.delete("/HM_HostelFeatures", authenticate, MasterData.deleteHM_HostelFeatures);
 app.get("/HM_AppVisibility", authenticate, MasterData.getHMAppVisibility);
+app.get("/HM_LoginUser", authenticate, MasterData.getLoginData);
 
 app.get("/HM_ManageInvoice", authenticate, HM_ManageInvoice.getHM_ManageInvoice);
 app.post("/HM_ManageInvoice", authenticate, HM_ManageInvoice.postHM_ManageInvoice);

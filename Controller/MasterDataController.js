@@ -447,6 +447,20 @@ async function deleteHM_HostelFeatures(req, res, next) {
   }
 }
 
+async function getLoginData(req, res, next) {
+  try {
+    req.body.tableName = "HM_Login";
+    req.body.filters = {};
+    req.body.selectedFields = ["UserID", "Salutation", "UserName", "Role", "EmailID", "BranchCode", "STDCode", "MobileNo", "Status", "DateOfBirth", "Gender", "Country", "State", "City", "Address", "AdminComment", "Subscription_Role"];
+
+    const data = await CommonReadWithFilters(req, res, next);
+   
+    res.send({ success: true, data: data });
+  } catch (err) {
+    res.status(500).send({ success: false, message: err || "Technical error, please contact the administrator", });
+  }
+}
+
 exports.MasterData = {
   getCurrency,
   getCompanyCodeDetails,
@@ -463,5 +477,6 @@ exports.MasterData = {
   putHM_HostelFeatures,
   deleteHM_HostelFeatures,
   getHMAppVisibility,
-  HM_BranchData
+  HM_BranchData,
+  getLoginData
 };
