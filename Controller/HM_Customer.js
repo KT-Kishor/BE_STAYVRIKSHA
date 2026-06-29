@@ -502,13 +502,17 @@ async function postHM_Customer(req, res, next) {
       : bedTypeResult;
     const noOfPerson = Number(BedType?.NoOfPerson) || 0;
     const maxBeds = Number(BedType?.MaxBeds) || 0;
-    const totalCapacity = noOfPerson * maxBeds;
+
+    const propertyType = bookingPayload?.[0]?.PropertyType || "";
+    const totalCapacity = ["Hostel", "PG"].includes(propertyType)
+      ? noOfPerson * maxBeds
+      : maxBeds;
 
     // Read booking table
     req.body.filters = {
       BranchCode: bookingPayload?.[0]?.BranchCode || "",
       BedType: bookingPayload?.[0]?.BedType || "",
-      Status: ["New", "Assigned"],
+      Status: ["New", "Assigned", "Confirmed"],
     };
     req.body.tableName = "HM_Booking";
     const HM_Booking = (await CommonReadWithFilters(req, res, next)) || [];

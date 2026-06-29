@@ -286,6 +286,7 @@ async function putHM_Login(req, res, next) {
     req.body.tableName = "HM_Login";
 
     const data = req.body.data;
+    delete data.BranchName;
     const filters = req.body.filters;
 
     let isCredentialUpdated = false;
