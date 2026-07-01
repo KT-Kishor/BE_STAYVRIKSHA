@@ -146,6 +146,7 @@ app.post("/HM_Login", authenticate, HM_Login.postHM_Login);
 app.put("/HM_Login", authenticate, HM_Login.putHM_Login);
 app.delete("/HM_Login", authenticate, HM_Login.deleteHM_Login);
 app.post("/HostelSendOTP", authenticate, HM_Login.HostelSendOTPEmail);
+app.post("/HostelSendBackOTPEmail", authenticate, HM_Login.HostelSendBackOTPEmail);
 app.post("/EmailOTP", authenticate, HM_Login.OTPEmail);
 app.get("/HM_VerifyOTP", authenticate, HM_Login.VerifyCustomerOTP);
 app.get("/HM_CustomerContact", authenticate, HM_Login.HM_CustomerContact);

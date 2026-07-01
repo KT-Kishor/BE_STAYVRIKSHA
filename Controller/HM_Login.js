@@ -810,6 +810,102 @@ async function HM_Customerdata(req, res, next) {
   }
 }
 
+async function HostelSendBackOTPEmail(req, res, next) {
+    try {
+        req.body.filters = {};
+        req.body.tableName = "HM_Login";
+
+        if (req.query.UserID) req.body.filters.UserID = req.query.UserID;
+        if (req.query.UserName) req.body.filters.UserName = req.query.UserName;
+        if (req.query.EmailID) req.body.filters.EmailID = req.query.EmailID;
+
+        const LoginData = await CommonReadCall(req, res, next);
+
+        if (!LoginData || LoginData.length === 0) {
+            return res.status(400).send({
+                success: false,
+                message: "User not found."
+            });
+        }
+
+        const user = LoginData[0];
+
+        // Email validation
+        if (!user.EmailID) {
+            return res.status(400).send({
+                success: false,
+                message: "Email ID is required."
+            });
+        }
+
+        // Allow OTP only for Send Back status
+        if (user.Status !== "Send Back") {
+            return res.status(400).send({
+                success: false,
+                message: "OTP can only be sent when the status is 'Send Back'."
+            });
+        }
+
+        // Read Email Template
+        req.body.tableName = "EmailContent";
+        req.body.filters = {
+            Type: req.body.Type
+        };
+
+        const emailContentData = await CommonReadCall(req, res, next);
+
+        if (!emailContentData || emailContentData.length === 0) {
+            return res.status(400).send({
+                success: false,
+                message: "Email template not found."
+            });
+        }
+
+        // Generate OTP
+        const OTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Save OTP
+        req.body.tableName = "HM_Login";
+        req.body.filters = {
+            EmailID: user.EmailID
+        };
+        req.body.data = {
+            OTP: await bcrypt.hash(OTP, saltRounds),
+            TimeDate: new Date().getTime()
+        };
+
+        await CommonUpdateCall(req, res, next);
+
+        // Send Email
+        const emailContent = emailContentData[0];
+
+        const from = emailContent.FormEmailId;
+        const fromName = emailContent.FormName;
+        const to = [user.EmailID, emailContent.CCEmailId];
+        const toName = user.UserName;
+        const subject = emailContent.Subject;
+
+        const body = `
+      <p>Dear ${user.UserName},</p>
+      <p>${emailContent.Body.replaceAll("<OTPCODE>", OTP)}</p>
+    `;
+
+        await CommonSendEmail(req,from,fromName,to,toName,subject,body);
+        return res.send({
+            success: true,
+            message: "OTP sent successfully.",
+            OTP: OTP
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            success: false,
+            message: "Internal server error."
+        });
+    }
+}
+
 exports.HM_Login = {
   getHM_Login,
   postHM_Login,
@@ -821,5 +917,6 @@ exports.HM_Login = {
   HM_LoginReadCall,
   OTPEmail,
   VerifyCustomerOTP,
-  HM_Customerdata
+  HM_Customerdata,
+  HostelSendBackOTPEmail
 };
