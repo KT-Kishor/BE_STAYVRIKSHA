@@ -815,9 +815,9 @@ async function HostelSendBackOTPEmail(req, res, next) {
         req.body.filters = {};
         req.body.tableName = "HM_Login";
 
-        if (req.query.UserID) req.body.filters.UserID = req.query.UserID;
-        if (req.query.UserName) req.body.filters.UserName = req.query.UserName;
-        if (req.query.EmailID) req.body.filters.EmailID = req.query.EmailID;
+        if (req.body.UserID) req.body.filters.UserID = req.body.UserID;
+        if (req.body.UserName) req.body.filters.UserName = req.body.UserName;
+        if (req.body.EmailID) req.body.filters.EmailID = req.body.EmailID;
 
         const LoginData = await CommonReadCall(req, res, next);
 
