@@ -255,19 +255,27 @@ async function HM_BranchImage(req, res, next) {
    const BranchID= req.query.BranchID ;
    const Image= req.query.Image ;
 
-   
-
     req.body.filters = {
       BranchID: BranchID
     };
 
-    if (Image === "Attachment") {
+    if (Image === "Home") {
       req.body.selectedFields = [
         "Attachment",
         "AttachmentType",
         "AttachmentName"
       ];
-    } else {
+    }else if(Image === "BothImage") {
+        req.body.selectedFields = [
+        "Attachment",
+        "AttachmentType",
+        "AttachmentName",
+         "Photo1",
+        "Photo1Name",
+        "Photo1Type"
+      ];
+    }
+     else {
       req.body.selectedFields = [
         "Photo1",
         "Photo1Name",
@@ -286,7 +294,22 @@ async function HM_BranchImage(req, res, next) {
           AttachmentType: item.AttachmentType,
           AttachmentName: item.AttachmentName
         };
-      } else {
+      }else if(Image === "BothImage") {
+        return {
+          Attachment: item.Attachment
+            ? Buffer.from(item.Attachment).toString("base64")
+            : null,
+          AttachmentType: item.AttachmentType,
+          AttachmentName: item.AttachmentName,
+          Photo1: item.Photo1
+            ? Buffer.from(item.Photo1).toString("base64")
+            : null,
+          Photo1Type: item.Photo1Type,
+          Photo1Name: item.Photo1Name
+        };
+      }
+      
+      else {
         return {
           Photo1: item.Photo1
             ? Buffer.from(item.Photo1).toString("base64")
