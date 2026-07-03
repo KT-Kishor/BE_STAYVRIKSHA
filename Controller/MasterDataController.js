@@ -252,7 +252,10 @@ async function HM_BranchImage(req, res, next) {
   try {
     req.body.tableName = "HM_Branch";
 
-    const { BranchID, Image } = req.body;
+   const BranchID= req.query.BranchID ;
+   const Image= req.query.Image ;
+
+   
 
     req.body.filters = {
       BranchID: BranchID
