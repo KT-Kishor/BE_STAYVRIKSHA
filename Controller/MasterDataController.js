@@ -228,7 +228,9 @@ async function HM_BranchData(req, res, next) {
   try {
     req.body.tableName = "HM_Branch";
     req.body.filters = {};
-    req.body.selectedFields = ["Name", "BranchID", "City", "Country", "LandMark", "Address", "Type", "Value", "GSTIN", "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact"];
+    req.body.selectedFields = ["Name", "BranchID", "City", "Country","State", "LandMark", "Address", "Type", "Value", "GSTIN", 
+      "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact", "Pincode","Penalty","Currency","Status",
+      "StartingPrice","EditBefore"];
     if (req.query.Name) req.body.filters.Name = req.query.Name;
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;
@@ -243,6 +245,65 @@ async function HM_BranchData(req, res, next) {
     res.send({ success: true, data: data });
   } catch (err) {
     res.status(500).send({ success: false, message: err || "Technical error, please contact the administrator", });
+  }
+}
+
+async function HM_BranchImage(req, res, next) {
+  try {
+    req.body.tableName = "HM_Branch";
+
+    const { BranchID, Image } = req.body;
+
+    req.body.filters = {
+      BranchID: BranchID
+    };
+
+    if (Image === "Attachment") {
+      req.body.selectedFields = [
+        "Attachment",
+        "AttachmentType",
+        "AttachmentName"
+      ];
+    } else {
+      req.body.selectedFields = [
+        "Photo1",
+        "Photo1Name",
+        "Photo1Type"
+      ];
+    }
+
+    const data = await CommonReadWithFilters(req, res, next);
+
+    const responseData = data.map(item => {
+      if (Image === "Home") {
+        return {
+          Attachment: item.Attachment
+            ? Buffer.from(item.Attachment).toString("base64")
+            : null,
+          AttachmentType: item.AttachmentType,
+          AttachmentName: item.AttachmentName
+        };
+      } else {
+        return {
+          Photo1: item.Photo1
+            ? Buffer.from(item.Photo1).toString("base64")
+            : null,
+          Photo1Type: item.Photo1Type,
+          Photo1Name: item.Photo1Name
+        };
+      }
+    });
+
+    return res.send({
+      success: true,
+      data: responseData
+    });
+
+  } catch (err) {
+    return res.status(500).send({
+      success: false,
+      message: err.message || "Technical error, please contact the administrator"
+    });
   }
 }
 
@@ -478,5 +539,6 @@ exports.MasterData = {
   deleteHM_HostelFeatures,
   getHMAppVisibility,
   HM_BranchData,
-  getLoginData
+  getLoginData,
+  HM_BranchImage
 };

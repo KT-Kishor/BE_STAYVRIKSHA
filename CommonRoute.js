@@ -221,6 +221,8 @@ app.get("/State", authenticate, MasterData.getState);
 app.get("/City", authenticate, MasterData.getCity);
 app.get("/HM_Branch", authenticate, MasterData.getBranch);
 app.get("/HM_BranchData", authenticate, MasterData.HM_BranchData);
+app.get("/HM_BranchImage", authenticate, MasterData.HM_BranchImage);
+
 app.post("/HM_Branch", authenticate, MasterData.postBranch);
 app.put("/HM_Branch", authenticate, MasterData.putBranch);
 app.delete("/HM_Branch", authenticate, MasterData.deleteBranch);
