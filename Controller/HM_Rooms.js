@@ -3,7 +3,8 @@ const {
   CommonCreateCall,
   CommonUpdateCall,
   CommonDeleteCall,
-  CommonReadWithFilters
+  CommonReadWithFilters,
+  CommounMultipalUpdate
 } = require("./CommonController");
 
 async function getHM_Rooms(req, res, next) {
@@ -56,7 +57,7 @@ async function postHM_Rooms(req, res, next) {
 async function putHM_Rooms(req, res, next) {
   try {
     req.body.tableName = "HM_Rooms";
-    await CommonUpdateCall(req, res, next);
+    await CommounMultipalUpdate(req, res, next);
     res.status(200).send({ success: true, message: "Room details updated!" });
   } catch (error) {
     res.status(500).send({
