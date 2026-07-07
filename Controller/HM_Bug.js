@@ -180,11 +180,28 @@ async function HM_BugTicketRaised(req, res, next) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
+async function getbugComment(req, res, next) {
+  try {
+
+   const BugID= req.query.BugID;
+    req.body.tableName = "AllComments";
+      req.body.filters = {
+      BugID: BugID
+    };
+    const data = await CommonReadCall(req, res, next);
+
+    res.send({ success: true, data });
+  } catch (error) {
+    res.status(500).send({
+      success: false, message: error || "Technical error, please contact the administrator",
+    });
+  }
+}
 
 
 async function sendmailtoCustomer(req, res, next) {
   try {
-    const {BugID, Email, Name, Comment, Status } = req.body;
+    const {CommentedBy,CommentDateTime,ApplicationName,BugID, Email, Name, Comment, Status } = req.body;
 
 
     req.body.tableName = "HM_RaiseBug";
@@ -205,6 +222,23 @@ async function sendmailtoCustomer(req, res, next) {
       next(err);
     }
 
+    req.body.tableName = "AllComments";
+
+     req.body.data = {
+      ApplicationName,
+      CommentDateTime,
+      CommentedBy,
+      Comment,
+      Status,
+      BugID
+    };
+
+     try {
+      const result = await CommonCreateCall(req);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
 
     req.body.tableName = "EmailContent";
     req.body.filters = {
@@ -215,7 +249,7 @@ async function sendmailtoCustomer(req, res, next) {
 
     if (!emailContentData || emailContentData.length === 0) {
       return res.status(400).send({
-        success: false,
+        success: false,   
         message: `email template not found.`
       });
     }
@@ -223,6 +257,7 @@ async function sendmailtoCustomer(req, res, next) {
     const emailContent = emailContentData[0];
 
     const body = emailContent.Body
+      .replaceAll("{{BugID}}", Name || "")
       .replaceAll("{{Name}}", Name || "")
       .replaceAll("{{Comment}}", Comment || "");
 
@@ -373,5 +408,6 @@ exports.HM_Bug = {
   postHM_Bug,
   putHM_Bug,
   deleteHM_Bug,
-  sendmailtoCustomer
+  sendmailtoCustomer,
+  getbugComment
 };

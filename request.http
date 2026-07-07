@@ -1163,9 +1163,22 @@ name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
-  "BugID": "BUG-2026/27-025",
+  "BugID": "BUG-2026/27-026",
   "Email": "telkarnaresh2674@gmail.com",
   "Name": "Mateen Qureshi",
   "Status": "Customer Action",
-  "Comment": "In the manageStaff application which field is to be removed from the staff details form, please let me know."
+  "Comment": "In the manageStaff application which field is to be removed from the staff details form, please let me know.",
+  "ApplicationName":"HM_RaiseBug",
+  "CommentDateTime":"2026-06-12 07:16:20",
+  "CommentedBy":"Naresh"
+}
+
+###
+GET http://localhost:3001/HM_BugComment
+Content-Type: application/json
+name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
+password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
+
+{
+  "BugID":"BUG-2026/27-001"
 }
