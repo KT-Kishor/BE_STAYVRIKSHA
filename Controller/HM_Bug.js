@@ -12,7 +12,7 @@ async function getHM_Bug(req, res, next) {
   try {
     req.body.filters = {};
     req.body.tableName = "HM_RaiseBug";
-    req.body.selectedFields = ["BugID", "AppName", "BugDescription", "RaisedBy", "Email", "CreatedDate", "Status", "ResolvedDescription", "ResolvedDate"];
+    req.body.selectedFields = ["BugID", "AppName", "BugDescription", "RaisedBy", "Email", "CreatedDate", "Status", "ResolvedDescription", "ResolvedDate","Comment"];
     if (req.query.BugID) req.body.filters.BugID = req.query.BugID;
     if (req.query.Status) req.body.filters.Status = req.query.Status;
     if (req.query.StartDate && req.query.EndDate) req.body.filters.CreatedDate = [req.query.StartDate, req.query.EndDate]
