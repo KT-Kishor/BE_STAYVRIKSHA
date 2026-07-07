@@ -208,6 +208,8 @@ app.get('/HM_Supportdata', authenticate, HM_Support.getSupportData);
 
 app.get('/HM_Bug', authenticate, HM_Bug.getHM_Bug);
 app.post('/HM_Bug', authenticate, HM_Bug.postHM_Bug);
+app.post('/sendmailtoCustomer', authenticate, HM_Bug.sendmailtoCustomer);
+
 app.put('/HM_Bug', authenticate, HM_Bug.putHM_Bug);
 app.delete('/HM_Bug', authenticate, HM_Bug.deleteHM_Bug);
 app.get('/HM_Bugdata', authenticate, HM_Bug.getBugData);

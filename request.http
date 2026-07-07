@@ -1155,3 +1155,17 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
   "BranchCode": "LOCKK4",
   "Image": "BothImage"
 }
+
+###
+POST http://localhost:3001/sendmailtoCustomer
+Content-Type: application/json
+name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
+password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
+
+{
+  "BugID": "BUG-2026/27-025",
+  "Email": "telkarnaresh2674@gmail.com",
+  "Name": "Mateen Qureshi",
+  "Status": "Customer Action",
+  "Comment": "In the manageStaff application which field is to be removed from the staff details form, please let me know."
+}

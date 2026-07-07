@@ -181,6 +181,96 @@ async function HM_BugTicketRaised(req, res, next) {
   }
 }
 
+
+async function sendmailtoCustomer(req, res, next) {
+  try {
+    const {BugID, Email, Name, Comment, Status } = req.body;
+
+
+    req.body.tableName = "HM_RaiseBug";
+
+    req.body.data = {
+      Comment,
+      Status
+    };
+
+    req.body.filters = {
+      BugID
+    };
+
+    try {
+      const result = await CommonUpdateCall(req);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+
+
+    req.body.tableName = "EmailContent";
+    req.body.filters = {
+      Type: "HM_BugComment"
+    };
+
+    const emailContentData = await CommonReadCall(req, res, next);
+
+    if (!emailContentData || emailContentData.length === 0) {
+      return res.status(400).send({
+        success: false,
+        message: `email template not found.`
+      });
+    }
+
+    const emailContent = emailContentData[0];
+
+    const body = emailContent.Body
+      .replaceAll("{{Name}}", Name || "")
+      .replaceAll("{{Comment}}", Comment || "");
+
+    try {
+      await CommonSendEmail(
+        req,
+        emailContent.FormEmailId,
+        emailContent.FormName,
+        [Email],
+        Name,
+        emailContent.Subject,
+        body,
+        emailContent.CCEmailId ? [emailContent.CCEmailId] : [],
+        emailContent.ReplyToEmailId
+      );
+      res.status(200).send({
+        success: true,
+        message: "Email sent successfully."
+      });
+
+
+    } catch (err) {
+      console.error(err);
+
+      failed.push({
+        email: Email,
+        reason: "Email sending failed"
+      });
+    }
+
+    return res.send({
+      success: failed.length === 0,
+      message: `${success.length} email(s) sent successfully.`,
+      sent: success,
+      failed: failed
+    });
+
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+}
+
 async function putHM_Bug(req, res, next) {
   try {
 
@@ -282,5 +372,6 @@ exports.HM_Bug = {
   getBugData,
   postHM_Bug,
   putHM_Bug,
-  deleteHM_Bug
+  deleteHM_Bug,
+  sendmailtoCustomer
 };
