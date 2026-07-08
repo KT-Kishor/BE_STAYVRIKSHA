@@ -257,7 +257,7 @@ async function sendmailtoCustomer(req, res, next) {
     const emailContent = emailContentData[0];
 
     const body = emailContent.Body
-      .replaceAll("{{BugID}}", Name || "")
+      .replaceAll("{{BugID}}", BugID || "")
       .replaceAll("{{Name}}", Name || "")
       .replaceAll("{{Comment}}", Comment || "");
 

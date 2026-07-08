@@ -176,6 +176,8 @@ async function getHM_CouponMaxUsesBookingCheck(req, res, next) {
         req.body = { tableName: "HM_Coupon", filters: {} };
         if (req.query.CouponCode)  req.body.filters.CouponCode = req.query.CouponCode;
         if (req.query.Status)  req.body.filters.Status = req.query.Status;
+        if (req.query.BranchCode)  req.body.filters.BranchCode = req.query.BranchCode;
+
         const couponData = await CommonReadWithFilters(req, res, next);
 
         req.body = { tableName: "HM_Booking", filters: {} };
