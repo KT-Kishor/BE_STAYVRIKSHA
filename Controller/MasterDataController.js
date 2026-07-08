@@ -131,7 +131,9 @@ async function getCity(req, res, next) {
 }
 
 async function getBranch(req, res, next) {
+
   try {
+     
     req.body.tableName = "HM_Branch";
     req.body.filters = {};
 
@@ -208,6 +210,101 @@ async function getBranch(req, res, next) {
         if (
           (key.startsWith("Photo") ||
             key.startsWith("Attachment")) &&
+            Buffer.isBuffer(branch[key])
+        ) {
+          branch[key] = branch[key].toString("base64");
+        }
+      }
+    }
+
+    return res.send({success: true, data});
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: "Internal Server Error"
+    });
+  }
+}
+
+async function getBranchImage(req, res, next) {
+  try {
+      req.body.selectedFields = ["Name", "BranchID", "City", "Country","State", "LandMark", "Address", "Type", "Value", "GSTIN", 
+      "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact", "Pincode","Penalty","Currency","Status",
+      "StartingPrice","EditBefore","Attachment","AttachmentType","AttachmentName"];
+    req.body.tableName = "HM_Branch";
+    req.body.filters = {};
+
+    if (req.query.Name) req.body.filters.Name = req.query.Name;
+    if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
+    if (req.query.City) req.body.filters.City = req.query.City;
+    if (req.query.LandMark) req.body.filters.LandMark = req.query.LandMark;
+
+    if (req.query.top) req.body.top = req.query.top;
+    if (req.query.skip) req.body.skip = req.query.skip;
+
+    if (req.query.BranchID === "" && req.query.Role === "Admin") {
+      return res.status(200).send({
+        success: true,
+        data: []
+      });
+    }
+
+    delete req.query.Role;
+
+    if (req.query.BranchID) {
+      req.body.filters.BranchID = req.query.BranchID.split(",");
+    }
+
+    // ---------- Fetch Branches ----------
+    let data = await CommonReadWithFilters(req, res, next);
+
+    delete req.body.top;
+    delete req.body.skip;
+
+    let feedbackMap = {};
+
+    if (req.query.flag === "true" && data.length > 0) {
+      const branchCodes = data.map(b => b.BranchID);
+
+      req.body.tableName = "HM_Feedback";
+      req.body.filters = { BranchCode: branchCodes};
+
+      const allFeedback =
+        (await CommonReadWithFilters(req, res, next)) || [];
+
+      for (const row of allFeedback) {
+        if (!feedbackMap[row.BranchCode]) {
+          feedbackMap[row.BranchCode] = {
+            total: 0,
+            count: 0
+          };
+        }
+
+        if (row.OverallRating && !isNaN(row.OverallRating)) {
+          feedbackMap[row.BranchCode].total += Number(row.OverallRating);
+          feedbackMap[row.BranchCode].count++;
+        }
+      }
+    }
+
+    // ---------- Format Data ----------
+    for (const branch of data) {
+
+      // Convert landmark to proper case
+      if (branch.LandMark) {
+          branch.LandMark = branch.LandMark.charAt(0).toUpperCase() +  branch.LandMark.slice(1).toLowerCase();
+      }
+
+      if (branch.Name) {
+           branch.Name = branch.Name.charAt(0).toUpperCase() + branch.Name.slice(1).toLowerCase();
+      }
+
+      const stat = feedbackMap[branch.BranchID];
+      branch.AverageRating = stat ? Number((stat.total / stat.count).toFixed(2)) : 0;
+      branch.TotalFeedbacks = stat ? stat.count : 0;
+
+      for (const key in branch) {
+        if (key.startsWith("Attachment") &&
             Buffer.isBuffer(branch[key])
         ) {
           branch[key] = branch[key].toString("base64");
@@ -566,5 +663,6 @@ exports.MasterData = {
   getHMAppVisibility,
   HM_BranchData,
   getLoginData,
-  HM_BranchImage
+  HM_BranchImage,
+  getBranchImage
 };

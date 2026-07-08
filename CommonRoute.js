@@ -225,6 +225,8 @@ app.get("/Country", authenticate, MasterData.getCountry);
 app.get("/State", authenticate, MasterData.getState);
 app.get("/City", authenticate, MasterData.getCity);
 app.get("/HM_Branch", authenticate, MasterData.getBranch);
+app.get("/HM_GetBranchImage", authenticate, MasterData.getBranchImage);
+
 app.get("/HM_BranchData", authenticate, MasterData.HM_BranchData);
 app.get("/HM_BranchImage", authenticate, MasterData.HM_BranchImage);
 
