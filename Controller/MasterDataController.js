@@ -228,10 +228,37 @@ async function getBranch(req, res, next) {
 
 async function getBranchImage(req, res, next) {
   try {
-      req.body.selectedFields = ["Name", "BranchID", "City", "Country","State", "LandMark", "Address", "Type", "Value", "GSTIN", 
-      "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact", "Pincode","Penalty","Currency","Status",
-      "StartingPrice","EditBefore","Attachment","AttachmentType","AttachmentName"];
+    // ---------- Branch Query ----------
     req.body.tableName = "HM_Branch";
+    req.body.selectedFields = [
+      "Name",
+      "BranchID",
+      "City",
+      "Country",
+      "State",
+      "LandMark",
+      "Address",
+      "Type",
+      "Value",
+      "GSTIN",
+      "GeoLocation",
+      "CheckinTime",
+      "CheckoutTime",
+      "EmailID",
+      "PropertyType",
+      "STD",
+      "Contact",
+      "Pincode",
+      "Penalty",
+      "Currency",
+      "Status",
+      "StartingPrice",
+      "EditBefore",
+      "Attachment",
+      "AttachmentType",
+      "AttachmentName"
+    ];
+
     req.body.filters = {};
 
     if (req.query.Name) req.body.filters.Name = req.query.Name;
@@ -263,14 +290,23 @@ async function getBranchImage(req, res, next) {
 
     let feedbackMap = {};
 
+    // ---------- Fetch Feedback ----------
     if (req.query.flag === "true" && data.length > 0) {
-      const branchCodes = data.map(b => b.BranchID);
+      const branchCodes = data.map(branch => branch.BranchID);
 
       req.body.tableName = "HM_Feedback";
-      req.body.filters = { BranchCode: branchCodes};
 
-      const allFeedback =
-        (await CommonReadWithFilters(req, res, next)) || [];
+      // IMPORTANT: Change selectedFields for Feedback table
+      req.body.selectedFields = [
+        "BranchCode",
+        "OverallRating"
+      ];
+
+      req.body.filters = {
+        BranchCode: branchCodes
+      };
+
+      const allFeedback = await CommonReadWithFilters(req, res, next) || [];
 
       for (const row of allFeedback) {
         if (!feedbackMap[row.BranchCode]) {
@@ -287,36 +323,48 @@ async function getBranchImage(req, res, next) {
       }
     }
 
-    // ---------- Format Data ----------
+    // ---------- Format Branch Data ----------
     for (const branch of data) {
 
-      // Convert landmark to proper case
       if (branch.LandMark) {
-          branch.LandMark = branch.LandMark.charAt(0).toUpperCase() +  branch.LandMark.slice(1).toLowerCase();
+        branch.LandMark =
+          branch.LandMark.charAt(0).toUpperCase() +
+          branch.LandMark.slice(1).toLowerCase();
       }
 
       if (branch.Name) {
-           branch.Name = branch.Name.charAt(0).toUpperCase() + branch.Name.slice(1).toLowerCase();
+        branch.Name =
+          branch.Name.charAt(0).toUpperCase() +
+          branch.Name.slice(1).toLowerCase();
       }
 
       const stat = feedbackMap[branch.BranchID];
-      branch.AverageRating = stat ? Number((stat.total / stat.count).toFixed(2)) : 0;
+
+      branch.AverageRating = stat
+        ? Number((stat.total / stat.count).toFixed(2))
+        : 0;
+
       branch.TotalFeedbacks = stat ? stat.count : 0;
 
       for (const key in branch) {
-        if (key.startsWith("Attachment") &&
-            Buffer.isBuffer(branch[key])
-        ) {
+        if (key.startsWith("Attachment") && Buffer.isBuffer(branch[key])) {
           branch[key] = branch[key].toString("base64");
         }
       }
     }
 
-    return res.send({success: true, data});
+    return res.status(200).send({
+      success: true,
+      data
+    });
+
   } catch (error) {
+    console.error(error);
+
     return res.status(500).send({
       success: false,
-      message: "Internal Server Error"
+      message: "Internal Server Error",
+      error: error.message
     });
   }
 }
