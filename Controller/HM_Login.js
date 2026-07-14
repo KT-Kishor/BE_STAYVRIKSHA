@@ -115,7 +115,6 @@ async function postHM_Login(req, res, next) {
     const createResult = await CommonCreateCall(req, res, next);
     if (createResult.success !== true) throw new Error("Failed to create login record.");
 
-    if (data.Role === "Customer") {
       {
         req.body.data = {
           MemberID: data.UserID,
@@ -130,7 +129,6 @@ async function postHM_Login(req, res, next) {
         req.body.tableName = "HM_Members";
         await CommonCreateCall(req, res, next);
       }
-    }
 
     if (VenderDocuments.length > 0) {
       VenderDocuments.forEach(doc => {
