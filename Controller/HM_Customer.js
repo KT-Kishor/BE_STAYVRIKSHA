@@ -19,10 +19,10 @@ async function getHM_Customer(req, res, next) {
     const origin = req.get("origin") || "";
 
     if (origin.split("//")[1] === "stayvriksha.in" || origin.split("//")[1] === "www.stayvriksha.in") {
-				dbConnProd = Stayvriksha;
-			} else {
-				dbConnProd = DemoStayvriksha;
-			}
+      dbConnProd = Stayvriksha;
+    } else {
+      dbConnProd = DemoStayvriksha;
+    }
 
     if (req.query.BranchCode === "" && req.query.Role === "Admin")
       return res.status(200).send({ success: true, Customers: [] });
@@ -61,7 +61,7 @@ async function getHM_Customer(req, res, next) {
       req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate];
     }
 
-     if ((req.query.BookingID && !req.query.MemberID) || (!req.query.BookingID && !req.query.UserID)) {
+    if ((req.query.BookingID && !req.query.MemberID) || (!req.query.BookingID && !req.query.UserID)) {
       let query = `
         SELECT
           C.BookingID,
@@ -121,7 +121,7 @@ async function getHM_Customer(req, res, next) {
           if (id.includes("_")) {
             return `B.MemberID = '${id}'`;
           } else {
-            return `B.MemberID LIKE '${id}'`; 
+            return `B.MemberID LIKE '${id}'`;
           }
         });
         whereClauses.push(`(${conditions.join(" OR ")})`);
@@ -223,7 +223,7 @@ async function getHM_Customer(req, res, next) {
         if (id.includes("_")) {
           return `TRIM(MemberID) = '${id}'`;
         } else {
-          return `TRIM(MemberID) LIKE '${id}'`; 
+          return `TRIM(MemberID) LIKE '${id}'`;
         }
       });
       memberCondition = conditions.join(" OR ");
@@ -253,19 +253,19 @@ async function getHM_Customer(req, res, next) {
     // 🔹 OPTIMIZATION STEP: Group array results into Map objects ($O(N)$ lookup speed instead of $O(N^2)$)
     const bookingsMap = new Map();
     bookings.forEach(b => {
-      if(!bookingsMap.has(b.BookingID)) bookingsMap.set(b.BookingID, []);
+      if (!bookingsMap.has(b.BookingID)) bookingsMap.set(b.BookingID, []);
       bookingsMap.get(b.BookingID).push(b);
     });
 
     const paymentsMap = new Map();
     payments.forEach(p => {
-      if(!paymentsMap.has(p.BookingID)) paymentsMap.set(p.BookingID, []);
+      if (!paymentsMap.has(p.BookingID)) paymentsMap.set(p.BookingID, []);
       paymentsMap.get(p.BookingID).push(p);
     });
 
     const facilityMap = new Map();
     facility.forEach(f => {
-      if(!facilityMap.has(f.BookingID)) facilityMap.set(f.BookingID, []);
+      if (!facilityMap.has(f.BookingID)) facilityMap.set(f.BookingID, []);
       facilityMap.get(f.BookingID).push(f);
     });
 
@@ -325,9 +325,9 @@ async function postHM_Customer(req, res, next) {
   try {
     let customerList = req.body.data;
     const pdfAttachment = req.body.pdfAttachment;
-    const propertyName =  req.body.data[0].Area || "";
+    const propertyName = req.body.data[0].Area || "";
     const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}`;
-    const propertyEmail = req.body.data[0].PropertyEmail 
+    const propertyEmail = req.body.data[0].PropertyEmail
     const memberID = req.body.data?.[0]?.Booking?.[0]?.MemberID || "";
     delete req.body.data[0].Area;
     delete req.body.data[0].PropertySTD;
@@ -383,7 +383,7 @@ async function postHM_Customer(req, res, next) {
 
     // ================= FETCH EXISTING BOOKINGS =================
     req.body.tableName = "HM_Booking";
-    req.body.filters={}
+    req.body.filters = {}
     const existingBookings = await CommonReadCall(req, res, next) || [];
 
     // Generate Financial Year
@@ -574,11 +574,11 @@ async function postHM_Customer(req, res, next) {
         StartDate: formatDate(data.StartDate),
         EndDate: formatDate(data.EndDate),
         Guests: data.NoOfPersons || "1",
-        MemberID : data.MemberID || "",
+        MemberID: data.MemberID || "",
         PropertyName: propertyName || "",
         PropertyMobileNo: propertyMobileNo || "",
         PropertyEmail: propertyEmail || "",
-        PropertyType : data.PropertyType
+        PropertyType: data.PropertyType
       };
 
       await BookingSubmitEmail(req, res, next, pdfAttachment);
@@ -641,12 +641,12 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
     let subject = emailContent.Subject;
 
     subject = subject
-        .replaceAll("<PropertyName>", req.body.PropertyName || "")
-        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "");
 
-    
+
     const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
-    const encodedMemberID  = Buffer.from(String(req.body.MemberID)).toString("base64");
+    const encodedMemberID = Buffer.from(String(req.body.MemberID)).toString("base64");
 
     let attachments = [];
 
@@ -659,7 +659,7 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
     }
 
     let propertyMobileNo = req.body.PropertyMobileNo || "";
-    
+
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.UserName},</p>
                     <p>${emailContent.Body}</p>`;
@@ -684,7 +684,7 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-   await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
   } catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
@@ -695,7 +695,7 @@ async function putHM_Customer(req, res, next) {
     const payload = req.body.data?.[0];
     const filters = req.body.filters;
     const pdfAttachment = req.body.data?.[0].pdfAttachment || "";
-    const propertyName =  req.body.data[0].Area || "";
+    const propertyName = req.body.data[0].Area || "";
     const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}` || "";
     const propertyEmail = req.body.data[0].PropertyEmail || "";
     const propertyType = req.body.data[0].PropertyType || "";
@@ -916,17 +916,17 @@ async function putHM_Customer(req, res, next) {
 
         // Skip cancel bookings
         if (booking.Status === "Cancelled") {
-            continue;
+          continue;
         }
 
         // Skip completed bookings
         if (booking.Status === "Completed") {
-            continue;
+          continue;
         }
 
-         // Skip Assigned bookings
+        // Skip Assigned bookings
         if (booking.Status === "Assigned") {
-            continue;
+          continue;
         }
 
         const emailPayload = {
@@ -943,7 +943,8 @@ async function putHM_Customer(req, res, next) {
           PropertyName: propertyName || "",
           PropertyMobileNo: propertyMobileNo || "",
           PropertyEmail: propertyEmail || "",
-          PropertyType: booking.PropertyType
+          PropertyType: booking.PropertyType,
+          EditedSections: payload.EditedSections
         };
 
         const originalBody = req.body;
@@ -1000,15 +1001,17 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
     }
 
     subject = subject
-        .replaceAll("<PropertyName>", req.body.PropertyName || "")
-        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "")
+     
 
-    
+
+
     const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
-    const encodedMemberID  = Buffer.from(String(req.body.MemberID)).toString("base64");
+    const encodedMemberID = Buffer.from(String(req.body.MemberID)).toString("base64");
 
     let propertyMobileNo = req.body.PropertyMobileNo || "";
-    
+
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.UserName},</p>
                     <p>${emailContent.Body}</p>`;
@@ -1028,13 +1031,19 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
       .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
       .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
       .replaceAll("<EncodedMemberID>", encodedMemberID)
-      .replaceAll("<EncodedCustomerID>", encodedCustomerID);
+      .replaceAll("<EncodedCustomerID>", encodedCustomerID)
+      .replaceAll("<EditedSections>",Array.isArray(req.body.EditedSections)
+          ?   req.body.EditedSections.join(", ")
+          : (req.body.EditedSections || "")
+      );
+
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-   await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
-  } catch (error) {
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
+  } 
+  catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
@@ -1056,8 +1065,8 @@ async function BookingCancelledEmail(req, res, next) {
     let subject = emailContent.Subject;
 
     subject = subject
-        .replaceAll("<PropertyName>", req.body.PropertyName || "")
-        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "");
 
     let body = `<p>Dear ${req.body.UserName},</p>
                 <p>${emailContent.Body}</p>`;
@@ -1102,8 +1111,8 @@ async function CheckoutCompletedEmail(req, res, next) {
     let subject = emailContent.Subject;
 
     subject = subject
-        .replaceAll("<PropertyName>", req.body.PropertyName || "")
-        .replaceAll("<PropertyType>", req.body.PropertyType || "");
+      .replaceAll("<PropertyName>", req.body.PropertyName || "")
+      .replaceAll("<PropertyType>", req.body.PropertyType || "");
 
     const encodedBookingID = Buffer.from(String(req.body.BookingID)).toString(
       "base64",
