@@ -135,10 +135,11 @@ async function putHM_Deposit(req, res, next) {
     req.body.tableName = "HM_Booking";
     var readData = await CommonReadWithFilters(req, res, next);
     if (readData.length > 0) {
-      if (readData[0].Status !== "Completed") {
+      if (readData[0].Status !== "Completed" && FilterDate.flag!=="true") {
         return res.status(400).send({ success: false, message: "Until checkout is completed, deposit details cannot be updated." });
       }
     }
+    delete FilterDate.flag
     req.body.filters = FilterDate;
     req.body.tableName = "HM_Deposit";
     await CommonUpdateCall(req, res, next);
