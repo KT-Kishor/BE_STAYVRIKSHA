@@ -82,7 +82,7 @@ async function getHM_Customer(req, res, next) {
           B.PaymentType,
           B.MemberID,
           B.UserID,
-          B.CouponCode
+          B.CouponCode,
           B.RentPrice   
         FROM HM_Customer C
         LEFT JOIN HM_Booking B
