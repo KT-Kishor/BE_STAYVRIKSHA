@@ -83,6 +83,7 @@ async function getHM_Customer(req, res, next) {
           B.MemberID,
           B.UserID,
           B.CouponCode
+          B.RentPrice   
         FROM HM_Customer C
         LEFT JOIN HM_Booking B
           ON C.BookingID = B.BookingID
