@@ -81,7 +81,8 @@ async function getHM_Customer(req, res, next) {
           B.BookingDate,
           B.PaymentType,
           B.MemberID,
-          B.UserID
+          B.UserID,
+          B.CouponCode
         FROM HM_Customer C
         LEFT JOIN HM_Booking B
           ON C.BookingID = B.BookingID
@@ -956,7 +957,7 @@ async function putHM_Customer(req, res, next) {
       }
     }
 
-    return res.status(200).send({
+    return res. status(200).send({
       success: true,
       message: "Customer details updated successfully!",
     });
@@ -1014,7 +1015,7 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
 
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.UserName},</p>
-                    <p>${emailContent.Body}</p>`;
+                    <p>${emailContent.Body}</p>`;   
 
     body = body
       .replaceAll("<BookingID>", req.body.BookingID)
@@ -1032,10 +1033,12 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
       .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
       .replaceAll("<EncodedMemberID>", encodedMemberID)
       .replaceAll("<EncodedCustomerID>", encodedCustomerID)
-      .replaceAll("<EditedSections>",Array.isArray(req.body.EditedSections)
-          ?   req.body.EditedSections.join(", ")
-          : (req.body.EditedSections || "")
-      );
+      .replaceAll(
+    "<EditedSections>",
+    Array.isArray(req.body.EditedSections) && req.body.EditedSections.length > 0
+        ?"<strong>The document details associated with your booking have been updated.</strong>"
+        : ""
+)
 
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
