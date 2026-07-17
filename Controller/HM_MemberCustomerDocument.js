@@ -100,6 +100,10 @@ async function postHM_MemberDocument(req, res, next) {
         const documents = member.Documents || [];
 
         for (const doc of documents) {
+
+              if (!doc.File || doc.File.trim() === "") {
+    continue;
+  }
           const documentData = {
             DocumentID: randomUUID(),
             DocumentType: doc.DocumentType,

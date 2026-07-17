@@ -499,6 +499,7 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
         ConversionRate: "",
         AmountInINR: "",
         Used: "",
+        ReceivedBy:item.ReceivedBy
       }));
     }
 
@@ -604,7 +605,7 @@ async function postHM_InvoicePaymentDetail(req, res, next) {
       Currency: inputData.Currency,
       CustomerName: inputData.CustomerName,
       BookingID: inputData.BookingID,
-      BankTransactionID: inputData.TransactionId,
+      BankTransactionID: inputData.TransactionId?inputData.TransactionId : inputData.ReceivedBy,
       PaymentType: inputData.PaymentType,
       Amount: inputData.ReceivedAmount,
       BankName: inputData.PaymentType,
@@ -612,7 +613,7 @@ async function postHM_InvoicePaymentDetail(req, res, next) {
       BookingID: inputData.BookingID,
       BranchCode: inputData.BranchCode,
       InvNo: inputData.InvNo,
-      EntryDate : inputData.EntryDate
+      EntryDate : inputData.EntryDate,
     };
 
     //  CONDITION: mark Used only if no prior payment exists
