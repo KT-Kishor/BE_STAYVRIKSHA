@@ -927,9 +927,9 @@ async function putHM_Customer(req, res, next) {
         }
 
         // Skip Assigned bookings
-        if (booking.Status === "Assigned") {
-          continue;
-        }
+        // if (booking.Status === "Assigned") {
+        //   continue;
+        // }
 
         const emailPayload = {
           UserName: payload.CustomerName || "Customer",
