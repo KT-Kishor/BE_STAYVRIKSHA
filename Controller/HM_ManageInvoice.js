@@ -486,7 +486,7 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
       invoiceMap[inv.InvNo] = inv;
     });
 
-    //  Mapping Functions
+    // Mapping Functions
     function mapInvoiceDetail(data) {
       return (data || []).map((item) => ({
         InvNo: item.InvNo,
@@ -499,7 +499,7 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
         ConversionRate: "",
         AmountInINR: "",
         Used: "",
-        ReceivedBy:item.ReceivedBy
+        ReceivedBy: item.ReceivedBy || "", 
       }));
     }
 
@@ -521,7 +521,7 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
 
         let runningPaid = 0;
 
-        // sort payments by date
+        // Sort payments by date
         paymentGroups[invNo].sort(
           (a, b) => new Date(a.Date) - new Date(b.Date),
         );
@@ -543,6 +543,7 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
             ConversionRate: "",
             AmountInINR: "",
             Used: "X",
+            ReceivedBy: item.ReceivedBy || "", 
           });
         });
       });
@@ -554,19 +555,19 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
       ...mapPaymentData(PaymentDetail),
     ];
 
-    // Remove duplicates and prioritize Used = "X"
     const uniqueMap = new Map();
 
     mergedData.forEach((item) => {
-      const key = `${item.InvNo}_${item.TransactionId}`;
+      const dateStr = item.ReceivedDate ? new Date(item.ReceivedDate).toISOString().split('T')[0] : "";
+      const amountStr = Number(item.ReceivedAmount || 0).toFixed(2);
+      
+      const key = `${item.InvNo}_${dateStr}_${amountStr}`;
 
       if (!uniqueMap.has(key)) {
         uniqueMap.set(key, item);
       } else {
         const existing = uniqueMap.get(key);
-
-        // If new record is Used = X then replace
-        if (item.Used === "") {
+        if (item.Used === "" && existing.Used === "X") {
           uniqueMap.set(key, item);
         }
       }
