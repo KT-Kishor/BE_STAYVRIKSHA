@@ -675,27 +675,27 @@ async function putHM_Bookingdeposit(req, res, next) {
     // Split all Member IDs
     const aMemberIDs = String(MemberID).split(",").map(id => id.trim()).filter(Boolean);
 
-    let aMissingMembers = [];
+   let bDocumentExists = false;
 
-    for (const sMemberID of aMemberIDs) {  // Check document for every member
+for (const sMemberID of aMemberIDs) {
 
-      req.body = {
+    req.body = {
         tableName: "HM_CustomerDocument",
         filters: {
-          MemberID: sMemberID
-        },
-      };
+            MemberID: sMemberID
+        }
+    };
 
-      const oDocResult = await CommonReadCall(req, res, next);
+    const oDocResult = await CommonReadCall(req, res, next);
 
-      // Store missing members
-      if (!oDocResult || oDocResult.length === 0) {
-        aMissingMembers.push(sMemberID);
-      }
+    if (oDocResult && oDocResult.length > 0) {
+        bDocumentExists = true;
+        break; // One member has a document, no need to check others
     }
+}
 
     // If any member document missing
-    if (aMissingMembers.length > 0) {
+    if (!bDocumentExists) {
 
       if (CustomerEmail) {
         try {
