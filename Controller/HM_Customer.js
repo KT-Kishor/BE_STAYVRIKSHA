@@ -946,7 +946,8 @@ async function putHM_Customer(req, res, next) {
           PropertyMobileNo: propertyMobileNo || "",
           PropertyEmail: propertyEmail || "",
           PropertyType: booking.PropertyType,
-          EditedSections: payload.EditedSections
+          EditedSections: payload.EditedSections,
+          AdminUpdated:payload.Booking?.[0]?.AdminUpdated  || ""
         };
 
         const originalBody = req.body;
@@ -974,7 +975,13 @@ async function putHM_Customer(req, res, next) {
 async function BookingEditEmail(req, res, next, pdfAttachment) {
   try {
     req.body.tableName = "EmailContent";
+
+    if(req.body.AdminUpdated==="YES" ){
+    req.body.filters = { Type: "AdminBookingEdit" };
+
+    }else{
     req.body.filters = { Type: "BookingEdit" };
+    }
 
     var emailContentData = await CommonReadCall(req, res, next);
     if (!emailContentData || emailContentData.length === 0) {
