@@ -522,7 +522,7 @@ async function postHM_Customer(req, res, next) {
     if (HM_Booking.length >= totalCapacity) {
       return res
         .status(400)
-        .json({ success: false, message: "This room is already booked" });
+        .json({ success: false, message: "All rooms at this property are fully booked." });
     }
 
     // else continue booking...
