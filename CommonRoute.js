@@ -249,6 +249,7 @@ app.post("/HM_ManageInvoiceItem", authenticate, HM_ManageInvoice.postHM_ManageIn
 app.put("/HM_ManageInvoiceItem", authenticate, HM_ManageInvoice.putHM_ManageInvoiceItem);
 app.delete("/HM_ManageInvoiceItem", authenticate, HM_ManageInvoice.deleteHM_ManageInvoiceItem);
 app.get("/HM_InvoicePaymentDetail", authenticate, HM_ManageInvoice.getHM_InvoicePaymentDetail);
+app.get("/fetchHM_InvoicePaymentDetail", authenticate, HM_ManageInvoice.fetchHM_InvoicePaymentDetail);
 app.post("/HM_InvoicePaymentDetail", authenticate, HM_ManageInvoice.postHM_InvoicePaymentDetail);
 app.post("/HM_getAllInvoiceData", authenticate, HM_ManageInvoice.getAllInvoiceData);
 app.get("/HM_getInvoiceData", authenticate, HM_ManageInvoice.getHM_InvoiceFullData)
