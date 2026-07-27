@@ -1159,11 +1159,9 @@ async function fetchHM_InvoicePaymentDetail(req, res, next) {
     req.body.filters = filters;
 
     const invoicePaymentDetail = await CommonReadCall(req, res, next);
-
+    invoicePaymentDetail.sort((a, b) => new Date(b.ReceivedDate) - new Date(a.ReceivedDate));
     res.send({ success: true, data: invoicePaymentDetail });
   } catch (error) {
-    console.error("Error in fetchHM_InvoicePaymentDetail:", error);
-
     return res.status(500).json({
       success: false,
       message: "Failed to fetch HM Invoice Payment Detail.",
