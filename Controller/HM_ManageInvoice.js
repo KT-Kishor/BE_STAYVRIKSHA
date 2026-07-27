@@ -465,7 +465,7 @@ async function deleteHM_ManageInvoiceItem(req, res, next) {
 async function getHM_InvoicePaymentDetail(req, res, next) {
   try {
     const filters = {};
-    if (req.body.InvNo) filters.InvNo = req.body.InvNo;
+    if (req.query.InvNo) filters.InvNo = req.query.InvNo;
 
     req.body.tableName = "HM_InvoicePaymentDetail";
     req.body.filters = filters;
@@ -1153,7 +1153,7 @@ async function fetchHM_InvoicePaymentDetail(req, res, next) {
   try {
     const filters = {};
 
-    if (req.body.InvNo) filters.InvNo = req.body.InvNo;
+    if (req.query.InvNo) filters.InvNo = req.query.InvNo;
 
     req.body.tableName = "HM_InvoicePaymentDetail";
     req.body.filters = filters;
