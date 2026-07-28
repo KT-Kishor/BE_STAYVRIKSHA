@@ -60,12 +60,7 @@ async function postHM_ManageInvoice(req, res, next) {
       });
     }
 
-    if (!data.BookingID) {
-      return res.status(400).send({
-        success: false,
-        message: "BookingID are required",
-      });
-    }
+    if (!data.BookingID) return res.status(400).send({success: false,message: "BookingID are required",});
 
     req.body = {
       tableName: "HM_ManageInvoice",
@@ -86,9 +81,7 @@ async function postHM_ManageInvoice(req, res, next) {
     const financialYear = `${currentYear}/${nextYear.toString().slice(-2)}`;
     const prefix = `${branchCode}/${financialYear}-`;
 
-    const branchFyInvoices = (existingInvoices || []).filter((inv) =>
-      inv.InvNo?.startsWith(prefix),
-    );
+    const branchFyInvoices = (existingInvoices || []).filter((inv) => inv.InvNo?.startsWith(prefix),);
 
     let nextNumber = "001";
     if (branchFyInvoices.length > 0) {
@@ -130,26 +123,26 @@ async function postHM_ManageInvoice(req, res, next) {
 
     const bookingInvoices = await CommonReadCall(req, res, next);
 
-    if (bookingInvoices && bookingInvoices.length > 0) {
-      for (const invoice of bookingInvoices) {
-        req.body = {
-          tableName: "HM_Payment",
-          data: { Used: "X", InvNo: newInvoiceNo },
-          filters: {
-            BookingID: invoice.BookingID || data.BookingID,
-          },
-        };
+    // if (bookingInvoices && bookingInvoices.length > 0) {
+    //   for (const invoice of bookingInvoices) {
+    //     req.body = {
+    //       tableName: "HM_Payment",
+    //       data: { Used: "X", InvNo: newInvoiceNo },
+    //       filters: {
+    //         BookingID: invoice.BookingID || data.BookingID,
+    //       },
+    //     };
 
-        const paymentUpdateResponse = await CommonUpdateCall(req, res, next);
-        if (!paymentUpdateResponse || paymentUpdateResponse.error) {
-          return res.status(500).send({
-            success: false,
-            message:
-              paymentUpdateResponse?.error || "Failed to update HM_Payment",
-          });
-        }
-      }
-    }
+    //     const paymentUpdateResponse = await CommonUpdateCall(req, res, next);
+    //     if (!paymentUpdateResponse || paymentUpdateResponse.error) {
+    //       return res.status(500).send({
+    //         success: false,
+    //         message:
+    //           paymentUpdateResponse?.error || "Failed to update HM_Payment",
+    //       });
+    //     }
+    //   }
+    // }
 
     const itemsWithInvoiceNo = Items.map((item) => ({
       ...item,
@@ -703,29 +696,18 @@ async function getAllInvoiceData(req, res, next) {
     req.body.tableName = "HM_Booking";
     const BookingRaw = await CommonReadCall(req, res, next);
 
-    if (!BookingRaw.length) {
-      return res.send({ success: true, data: {} });
-    }
+    if (!BookingRaw.length) return res.send({ success: true, data: {} });
 
     const bookingStartDate = new Date(BookingRaw[0].StartDate);
     bookingStartDate.setHours(0, 0, 0, 0);
 
     // CYCLE TYPE DETECTION
-    const isYearly = BookingRaw.some(
-      (b) => b.PaymentType?.toLowerCase() === "per year",
-    );
+    const isYearly = BookingRaw.some((b) => b.PaymentType?.toLowerCase() === "per year",);
 
-    const { cycleStart, cycleEnd } = isYearly
-      ? getYearlyCycle(bookingStartDate, invoiceIndex)
-      : getMonthlyCycle(bookingStartDate, invoiceIndex);
+    const { cycleStart, cycleEnd } = isYearly ? getYearlyCycle(bookingStartDate, invoiceIndex) : getMonthlyCycle(bookingStartDate, invoiceIndex);
 
     // BOOKING CALCULATION
-    const BookingData = calculateBookingCycleAmounts(
-      BookingRaw,
-      cycleStart,
-      cycleEnd,
-      invoiceIndex,
-    );
+    const BookingData = calculateBookingCycleAmounts(BookingRaw, cycleStart, cycleEnd, invoiceIndex,);
 
     //  FACILITY ITEMS
     req.body.tableName = "HM_BookingFacilityItems";
@@ -741,12 +723,7 @@ async function getAllInvoiceData(req, res, next) {
       PaymentType: bookingPaymentType,
     }));
 
-    BookingFacilityItems = calculateFacilityCycleAmounts(
-      BookingFacilityItems,
-      cycleStart,
-      cycleEnd,
-      invoiceIndex,
-    );
+    BookingFacilityItems = calculateFacilityCycleAmounts(BookingFacilityItems,cycleStart,cycleEnd,invoiceIndex,);
 
     // CUSTOMER
     req.body.tableName = "HM_Customer";
@@ -760,21 +737,12 @@ async function getAllInvoiceData(req, res, next) {
       req.body.filters = { BookingID: data.BookingID };
       const ManagePayment = await CommonReadCall(req, res, next);
 
-      PerMonthTotalRent = ManagePayment.reduce(
-        (sum, pay) => sum + (parseFloat(pay.Amount) || 0),
-        0,
-      );
+      PerMonthTotalRent = ManagePayment.reduce((sum, pay) => sum + (parseFloat(pay.Amount) || 0),0,);
     }
 
     res.send({
       success: true,
-      data: {
-        ManageInvoice,
-        BookingData,
-        BookingFacilityItems,
-        ManageCustomer,
-        PerMonthTotalRent,
-      },
+      data: {ManageInvoice,BookingData,BookingFacilityItems,ManageCustomer,PerMonthTotalRent,},
     });
   } catch (err) {
     res.status(500).send({
@@ -1147,7 +1115,6 @@ async function getHM_InvoiceFullData(req, res, next) {
     });
   }
 }
-
 
 async function fetchHM_InvoicePaymentDetail(req, res, next) {
   try {
