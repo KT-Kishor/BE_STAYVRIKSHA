@@ -60,7 +60,7 @@ async function postHM_ManageInvoice(req, res, next) {
       });
     }
 
-    if (!data.BookingID) return res.status(400).send({success: false,message: "BookingID are required",});
+    if (!data.BookingID) return res.status(400).send({ success: false, message: "BookingID are required", });
 
     req.body = {
       tableName: "HM_ManageInvoice",
@@ -698,6 +698,37 @@ async function getAllInvoiceData(req, res, next) {
 
     if (!BookingRaw.length) return res.send({ success: true, data: {} });
 
+    // READ BRANCH DATA
+    const branchCodes = [...new Set(BookingRaw.map(item => item.BranchCode).filter(Boolean))];
+
+    const branchCodeFilter = branchCodes.join(",");
+
+    if (branchCodes.length > 0) {
+      req.body.tableName = "HM_Branch";
+      req.body.filters = {
+        BranchID : branchCodeFilter
+      };
+
+      BranchData = await CommonReadCall(req, res, next);
+    }
+
+    // CREATE MAP
+    const branchMap = {};
+    BranchData.forEach(branch => {
+      branchMap[branch.BranchID] = branch;
+    });
+
+    // MERGE BRANCH DETAILS INTO BOOKING
+    BookingRaw.forEach(booking => {
+      const branch = branchMap[booking.BranchCode];
+
+      if (branch) {
+        booking.GSTIN = branch.GSTIN;
+        booking.GSTType = branch.Type;
+        booking.GSTValue = branch.Value;
+      }
+    });
+
     const bookingStartDate = new Date(BookingRaw[0].StartDate);
     bookingStartDate.setHours(0, 0, 0, 0);
 
@@ -723,7 +754,7 @@ async function getAllInvoiceData(req, res, next) {
       PaymentType: bookingPaymentType,
     }));
 
-    BookingFacilityItems = calculateFacilityCycleAmounts(BookingFacilityItems,cycleStart,cycleEnd,invoiceIndex,);
+    BookingFacilityItems = calculateFacilityCycleAmounts(BookingFacilityItems, cycleStart, cycleEnd, invoiceIndex,);
 
     // CUSTOMER
     req.body.tableName = "HM_Customer";
@@ -737,12 +768,12 @@ async function getAllInvoiceData(req, res, next) {
       req.body.filters = { BookingID: data.BookingID };
       const ManagePayment = await CommonReadCall(req, res, next);
 
-      PerMonthTotalRent = ManagePayment.reduce((sum, pay) => sum + (parseFloat(pay.Amount) || 0),0,);
+      PerMonthTotalRent = ManagePayment.reduce((sum, pay) => sum + (parseFloat(pay.Amount) || 0), 0,);
     }
 
     res.send({
       success: true,
-      data: {ManageInvoice,BookingData,BookingFacilityItems,ManageCustomer,PerMonthTotalRent,},
+      data: { ManageInvoice, BookingData, BookingFacilityItems, ManageCustomer, PerMonthTotalRent, },
     });
   } catch (err) {
     res.status(500).send({
