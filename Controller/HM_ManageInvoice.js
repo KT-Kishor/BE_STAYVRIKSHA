@@ -7,6 +7,7 @@ const {
   CommonDeleteCall,
   CommounMultipalUpdate,
   CommonReadWithFilters,
+  CommonDeleteCallWithMutiple
 } = require("./CommonController");
 const { log } = require("console");
 
@@ -442,16 +443,10 @@ async function putHM_ManageInvoiceItem(req, res, next) {
 async function deleteHM_ManageInvoiceItem(req, res, next) {
   try {
     req.body.tableName = "HM_ManageInvoiceItem";
-    var data = await CommonDeleteCall(req, res, next);
-    res.send({
-      success: true,
-      data,
-    });
+    var data = await CommonDeleteCallWithMutiple(req, res, next);
+    res.send({success: true,data,});
   } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: error || "Technical error, please contact the administrator",
-    });
+    res.status(500).send({success: false,message: error || "Technical error, please contact the administrator",});
   }
 }
 
