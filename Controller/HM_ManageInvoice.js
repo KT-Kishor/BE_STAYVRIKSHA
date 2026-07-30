@@ -603,6 +603,7 @@ async function postHM_InvoicePaymentDetail(req, res, next) {
       BranchCode: inputData.BranchCode,
       InvNo: inputData.InvNo,
       EntryDate: inputData.EntryDate,
+      Payment: inputData.Payment
     };
 
     //  CONDITION: mark Used only if no prior payment exists
