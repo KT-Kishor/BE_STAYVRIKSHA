@@ -947,7 +947,9 @@ async function putHM_Customer(req, res, next) {
           PropertyEmail: propertyEmail || "",
           PropertyType: booking.PropertyType,
           EditedSections: payload.EditedSections,
-          AdminUpdated:payload.Booking?.[0]?.AdminUpdated  || ""
+          AdminUpdated:payload.Booking?.[0]?.AdminUpdated  || "",
+          Currency:booking.Currency  || ""
+
         };
 
         const originalBody = req.body;
@@ -1032,6 +1034,7 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
       .replaceAll("<RentPrice>", req.body.RentPrice)
+      .replaceAll("<Currency>", req.body.Currency)
       .replaceAll("<BedType>", req.body.BedType)
       .replaceAll("<Guests>", req.body.Guests)
       .replaceAll("<MemberID>", req.body.MemberID)
