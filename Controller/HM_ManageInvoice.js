@@ -603,7 +603,7 @@ async function postHM_InvoicePaymentDetail(req, res, next) {
       BranchCode: inputData.BranchCode,
       InvNo: inputData.InvNo,
       EntryDate: inputData.EntryDate,
-      // Payment: inputData.Payment
+      Payment: inputData.Payment
     };
 
     //  CONDITION: mark Used only if no prior payment exists
@@ -626,6 +626,7 @@ async function postHM_InvoicePaymentDetail(req, res, next) {
     delete inputData.BookingID;
     delete inputData.PaymentType;
     delete inputData.BranchCode;
+    delete inputData.Payment;
 
     // STEP 3: CREATE INVOICE PAYMENT DETAIL
     req.body = { tableName: "HM_InvoicePaymentDetail", data: inputData };
@@ -671,7 +672,7 @@ async function postHM_InvoicePaymentDetail(req, res, next) {
     res.status(500).send({
       success: false,
       message:
-        error.message || "Technical error, please contact the administrator",
+        error.error || error.message || "Technical error, please contact the administrator",
     });
   }
 }
