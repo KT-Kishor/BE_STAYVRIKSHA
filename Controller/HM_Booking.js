@@ -91,7 +91,8 @@ async function putHM_Booking(req, res, next) {
       PropertyName: propertyName,
       PropertyMobileNo: propertyMobileNo || "",
       PropertyEmail: propertyEmail || "",
-      PropertyType : data.PropertyType
+      PropertyType : data.PropertyType,
+      Currency:data.Currency  || ""
     };
 
     // Update Booking Table First
@@ -115,7 +116,7 @@ async function putHM_Booking(req, res, next) {
 
       } else if (data.Status === "Rejected") {
 
-        await BookingRejectEmail(req, res, next);
+        await BookingRejectEmail(req, res, next,pdfAttachment);
       }
     }
 
@@ -202,7 +203,7 @@ async function BookingConfirmEmail(req, res, next, pdfAttachment) {
   }
 }
 
-async function BookingRejectEmail(req, res, next) {
+async function BookingRejectEmail(req, res, next,pdfAttachment) {
   try {
     req.body.tableName = "EmailContent";
     req.body.filters = { Type: "BookingReject" };
@@ -221,6 +222,16 @@ async function BookingRejectEmail(req, res, next) {
     const toName = req.body.CustomerName;
 
     let subject = emailContent.Subject;
+
+    let attachments = [];
+
+    if (pdfAttachment && pdfAttachment.content) {
+      attachments.push({
+        filename: pdfAttachment.fileName || "BookingVoucher.pdf",
+        content: Buffer.from(pdfAttachment.content, "base64"),
+        contentType: pdfAttachment.mimeType || "application/pdf",
+      });
+    }
 
     subject = subject
         .replaceAll("<PropertyName>", req.body.PropertyName || "")
@@ -247,7 +258,7 @@ async function BookingRejectEmail(req, res, next) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo,attachments);
   } catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
