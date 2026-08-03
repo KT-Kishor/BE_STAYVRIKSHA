@@ -488,6 +488,7 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
         AmountInINR: "",
         Used: "",
         ReceivedBy: item.ReceivedBy || "",
+        EntryDate:item.EntryDate || ""
       }));
     }
 
