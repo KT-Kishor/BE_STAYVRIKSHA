@@ -1149,14 +1149,44 @@ async function fetchHM_InvoicePaymentDetail(req, res, next) {
   try {
     const filters = {};
 
-    if (req.query.InvNo) filters.InvNo = req.query.InvNo;
+    if (req.query.InvNo) {
+      filters.InvNo = req.query.InvNo;
+    }
 
+    // Fetch Invoice Payment Details
     req.body.tableName = "HM_InvoicePaymentDetail";
     req.body.filters = filters;
 
     const invoicePaymentDetail = await CommonReadCall(req, res, next);
-    invoicePaymentDetail.sort((a, b) => new Date(b.ReceivedDate) - new Date(a.ReceivedDate));
-    res.send({ success: true, data: invoicePaymentDetail });
+
+    // Fetch HM_Payment records for the same invoice
+    req.body.tableName = "HM_Payment";
+    req.body.filters = filters;
+
+    const paymentDetails = await CommonReadCall(req, res, next);
+
+    // Compare Invoice No + Amount
+    const result = invoicePaymentDetail.map(invoice => {
+      const matchedPayment = paymentDetails.find(payment =>
+        payment.InvNo === invoice.InvNo &&
+        Number(payment.Amount) === Number(invoice.ReceivedAmount)
+      );
+
+      return {
+        ...invoice,
+       Used: matchedPayment?.Used === "Y" ? "Y" : ""
+      };
+    });
+
+    result.sort(
+      (a, b) => new Date(b.ReceivedDate) - new Date(a.ReceivedDate)
+    );
+
+    res.  send({
+      success: true,
+      data: result
+    });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
