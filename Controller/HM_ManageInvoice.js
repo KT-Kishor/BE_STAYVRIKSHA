@@ -533,6 +533,7 @@ async function getHM_InvoicePaymentDetail(req, res, next) {
             AmountInINR: "",
             Used: "X",
             ReceivedBy: item.ReceivedBy || "",
+            Payment:item.Payment || ""
           });
         });
       });
@@ -1174,7 +1175,8 @@ async function fetchHM_InvoicePaymentDetail(req, res, next) {
 
       return {
         ...invoice,
-       Used: matchedPayment?.Used === "Y" ? "Y" : ""
+       Used: matchedPayment?.Used === "Y" ? "Y" : "",
+       Payment: matchedPayment?.Payment || ""
       };
     });
 
