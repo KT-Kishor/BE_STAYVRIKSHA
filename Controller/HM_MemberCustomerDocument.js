@@ -208,7 +208,8 @@ async function putHM_MemberDocument(req, res, next) {
                         FileName,
                         FileType,
                         MemberID: DocMemberID,
-                        UserID: DocUserID
+                        UserID: DocUserID,
+                        File
                     };
 
                     if (File) {
