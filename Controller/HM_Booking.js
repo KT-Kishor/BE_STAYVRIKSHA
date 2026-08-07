@@ -551,7 +551,7 @@ for (const sMemberID of aMemberIDs) {
 
     const oDocResult = await CommonReadCall(req, res, next);
 
-    if (oDocResult && oDocResult.length > 0) {
+    if (oDocResult && oDocResult.length > 0 && oDocResult[0].File && oDocResult[0].File.length > 0) {
         bDocumentExists = true;
         break; // One member has a document, no need to check others
     }
