@@ -265,6 +265,8 @@ async function getBranchImage(req, res, next) {
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;
     if (req.query.LandMark) req.body.filters.LandMark = req.query.LandMark;
+    if (req.query.PropertyType) req.body.filters.PropertyType = req.query.PropertyType;
+
 
     if (req.query.top) req.body.top = req.query.top;
     if (req.query.skip) req.body.skip = req.query.skip;
@@ -379,6 +381,7 @@ async function HM_BranchData(req, res, next) {
     if (req.query.Name) req.body.filters.Name = req.query.Name;
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;
+    if (req.query.PropertyType) req.body.filters.PropertyType = req.query.PropertyType;
     if (req.query.BranchID) {
       req.body.filters.BranchID = req.query.BranchID.split(",");
     }
