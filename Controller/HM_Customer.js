@@ -568,6 +568,7 @@ async function postHM_Customer(req, res, next) {
 
       req.body = {
         UserName: customer.CustomerName,
+        Salutation: customer.Salutation,
         BookingID: data.BookingID,
         toEmailID: customer.CustomerEmail || "",
         BedType: data.BedType,
@@ -670,6 +671,7 @@ async function BookingSubmitEmail(req, res, next, pdfAttachment) {
     body = body
       .replaceAll("<BookingID>", req.body.BookingID)
       .replaceAll("<CustomerName>", req.body.UserName)
+      .replaceAll("<Salutation>", req.body.Salutation)
       .replaceAll("<BookingDate>", req.body.BookingDate)
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
@@ -876,6 +878,7 @@ async function putHM_Customer(req, res, next) {
     for (const booking of cancelledBookings) {
       req.body = {
         UserName: payload.CustomerName || "Customer",
+        Salutation: payload.Salutation,
         toEmailID: payload.CustomerEmail || "",
         BedType: booking.BedType,
         RentPrice: formatAmount(booking.RentPrice),
@@ -937,6 +940,7 @@ async function putHM_Customer(req, res, next) {
 
         const emailPayload = {
           UserName: payload.CustomerName || "Customer",
+          Salutation: payload.Salutation,
           BookingID: booking.BookingID,
           toEmailID: payload.CustomerEmail || "",
           BedType: booking.BedType,
@@ -1036,6 +1040,7 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
       .replaceAll("<CustomerName>", req.body.UserName)
       .replaceAll("<BookingDate>", req.body.BookingDate)
       .replaceAll("<StartDate>", req.body.StartDate)
+      .replaceAll("<Salutation>", req.body.Salutation)
       .replaceAll("<EndDate>", req.body.EndDate)
       .replaceAll("<RentPrice>", req.body.RentPrice)
       .replaceAll("<Currency>", req.body.Currency)
@@ -1103,6 +1108,7 @@ async function BookingCancelledEmail(req, res, next,pdfAttachment) {
 
     body = body
       .replaceAll("<BookingDate>", req.body.BookingDate)
+
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
       .replaceAll("<RentPrice>", req.body.RentPrice)
@@ -1163,6 +1169,7 @@ async function CheckoutCompletedEmail(req, res, next,pdfAttachment) {
 
     body = body
       .replaceAll("<CustomerName>", req.body.CustomerName)
+      .replaceAll("<Salutation>", req.body.Salutation)
       .replaceAll("<BookingID>", encodedBookingID)
       .replaceAll("<RoomNo>", req.body.RoomNo)
       .replaceAll("<CheckoutDate>", req.body.CheckoutDate)

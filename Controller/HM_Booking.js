@@ -65,15 +65,18 @@ async function putHM_Booking(req, res, next) {
     const propertyName = data.PropertyName || "";
     const propertyMobileNo = `${data.PropertySTD || ""} ${data.PropertyMobileNo || ""}`;
     const propertyEmail = data.PropertyEmail 
+    const Salutation=data.Salutation
 
     // Remove Non-DB Fields Before Update
     delete data.CustomerEmail;
     delete data.Guests;
     delete data.pdfAttachment;
     delete data.PropertyName;
-    delete data.PropertySTD;
+    delete data.PropertySTD
     delete data.PropertyMobileNo;
     delete data.PropertyEmail;
+    delete data.Salutation;
+
 
     // Prepare Email Payload
     const emailPayload = {
@@ -108,7 +111,11 @@ async function putHM_Booking(req, res, next) {
     // Send Email Only After Successful Update
     if (updateResponse && updateResponse.success !== false) {
 
+
+      emailPayload.Salutation = Salutation;
+
       req.body = emailPayload;
+
 
       if (data.Status === "Confirmed") {
 
@@ -181,6 +188,7 @@ async function BookingConfirmEmail(req, res, next, pdfAttachment) {
     body = body
       .replaceAll("<BookingID>", req.body.BookingID)
       .replaceAll("<CustomerName>", req.body.CustomerName)
+      .replaceAll("<Salutation>", req.body.Salutation)
       .replaceAll("<BookingDate>", req.body.BookingDate)
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
@@ -247,6 +255,7 @@ async function BookingRejectEmail(req, res, next,pdfAttachment) {
     body = body
       .replaceAll("<BookingID>", req.body.BookingID)
       .replaceAll("<CustomerName>", req.body.CustomerName)
+      .replaceAll("<Salutation>", req.body.Salutation)
       .replaceAll("<BookingDate>", req.body.BookingDate)
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
