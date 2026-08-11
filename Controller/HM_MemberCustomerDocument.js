@@ -67,6 +67,87 @@ async function getHM_MemberDocument(req, res, next) {
     }
 }
 
+async function getHM_Documentonly(req, res, next) {
+    try {
+        const { MemberID } = req.body;
+
+        if (!MemberID) {
+            return res.status(400).send({
+                success: false,
+                message: "MemberID is required"
+            });
+        }
+
+        req.body = {
+            tableName: "HM_CustomerDocument",
+            filters: { MemberID }
+        };
+
+       
+        const data = await CommonReadWithFilters(req, res, next);
+
+        // Convert File to Base64
+        const documents = (data || []).map(item => {
+            if (item.File) {
+                if (Buffer.isBuffer(item.File)) {
+                    item.File = item.File.toString("base64");
+                } else if (item.File?.data) {
+                    // For Buffer returned as { type: "Buffer", data: [...] }
+                    item.File = Buffer.from(item.File.data).toString("base64");
+                }
+            }
+
+            return item;
+        });
+
+        res.send({
+            success: true,
+            data: documents
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).send({
+            success: false,
+            message: err?.message || "Technical error, please contact the administrator"
+        });
+    }
+}
+
+async function getHM_Member(req, res, next) {
+    try {
+       const { UserID } = req.query;
+
+        if (!UserID) {
+            return res.status(400).send({
+                success: false,
+                message: "UserID is required"
+            });
+        }
+
+        req.body = {
+            tableName: "HM_Members",
+            filters: { UserID }
+        };
+
+        const memberData = await CommonReadWithFilters(req, res, next);
+
+        res.send({
+            success: true,
+            data: memberData
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).send({
+            success: false,
+            message: err?.message || "Technical error, please contact the administrator"
+        });
+    }
+}
+
 async function postHM_MemberDocument(req, res, next) {
   try {
     const payload = req.body.data;
@@ -498,5 +579,7 @@ exports.HM_MemberDocument = {
   putHM_MemberDocument,
   deleteHM_MemberDocument,
   getHM_MemberDoc,
-  putHM_Document
+  putHM_Document,
+  getHM_Documentonly,
+  getHM_Member
 };

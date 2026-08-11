@@ -170,6 +170,10 @@ app.put('/HM_Complaint', authenticate, HM_Complaint.putHM_Complaint);
 app.delete('/HM_Complaint', authenticate, HM_Complaint.deleteHM_Complaint);
 
 app.get("/HM_MemberDocument", authenticate, HM_MemberDocument.getHM_MemberDocument);
+app.get("/HM_Documentonly", authenticate, HM_MemberDocument.getHM_Documentonly);
+app.get("/HM_Memberonly", authenticate, HM_MemberDocument.getHM_Member);
+
+
 app.post("/HM_MemberDocument", authenticate, HM_MemberDocument.postHM_MemberDocument);
 app.put("/HM_MemberDocument", authenticate, HM_MemberDocument.putHM_MemberDocument);
 app.delete("/HM_MemberDocument", authenticate, HM_MemberDocument.deleteHM_MemberDocument);
