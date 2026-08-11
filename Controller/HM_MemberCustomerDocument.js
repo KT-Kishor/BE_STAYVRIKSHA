@@ -69,7 +69,7 @@ async function getHM_MemberDocument(req, res, next) {
 
 async function getHM_Documentonly(req, res, next) {
     try {
-        const { MemberID } = req.body;
+        const { MemberID } = req.query;
 
         if (!MemberID) {
             return res.status(400).send({
