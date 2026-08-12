@@ -1002,9 +1002,9 @@ function calculateFacilityCycleAmounts(items, cycleStart, cycleEnd, invoiceIndex
       switch (unit) {
 
         case "unit price":
-          if (invoiceIndex > 0) {
-            return 0;
-          }
+          // if (invoiceIndex > 0) {
+          //   return 0;
+          // }
           facilityAmount = truncate2(qty * price);
           break;
 
