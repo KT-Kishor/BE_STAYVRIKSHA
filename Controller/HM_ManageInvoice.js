@@ -942,6 +942,16 @@ function calculateFacilityCycleAmounts(items, cycleStart, cycleEnd, invoiceIndex
       effectiveEnd = eDate < cycleEnd ? eDate : cycleEnd;
     }
 
+    if (unit === "unit price") {
+    const startWithinCycle =
+        sDate >= cycleStart &&
+        sDate <= cycleEnd;
+
+    if (!startWithinCycle) {
+        return;
+    }
+}
+
     const calcStart = bookingUnit === "per day" ? sDate : effectiveStart;
     const calcEnd = bookingUnit === "per day" ? eDate : effectiveEnd;
 
