@@ -52,6 +52,9 @@ async function getHM_Customer(req, res, next) {
     if (req.query.RoomNo)
       req.body.filters.RoomNo = normalizeToArray(req.query.RoomNo);
 
+     if (req.query.BranchName)
+      req.body.filters.BranchName = normalizeToArray(req.query.BranchName);
+
     if (req.query.MemberID)
       req.body.filters.MemberID = normalizeToArray(
         req.query.MemberID.split(","),
@@ -116,6 +119,11 @@ async function getHM_Customer(req, res, next) {
       if (req.body.filters.RoomNo) {
         const list = req.body.filters.RoomNo.map((v) => `'${v}'`).join(",");
         whereClauses.push(`B.RoomNo IN (${list})`);
+      }
+
+      if (req.body.filters.BranchName) {
+        const list = req.body.filters.BranchName.map((v) => `'${v}'`).join(",");
+        whereClauses.push(`B.BranchName IN (${list})`);
       }
 
       if (req.body.filters.MemberID) {
@@ -289,7 +297,7 @@ async function getHM_Customer(req, res, next) {
           : mergedData,
     });
   } catch (error) {
-    return res.status(500).send({
+    return res. status(500).send({
       success: false,
       message: "Technical error",
       error: error.message,

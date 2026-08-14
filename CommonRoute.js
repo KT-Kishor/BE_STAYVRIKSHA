@@ -124,6 +124,8 @@ app.delete('/HM_ExtraFacilities', authenticate, HM_ExtraFacilities.deleteHM_Extr
 app.get('/HM_ExtraFacilitiesDelete', authenticate, HM_ExtraFacilities.getBookingFacilityItemsForDelete);
 
 app.get("/HM_BookingFacilityItems", authenticate, HM_BookingFacilityItems.getHM_BookingFacilityItems);
+app.get("/HM_BookingandFacilityItems", authenticate, HM_BookingFacilityItems.getHM_BookingandFacilityItems);
+
 app.post("/HM_BookingFacilityItems", authenticate, HM_BookingFacilityItems.postHM_BookingFacilityItems);
 app.put("/HM_BookingFacilityItems", authenticate, HM_BookingFacilityItems.putHM_BookingFacilityItems);
 app.delete("/HM_BookingFacilityItems", authenticate, HM_BookingFacilityItems.deleteHM_BookingFacilityItems);

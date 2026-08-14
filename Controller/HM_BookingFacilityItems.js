@@ -24,6 +24,45 @@ async function getHM_BookingFacilityItems(req, res, next) {
         });
     }
 }
+async function getHM_BookingandFacilityItems(req, res, next) {
+    try {
+        req.body.filters = {};
+
+        // Apply same filters
+        if (req.query.BookingID) {
+            req.body.filters.BookingID = req.query.BookingID;
+        }
+
+        if (req.query.BranchCode) {
+            req.body.filters.BranchCode = req.query.BranchCode.split(",");
+        }
+
+        // 1. Get Booking Facility Items
+        req.body.tableName = "HM_BookingFacilityItems";
+        const facilityData = await CommonReadWithFilters(req, res, next);
+
+        // 2. Get Booking data using same filters
+        req.body.tableName = "HM_Booking";
+        const bookingData = await CommonReadWithFilters(req, res, next);
+
+        // 3. Merge both arrays
+        const mergedData = [
+            ...(Array.isArray(facilityData) ? facilityData : []),
+            ...(Array.isArray(bookingData) ? bookingData : [])
+        ];
+
+        res.send({
+            success: true,
+            commentData: mergedData
+        });
+
+    } catch (error) {
+        res.status(500).send({
+            success: false,
+            message: error?.message || error || "Technical error, please contact the administrator"
+        });
+    }
+}
 
 async function postHM_BookingFacilityItems(req, res, next) {
     try {
@@ -78,5 +117,6 @@ exports.HM_BookingFacilityItems = {
     getHM_BookingFacilityItems,
     postHM_BookingFacilityItems,
     putHM_BookingFacilityItems,
-    deleteHM_BookingFacilityItems
+    deleteHM_BookingFacilityItems,
+    getHM_BookingandFacilityItems
 };
