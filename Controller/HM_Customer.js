@@ -631,6 +631,74 @@ function formatDate(dateString) {
   return `${day}/${month}/${year}`;
 }
 
+async function getavailableRooms(req, res, next) {
+  try {
+    // Read Bed Type
+
+
+    req.body.filters = {
+      BranchCode: req.query.BranchCode || "",
+      ACType: req.query.ACType || "",
+      Name: req.query.Name || "",
+    };
+
+    req.body.tableName = "HM_BedType";
+
+    const bedTypeResult = await CommonReadWithFilters(req, res, next);
+
+    const BedType = Array.isArray(bedTypeResult)
+      ? bedTypeResult[0]
+      : bedTypeResult;
+
+    const noOfPerson = Number(BedType?.NoOfPerson) || 0;
+    const maxBeds = Number(BedType?.MaxBeds) || 0;
+
+    // Property type
+    const propertyType = req.query.PropertyType || "";
+
+    const totalCapacity = ["Hostel", "PG"].includes(propertyType)
+      ? noOfPerson * maxBeds
+      : maxBeds;
+
+    // Read booking table
+    req.body.filters = {
+      BranchCode: req.query.BranchCode || "",
+      Bedtype: `${req.query.Name} - ${req.query.ACType}` || "",
+      Status: ["New", "Assigned", "Confirmed"],
+    };
+
+    req.body.tableName = "HM_Booking";
+
+    const HM_Booking =
+      (await CommonReadWithFilters(req, res, next)) || [];
+
+    // Check capacity
+    if (HM_Booking.length >= totalCapacity) {
+      return res.status(400).json({
+        success: false,
+        message: "All rooms at this property are fully booked.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      available: true,
+      totalCapacity,
+      bookedCount: HM_Booking.length,
+      availableCount: totalCapacity - HM_Booking.length,
+    });
+
+  } catch (error) {
+    console.error("Error in getavailableRooms:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong.",
+      error: error.message,
+    });
+  }
+}
+
 async function BookingSubmitEmail(req, res, next, pdfAttachment) {
   try {
     req.body.tableName = "EmailContent";
@@ -1306,4 +1374,5 @@ exports.HM_Customer = {
   deleteHM_Customer,
   getBranchHotelData,
   getHM_Members,
+  getavailableRooms
 };
