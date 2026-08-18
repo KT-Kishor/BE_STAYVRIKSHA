@@ -676,7 +676,7 @@ async function getavailableRooms(req, res, next) {
     if (HM_Booking.length >= totalCapacity) {
       return res.status(400).json({
         success: false,
-        message: "All rooms at this property are fully booked.",
+        message: `All ${req.query.Name} - ${req.query.ACType} rooms are currently fully booked.`,
       });
     }
 
