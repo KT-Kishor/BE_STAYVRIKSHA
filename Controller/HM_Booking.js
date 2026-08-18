@@ -528,6 +528,20 @@ async function putHM_Bookingdeposit(req, res, next) {
       MemberID
     } = req.body.data;
 
+    const BranchName = req.body.data.BranchName;
+    const STDCode = req.body.data.STDCode;
+
+    const MobileNo = req.body.data.MobileNo;
+    const AdminEmail = req.body.data.AdminEmail;
+
+
+
+    delete req.body.data.BranchName
+    delete req.body.data.STDCode
+
+    delete req.body.data.MobileNo
+    delete req.body.data.AdminEmail
+
     const { BookingID, flag } = req.body.filters;
 
     if (!BookingID) {
@@ -576,7 +590,11 @@ for (const sMemberID of aMemberIDs) {
             CustomerName,
             UserID,
             BookingID,
-            MemberID
+            MemberID,
+            BranchName,
+            STDCode,
+            MobileNo,
+            AdminEmail
           };
 
           await documentUploadEmail(req, res, next);
@@ -673,7 +691,11 @@ async function documentUploadEmail(req, res, next) {
 
     body = body
       .replaceAll("<BookingID>", req.body.BookingID || "")
+      .replaceAll("<BranchName>", req.body.BranchName || "")
       .replaceAll("<CustomerName>", req.body.CustomerName || "Customer")
+      .replaceAll("<STDCode>", req.body.STDCode || "")
+      .replaceAll("<MobileNo>", req.body.MobileNo || "")
+      .replaceAll("<AdminEmail>", req.body.AdminEmail || "")
       .replaceAll("<EncodedMemberID>", encodedMemberID)
       .replaceAll("<EncodedBookingID>", encodedBookingID);
 
