@@ -46,6 +46,8 @@ async function postHM_Complaint(req, res, next) {
     };
     let emailIds = req.body.data.emailIds;
     let BranchName = req.body.data.BranchName;
+    let ccmailids = req.body.data.ccmailids;
+
 
     if (req.body.data.File) {
       req.body.data.File = Buffer.from(req.body.data.File, 'base64');
@@ -53,12 +55,16 @@ async function postHM_Complaint(req, res, next) {
 
    delete req.body.data.emailIds
    delete req.body.data.BranchName
+   delete req.body.data.ccmailids;
+
 
     // Step 4: Create main Allowance record
     await CommonCreateCall(req, res, next);
 
     req.body.data.emailIds = emailIds;
     req.body.data.BranchName = BranchName;
+    req.body.data.ccmailids=ccmailids;
+
 
     await ComplaintSubmitEmail(req, res, next);
     res.status(200).send({
@@ -121,7 +127,11 @@ async function ComplaintSubmitEmail(req, res, next) {
       .replaceAll("<Comment>", req.body.data.Comment)
 
 
-    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+      const CC = (req.body.data.ccmailids  || "")
+      .split(",")
+      .map(email => email.trim())
+      .filter(email => email);
+
     const replyTo = emailContent.ReplyToEmailId;
 
     await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
@@ -142,16 +152,22 @@ async function putHM_Complaint(req, res, next) {
     let emailIds = req.body.data.emailIds;
     let BranchName = req.body.data.BranchName;
     let AdminName = req.body.data.AdminName;
+    let ccemailIds = req.body.data.ccmailids;
+
 
 
     delete req.body.data.emailIds
     delete req.body.data.BranchName
     delete req.body.data.AdminName
+    delete req.body.data.ccmailids 
+
     await CommonUpdateCall(req, res, next);
 
      req.body.data.emailIds = emailIds;
     req.body.data.BranchName = BranchName;
     req.body.data.AdminName = AdminName;
+    req.body.data.ccmailids = ccemailIds;
+
     
     if(req.body.data.Status !=="In Progress") {
      await ComplaintSubmitEmail(req, res, next);
