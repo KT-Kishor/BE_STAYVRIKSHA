@@ -505,8 +505,7 @@ async function HM_StaffContact(req, res, next) {
   try {
     req.body.filters = {};
     req.body.tableName = "HM_Login";
-    if (req.query.Role) req.body.filters.Role = req.query.Role;
-    if (req.query.UserID) req.body.filters.UserID = req.query.UserID;
+      if (req.query.UserID) req.body.filters.UserID = req.query.UserID;
     if (req.query.UserName) req.body.filters.UserName = req.query.UserName;
     if (req.query.BranchCode) req.body.filters.BranchCode = req.query.BranchCode.split(",");
     if (req.query.Type) req.body.filters.Type = req.query.Type;
@@ -539,6 +538,41 @@ async function HM_StaffContact(req, res, next) {
   } catch (err) {
     res.status(500).send({ success: false, message: err || "Technical error, please contact the administrator", });
   }
+}
+
+async function HM_StaffEmailIDs(req, res, next) {
+    try {
+        req.body.filters = {};
+        req.body.tableName = "HM_Login";
+        req.body.selectedFields = ["BranchCode", "EmailID"];
+
+        const data = await CommonReadWithFilters(req, res, next);
+
+        const branchCode = req.query.BranchCode;
+
+        let filteredData = data;
+
+        if (branchCode) {
+            filteredData = data.filter(item => {
+                const branches = (item.BranchCode || "")
+                    .split(",")
+                    .map(code => code.trim());
+
+                return branches.includes(branchCode.trim());
+            });
+        }
+
+        res.send({
+            success: true,
+            data: filteredData
+        });
+
+    } catch (err) {
+        res.status(500).send({
+            success: false,
+            message: err?.message || "Technical error, please contact the administrator"
+        });
+    }
 }
 
 async function HM_LoginReadCall(req, res, next) {
@@ -916,5 +950,6 @@ exports.HM_Login = {
   OTPEmail,
   VerifyCustomerOTP,
   HM_Customerdata,
-  HostelSendBackOTPEmail
+  HostelSendBackOTPEmail,
+  HM_StaffEmailIDs
 };

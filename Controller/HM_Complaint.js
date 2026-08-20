@@ -3,7 +3,9 @@ const {
   CommonReadWithFilters,
   CommonCreateCall,
   CommonUpdateCall,
-  CommonDeleteCall
+  CommonDeleteCall,
+  CommonReadCall,
+  CommonSendEmail
 } = require("./CommonController");
 
 async function getHM_Complaint(req, res, next) {
@@ -42,11 +44,23 @@ async function postHM_Complaint(req, res, next) {
     req.body.data = {
       ...data,
     };
+    let emailIds = req.body.data.emailIds;
+    let BranchName = req.body.data.BranchName;
+
     if (req.body.data.File) {
       req.body.data.File = Buffer.from(req.body.data.File, 'base64');
     }
+
+   delete req.body.data.emailIds
+   delete req.body.data.BranchName
+
     // Step 4: Create main Allowance record
     await CommonCreateCall(req, res, next);
+
+    req.body.data.emailIds = emailIds;
+    req.body.data.BranchName = BranchName;
+
+    await ComplaintSubmitEmail(req, res, next);
     res.status(200).send({
       success: true,
       message: "Complaint details saved successfully!",
@@ -61,13 +75,89 @@ async function postHM_Complaint(req, res, next) {
   }
 }
 
+async function ComplaintSubmitEmail(req, res, next) {
+  try {
+
+    req.body.tableName = "EmailContent";
+    if(req.body.data.Status === "Resolved") {
+      req.body.filters = { Type: "HM_ResolveComplaint" };
+    }else {
+      req.body.filters = { Type: "HM_Complaint" };
+    }
+
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res
+        .status(404)
+        .send({ success: false, message: "Email content not found" });
+    }
+
+    var emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+
+        const to = (req.body.data.emailIds || "")
+      .split(",")
+      .map(email => email.trim())
+      .filter(email => email);
+
+    const toName = req.body.data.UserName;
+    let subject = emailContent.Subject;
+
+    // Ensure replacements are applied
+    let body= emailContent.Body;
+
+    body = body
+      .replaceAll("<BranchName>", req.body.data.BranchName)
+      .replaceAll("<RoomNo>", req.body.data.RoomNo)
+      .replaceAll("<CustomerName>", req.body.data.CustomerName)
+      .replaceAll("<BookingID>", req.body.data.BookingID)
+      .replaceAll("<ComplaintType>", req.body.data.ComplaintType)
+      .replaceAll("<Description>", req.body.data.Description)
+      .replaceAll("<ComplaintID>", req.body.data.ComplaintID)
+      .replaceAll("<Status>", req.body.data.Status)
+      .replaceAll("<Comment>", req.body.data.Comment)
+
+
+    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
+
 async function putHM_Complaint(req, res, next) {
   try {
     req.body.tableName = "HM_Complaint";
     if (req.body.data.File) {
       req.body.data.File = Buffer.from(req.body.data.File, 'base64');
     }
+
+
+
+    let emailIds = req.body.data.emailIds;
+    let BranchName = req.body.data.BranchName;
+    let AdminName = req.body.data.AdminName;
+
+
+    delete req.body.data.emailIds
+    delete req.body.data.BranchName
+    delete req.body.data.AdminName
     await CommonUpdateCall(req, res, next);
+
+     req.body.data.emailIds = emailIds;
+    req.body.data.BranchName = BranchName;
+    req.body.data.AdminName = AdminName;
+    
+    if(req.body.data.Status !=="In Progress") {
+     await ComplaintSubmitEmail(req, res, next);
+    }
+
+
     res.status(200).send({ success: true, message: "Complaint details updated!" });
   } catch (error) {
     res.status(500).send({

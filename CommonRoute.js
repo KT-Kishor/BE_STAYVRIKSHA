@@ -154,6 +154,8 @@ app.post("/EmailOTP", authenticate, HM_Login.OTPEmail);
 app.get("/HM_VerifyOTP", authenticate, HM_Login.VerifyCustomerOTP);
 app.get("/HM_CustomerContact", authenticate, HM_Login.HM_CustomerContact);
 app.get("/HM_StaffContact", authenticate, HM_Login.HM_StaffContact);
+app.get("/HM_StaffEmailIDs", authenticate, HM_Login.HM_StaffEmailIDs);
+
 app.get("/HM_LoginReadCall", authenticate, HM_Login.HM_LoginReadCall);
 app.get("/HM_Logindata", authenticate, HM_Login.HM_Customerdata);
 
