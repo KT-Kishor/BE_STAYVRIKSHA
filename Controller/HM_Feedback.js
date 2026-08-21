@@ -14,7 +14,10 @@ async function getHM_Feedback(req, res, next) {
     if (req.query.CustomerName) req.body.filters.CustomerName = req.query.CustomerName;
     if (req.query.RoomNo) req.body.filters.RoomNo = req.query.RoomNo;
     if (req.query.BedType) req.body.filters.BedType = req.query.BedType;
-    if (req.query.OverallRating) req.body.filters.OverallRating = req.query.OverallRating;
+     if (req.query.OverallRating) {
+    req.body.filters.OverallRating = req.query.OverallRating.split(",");
+    }
+    
     if (req.query.StartDate && req.query.EndDate) req.body.filters.FeedbackDate = [req.query.StartDate, req.query.EndDate]
     if (req.query.BranchCode) req.body.filters.BranchCode = req.query.BranchCode.split(",");
     if (req.query.BranchCode === "" && req.query.Role === "Admin") return res.status(200).send({ success: true, data: [] })
