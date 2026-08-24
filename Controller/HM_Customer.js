@@ -829,7 +829,6 @@ async function putHM_Customer(req, res, next) {
           completedBookings.push({ ...booking });
 
         const dbBooking = { ...booking };
-        delete dbBooking.CustomerName;
         delete dbBooking.CustomerEmail;
 
         return {
