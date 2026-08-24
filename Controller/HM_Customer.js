@@ -965,7 +965,8 @@ async function putHM_Customer(req, res, next) {
         PropertyMobileNo: propertyMobileNo || "",
         PropertyEmail: propertyEmail || "",
         PropertyType: propertyType || "",
-        Currency:booking.Currency  || ""
+        Currency:booking.Currency  || "",
+        BookingID: booking.BookingID
       };
 
       await BookingCancelledEmail(req, res, next,pdfAttachment);
@@ -986,7 +987,7 @@ async function putHM_Customer(req, res, next) {
         Currency:booking.Currency  || ""
       };
 
-      await CheckoutCompletedEmail(req, res, next,pdfAttachment);
+      await CheckoutCompletedEmail(req, res, next);
     }
 
     if (payload.Booking && payload.Booking.length > 0) {
@@ -1183,7 +1184,8 @@ async function BookingCancelledEmail(req, res, next,pdfAttachment) {
 
     body = body
       .replaceAll("<BookingDate>", req.body.BookingDate)
-
+      .replaceAll("<UserName>", req.body.UserName)
+      .replaceAll("<BookingID>", req.body.BookingID)
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
       .replaceAll("<RentPrice>", req.body.RentPrice)
@@ -1204,7 +1206,7 @@ async function BookingCancelledEmail(req, res, next,pdfAttachment) {
   }
 }
 
-async function CheckoutCompletedEmail(req, res, next,pdfAttachment) {
+async function CheckoutCompletedEmail(req, res, next) {
   try {
     req.body.tableName = "EmailContent";
     req.body.filters = { Type: "HM_CheckoutNotification" };
@@ -1220,15 +1222,15 @@ async function CheckoutCompletedEmail(req, res, next,pdfAttachment) {
     const toName = req.body.CustomerName;
     let subject = emailContent.Subject;
 
-    let attachments = [];
+    // let attachments = [];
 
-    if (pdfAttachment && pdfAttachment.content) {
-      attachments.push({
-        filename: pdfAttachment.fileName || "BookingVoucher.pdf",
-        content: Buffer.from(pdfAttachment.content, "base64"),
-        contentType: pdfAttachment.mimeType || "application/pdf",
-      });
-    }
+    // if (pdfAttachment && pdfAttachment.content) {
+    //   attachments.push({
+    //     filename: pdfAttachment.fileName || "BookingVoucher.pdf",
+    //     content: Buffer.from(pdfAttachment.content, "base64"),
+    //     contentType: pdfAttachment.mimeType || "application/pdf",
+    //   });
+    // }
 
     subject = subject
       .replaceAll("<PropertyName>", req.body.PropertyName || "")
@@ -1258,7 +1260,7 @@ async function CheckoutCompletedEmail(req, res, next,pdfAttachment) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo,attachments);
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
   } catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
