@@ -1186,6 +1186,7 @@ async function BookingCancelledEmail(req, res, next,pdfAttachment) {
       .replaceAll("<BookingDate>", req.body.BookingDate)
       .replaceAll("<UserName>", req.body.UserName)
       .replaceAll("<BookingID>", req.body.BookingID)
+      .replaceAll("<Salutation>", req.body.Salutation)
       .replaceAll("<StartDate>", req.body.StartDate)
       .replaceAll("<EndDate>", req.body.EndDate)
       .replaceAll("<RentPrice>", req.body.RentPrice)
@@ -1296,6 +1297,9 @@ async function getBranchHotelData(req, res, next) {
 
     req.body.tableName = "HM_Branch";
     req.body.filters = {};
+     req.body.selectedFields = ["Name", "BranchID", "City", "Country","State", "LandMark", "Address", "Type", "Value", "GSTIN", 
+      "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact", "Pincode","Penalty","Currency","Status",
+      "StartingPrice","EditBefore"];
     if (req.query.BranchID)
       req.body.filters.BranchID = req.query.BranchID.split(",");
     const HM_Branch = await CommonReadWithFilters(req, res, next);
