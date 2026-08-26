@@ -49,7 +49,8 @@ async function postHM_Payment(req, res, next) {
       ReceivedAmount: data.Amount || "0",
       TotalAmount: data.Amount || "0",
       DueAmount: "0",
-      Currency: data.Currency || "INR"
+      Currency: data.Currency || "INR",
+      EntryDate:new Date()
     };
 
     req.body = { tableName: "HM_InvoicePaymentDetail", data: [invoicePaymentPayload] };
