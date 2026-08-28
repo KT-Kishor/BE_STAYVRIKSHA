@@ -52,7 +52,7 @@ async function getHM_Customer(req, res, next) {
     if (req.query.RoomNo)
       req.body.filters.RoomNo = normalizeToArray(req.query.RoomNo);
 
-     if (req.query.BranchName)
+    if (req.query.BranchName)
       req.body.filters.BranchName = normalizeToArray(req.query.BranchName);
 
     if (req.query.MemberID)
@@ -64,7 +64,7 @@ async function getHM_Customer(req, res, next) {
       req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate];
     }
 
-    if ((req.query.BookingID && !req.query.MemberID) || (!req.query.BookingID && !req.query.UserID)) {
+    if ((!req.query.BookingID)) {
       let query = `
         SELECT
           C.BookingID,
@@ -158,6 +158,8 @@ async function getHM_Customer(req, res, next) {
       });
     }
 
+    
+
     req.body.filters = {};
     req.body.tableName = "HM_Customer";
 
@@ -173,6 +175,16 @@ async function getHM_Customer(req, res, next) {
         message: "No customers found",
       });
     }
+    
+    req.body.filters = {};
+    req.body.tableName = "HM_Booking";
+
+      req.body.selectedFields = ["MemberID"];
+
+    if (req.query.BookingID) req.body.filters.BookingID = req.query.BookingID;
+
+
+    const Booking = await CommonReadWithFilters(req, res, next);
 
     // 🔹 OTP validation
     if (req.query.OTP) {
@@ -218,14 +230,29 @@ async function getHM_Customer(req, res, next) {
       facilityQuery = `SELECT * FROM HM_BookingFacilityItems WHERE BookingID IN (${bookingInClause})`;
     }
 
-    let ids = [];
-    if (req.query.MemberID) {
-      ids = req.query.MemberID.split(",")
+    // let ids = [];
+    // if (req.query.MemberID) {
+    //   ids = req.query.MemberID.split(",")
+    //     .map((id) => id.trim())
+    //     .filter(Boolean);
+    // } else {
+    //   ids = customers.map((c) => c.MemberID).filter((id) => id);
+    // }
+
+   
+
+      //   const ids = Booking[0]
+      // .map((c) => c.MemberID)
+      // .filter(Boolean)
+      // .map((id) => String(id).trim());
+
+      const ids = Booking[0]?.MemberID
+    ? Booking[0].MemberID
+        .split(",")
         .map((id) => id.trim())
-        .filter(Boolean);
-    } else {
-      ids = customers.map((c) => c.MemberID).filter((id) => id);
-    }
+        .filter(Boolean)
+    : [];
+
 
     let memberCondition = "";
     if (ids.length > 0) {
@@ -297,7 +324,7 @@ async function getHM_Customer(req, res, next) {
           : mergedData,
     });
   } catch (error) {
-    return res. status(500).send({
+    return res.status(500).send({
       success: false,
       message: "Technical error",
       error: error.message,
@@ -590,7 +617,7 @@ async function postHM_Customer(req, res, next) {
         PropertyMobileNo: propertyMobileNo || "",
         PropertyEmail: propertyEmail || "",
         PropertyType: data.PropertyType,
-        Currency:data.Currency
+        Currency: data.Currency
       };
 
       await BookingSubmitEmail(req, res, next, pdfAttachment);
@@ -965,11 +992,11 @@ async function putHM_Customer(req, res, next) {
         PropertyMobileNo: propertyMobileNo || "",
         PropertyEmail: propertyEmail || "",
         PropertyType: propertyType || "",
-        Currency:booking.Currency  || "",
+        Currency: booking.Currency || "",
         BookingID: booking.BookingID
       };
 
-      await BookingCancelledEmail(req, res, next,pdfAttachment);
+      await BookingCancelledEmail(req, res, next, pdfAttachment);
     }
 
     // 8️⃣ SEND CHECKOUT COMPLETED MAIL
@@ -984,7 +1011,7 @@ async function putHM_Customer(req, res, next) {
         PropertyMobileNo: propertyMobileNo || "",
         PropertyEmail: propertyEmail || "",
         PropertyType: propertyType || "",
-        Currency:booking.Currency  || ""
+        Currency: booking.Currency || ""
       };
 
       await CheckoutCompletedEmail(req, res, next);
@@ -1031,8 +1058,8 @@ async function putHM_Customer(req, res, next) {
           PropertyEmail: propertyEmail || "",
           PropertyType: booking.PropertyType,
           EditedSections: payload.EditedSections,
-          AdminUpdated:payload.Booking?.[0]?.AdminUpdated  || "",
-          Currency:booking.Currency  || ""
+          AdminUpdated: payload.Booking?.[0]?.AdminUpdated || "",
+          Currency: booking.Currency || ""
 
         };
 
@@ -1045,7 +1072,7 @@ async function putHM_Customer(req, res, next) {
       }
     }
 
-    return res. status(200).send({
+    return res.status(200).send({
       success: true,
       message: "Customer details updated successfully!",
     });
@@ -1062,11 +1089,11 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
   try {
     req.body.tableName = "EmailContent";
 
-    if(req.body.AdminUpdated==="YES" ){
-    req.body.filters = { Type: "AdminBookingEdit" };
+    if (req.body.AdminUpdated === "YES") {
+      req.body.filters = { Type: "AdminBookingEdit" };
 
-    }else{
-    req.body.filters = { Type: "BookingEdit" };
+    } else {
+      req.body.filters = { Type: "BookingEdit" };
     }
 
     var emailContentData = await CommonReadCall(req, res, next);
@@ -1098,7 +1125,7 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
     subject = subject
       .replaceAll("<PropertyName>", req.body.PropertyName || "")
       .replaceAll("<PropertyType>", req.body.PropertyType || "")
-     
+
 
 
 
@@ -1109,7 +1136,7 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
 
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.UserName},</p>
-                    <p>${emailContent.Body}</p>`;   
+                    <p>${emailContent.Body}</p>`;
 
     body = body
       .replaceAll("<BookingID>", req.body.BookingID)
@@ -1130,24 +1157,24 @@ async function BookingEditEmail(req, res, next, pdfAttachment) {
       .replaceAll("<EncodedMemberID>", encodedMemberID)
       .replaceAll("<EncodedCustomerID>", encodedCustomerID)
       .replaceAll(
-    "<EditedSections>",
-    Array.isArray(req.body.EditedSections) && req.body.EditedSections.length > 0
-        ?"<strong>The document details associated with your booking have been updated.</strong>"
-        : ""
-)
+        "<EditedSections>",
+        Array.isArray(req.body.EditedSections) && req.body.EditedSections.length > 0
+          ? "<strong>The document details associated with your booking have been updated.</strong>"
+          : ""
+      )
 
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
     await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
-  } 
+  }
   catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
 
-async function BookingCancelledEmail(req, res, next,pdfAttachment) {
+async function BookingCancelledEmail(req, res, next, pdfAttachment) {
   try {
     req.body.tableName = "EmailContent";
     req.body.filters = { Type: "BookingCancelled" };
@@ -1201,7 +1228,7 @@ async function BookingCancelledEmail(req, res, next,pdfAttachment) {
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo,attachments);
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments);
   } catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
@@ -1297,9 +1324,9 @@ async function getBranchHotelData(req, res, next) {
 
     req.body.tableName = "HM_Branch";
     req.body.filters = {};
-     req.body.selectedFields = ["Name", "BranchID", "City", "Country","State", "LandMark", "Address", "Type", "Value", "GSTIN", 
-      "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact", "Pincode","Penalty","Currency","Status",
-      "StartingPrice","EditBefore"];
+    req.body.selectedFields = ["Name", "BranchID", "City", "Country", "State", "LandMark", "Address", "Type", "Value", "GSTIN",
+      "GeoLocation", "CheckinTime", "CheckoutTime", "EmailID", "PropertyType", "STD", "Contact", "Pincode", "Penalty", "Currency", "Status",
+      "StartingPrice", "EditBefore"];
     if (req.query.BranchID)
       req.body.filters.BranchID = req.query.BranchID.split(",");
     const HM_Branch = await CommonReadWithFilters(req, res, next);
@@ -1372,6 +1399,239 @@ async function getHM_Members(req, res, next) {
   }
 }
 
+async function SendReminder(req, res, next) {
+  try {
+
+    const branchCode = req.query.BranchCode;
+    const paymentType = req.query.PaymentType; // Per Month / Per Year
+    const month = req.query.Month;             // 08
+    const year = req.query.Year;               // 2026
+    const WMonth = req.query.WMonth;               // 2026
+
+    // --------------------------------------------------
+    // 1. Get Assigned bookings
+    // --------------------------------------------------
+
+    req.body.filters = {
+      Status: ["Assigned"]
+    };
+
+    if (branchCode) {
+      req.body.filters.BranchCode = branchCode.split(",");
+    }
+
+    if (paymentType) {
+      req.body.filters.PaymentType = [paymentType];
+    }
+
+    req.body.selectedFields = [
+      "BookingID",
+      "BranchCode",
+      "PaymentType",
+      "Status",
+      "CustomerEmail",
+      "StartDate"
+    ];
+
+    req.body.tableName = "HM_Booking";
+
+    const filteredBookings = await CommonReadWithFilters(req, res, next);
+
+
+    let Booking = filteredBookings;
+
+    
+     if (year) {
+
+            const selectedYear = Number(year);
+            const selectedMonth = month ? Number(month) : null;
+
+            Booking = filteredBookings.filter(item => {
+
+                if (!item.StartDate) {
+                    return false;
+                }
+
+                const startDate = new Date(item.StartDate);
+
+                // ------------------------------------------
+                // CASE 1: Month + Year
+                // ------------------------------------------
+
+                if (selectedMonth) {
+
+                    return (
+                        startDate.getMonth() + 1 === selectedMonth &&
+                        startDate.getFullYear() === selectedYear
+                    );
+                }
+
+                // ------------------------------------------
+                // CASE 2: Year only
+                // ------------------------------------------
+
+                return (
+                    startDate.getFullYear() === selectedYear
+                );
+            });
+        }
+
+    // No assigned bookings
+    if (!Booking || Booking.length === 0) {
+      return res.send({
+        success: true,
+        data: [],
+        count: 0,
+        message: "No assigned bookings found."
+      });
+    }
+
+    // --------------------------------------------------
+    // 2. Get Booking IDs
+    // --------------------------------------------------
+
+    const bookingIds = Booking
+      .map(item => item.BookingID)
+      .filter(Boolean);
+
+    // --------------------------------------------------
+    // 3. Get invoices for these bookings
+    // --------------------------------------------------
+    req.body.filters = {};
+
+    req.body.filters.BookingID = bookingIds;
+
+    req.body.selectedFields = [
+      "BookingID",
+      "InvNo",
+      "InvoiceDate",
+      "Status"
+    ];
+
+    req.body.tableName = "HM_ManageInvoice";
+
+    const Invoices = await CommonReadWithFilters(req, res, next);
+
+        const selectedYear = year ? Number(year) : null;
+        const selectedMonth = month ? Number(month) : null;
+
+        const reminderData = [];
+
+
+        for (const booking of Booking) {
+
+            const bookingInvoices = (Invoices || []).filter(
+                invoice =>
+                    invoice.BookingID === booking.BookingID
+            );
+
+            const monthInvoice = bookingInvoices.find(invoice => {
+
+                if (!invoice.InvoiceDate) {
+                    return false;
+                }
+
+                const invoiceDate =
+                    new Date(invoice.InvoiceDate);
+
+                if (selectedMonth) {
+
+                    return (
+                        invoiceDate.getMonth() + 1 === selectedMonth &&
+                        invoiceDate.getFullYear() === selectedYear
+                    );
+                }
+
+                return (
+                    invoiceDate.getFullYear() === selectedYear
+                );
+            });
+
+      // No invoice for selected month
+      if (!monthInvoice) {
+
+        reminderData.push({
+          CustomerEmail: booking.CustomerEmail,
+        });
+
+        continue;
+      }
+
+      // Invoice exists but is partially paid
+      if (
+        monthInvoice.Status &&
+        (monthInvoice.Status.toLowerCase() === "payment partial" ||
+          monthInvoice.Status.toLowerCase() === "submitted")
+      ) {
+
+        reminderData.push({
+          CustomerEmail: booking.CustomerEmail
+        });
+      }
+    }
+    req.body.emails = reminderData
+      .map(item => item.CustomerEmail)
+      .filter(Boolean);
+
+      req.body.WMonth=WMonth
+      req.body.year=year
+
+
+    // await sendreminderEmail(req, res, next);
+    // --------------------------------------------------
+    // 5. Return data
+    // --------------------------------------------------
+
+    return res.send({
+      success: true,
+    });
+
+  } catch (error) {
+
+    return res.status(500).send({
+      success: false,
+      message: "Technical error, please contact admin",
+      error: error.message
+    });
+  }
+}
+async function sendreminderEmail(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_SendReminder" };
+
+    const emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) return;
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [req.body.toEmailID];
+    const toName = req.body.CustomerName;
+    let subject = emailContent.Subject;
+
+    let body = emailContent.Body;
+
+      body = body
+      .replaceAll("<Month>", req.body.WMonth)
+      .replaceAll("<Year>", req.body.year)
+
+    const CC = [];
+
+    const BCC = (req.body.emails || "")
+
+
+    const replyTo = emailContent.ReplyToEmailId;
+
+    const attachments = []
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, attachments, BCC);
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
+
 exports.HM_Customer = {
   getHM_Customer,
   postHM_Customer,
@@ -1379,5 +1639,6 @@ exports.HM_Customer = {
   deleteHM_Customer,
   getBranchHotelData,
   getHM_Members,
-  getavailableRooms
+  getavailableRooms,
+  SendReminder
 };

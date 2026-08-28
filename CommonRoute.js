@@ -90,6 +90,8 @@ app.put("/Package", authenticate, Subscription.putPackage);
 app.delete("/Package", authenticate, Subscription.deletePackage);
 
 app.get("/HM_Customer", authenticate, HM_Customer.getHM_Customer);
+app.get("/HM_SendReminder", authenticate, HM_Customer.SendReminder);
+
 app.get("/HM_AvailableRooms", authenticate, HM_Customer.getavailableRooms);
 app.post("/HM_Customer", authenticate, HM_Customer.postHM_Customer);
 app.put("/HM_Customer", authenticate, HM_Customer.putHM_Customer);
