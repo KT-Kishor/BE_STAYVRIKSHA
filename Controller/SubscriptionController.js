@@ -64,7 +64,6 @@ async function deletePackage(req, res, next) {
 }
 
 
-
 // =============================
 // SUBSCRIPTION CRUD
 // =============================
@@ -106,36 +105,20 @@ async function putSubscription(req, res, next) {
         req.body.tableName = "Subscription";
         await CommonUpdateCall(req, res, next);
 
-        res.send({
-            success: true,
-            message: "Subscription updated successfully"
-        });
+        res.send({ success: true, message: "Subscription updated successfully" });
 
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message
-        });
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
 async function deleteSubscription(req, res, next) {
     try {
-
         req.body.tableName = "Subscription";
-
         const data = await CommonDeleteCall(req, res, next);
-
-        res.send({
-            success: true,
-            data
-        });
-
+        res.send({ success: true, data });
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message
-        });
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
@@ -155,20 +138,16 @@ async function getSubscriptionPayment(req, res, next) {
 
         const data = await CommonReadWithFilters(req, res, next);
 
-        res.send({success: true,data});
+        res.send({ success: true, data });
     } catch (error) {
-        res.status(500).send({success: false,message: error.message});
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
 async function postSubscriptionPayment(req, res, next) {
-
     try {
-
         req.body.tableName = "Subscription_Payment";
-
         var data = req.body.data;
-
         var LoginRole = data.LoginRole;
         var UserID = data.UserID;
         var UserName = data.UserName;
@@ -186,13 +165,11 @@ async function postSubscriptionPayment(req, res, next) {
         // UPDATE SUBSCRIPTION
         req.body.tableName = "Subscription";
 
-        req.body.filters = {
-            SubscriptionID: data.SubscriptionID
-        };
+        req.body.filters = { SubscriptionID: data.SubscriptionID };
 
         req.body.data = {
             PaymentStatus: data.PaymentStatus,
-            SubscriptionStatus:data.PaymentStatus === "Success" ? "Active" : "Pending"
+            SubscriptionStatus: data.PaymentStatus === "Success" ? "Active" : "Pending"
         };
 
         await CommonUpdateCall(req, res, next);
@@ -200,63 +177,52 @@ async function postSubscriptionPayment(req, res, next) {
         // UPDATE USER ROLE
         req.body.tableName = "HM_Login";
 
-        req.body.filters = {
-            UserID: UserID
-        };
+        req.body.filters = { UserID: UserID };
 
-        req.body.data = {
-            Subscription_Role: LoginRole
-        };
+        req.body.data = { Subscription_Role: LoginRole };
 
         await CommonUpdateCall(req, res, next);
-        return res.send({success: true,message: "Payment saved successfully"});
+        return res.send({ success: true, message: "Payment saved successfully" });
     } catch (error) {
-        return res.status(500).send({success: false,message:error.message ||"Technical error, please contact administrator"
-        });
+        return res.status(500).send({ success: false, message: error.message || "Technical error, please contact administrator" });
     }
 }
 
 async function putSubscriptionPayment(req, res, next) {
     try {
-
         req.body.tableName = "Subscription_Payment";
-
         await CommonUpdateCall(req, res, next);
-
-        res.send({
-            success: true,
-            message: "Payment updated successfully"
-        });
-
+        res.send({ success: true, message: "Payment updated successfully" });
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message
-        });
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
 async function deleteSubscriptionPayment(req, res, next) {
     try {
-
         req.body.tableName = "Subscription_Payment";
-
         const data = await CommonDeleteCall(req, res, next);
-
-        res.send({
-            success: true,
-            data
-        });
-
+        res.send({ success: true, data });
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message
-        });
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 
+async function getPackage_Feature_Comparison(req, res, next) {
+    try {
+        req.body.tableName = "Package_Feature_Comparison";
+        req.body.filters = {};
 
+        if (req.query.FeatureID) req.body.filters.FeatureID = req.query.FeatureID;
+
+        const data = await CommonReadWithFilters(req, res, next);
+
+        res.send({ success: true, data });
+
+    } catch (error) {
+        res.status(500).send({ success: false, message: error.message });
+    }
+}
 
 exports.Subscription = {
     getSubscription,
@@ -270,5 +236,6 @@ exports.Subscription = {
     getSubscriptionPayment,
     postSubscriptionPayment,
     putSubscriptionPayment,
-    deleteSubscriptionPayment
+    deleteSubscriptionPayment,
+    getPackage_Feature_Comparison
 };

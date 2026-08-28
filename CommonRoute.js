@@ -88,6 +88,7 @@ app.get("/Package", authenticate, Subscription.getPackage);
 app.post("/Package", authenticate, Subscription.postPackage);
 app.put("/Package", authenticate, Subscription.putPackage);
 app.delete("/Package", authenticate, Subscription.deletePackage);
+app.get("/Package_Feature_Comparison", authenticate, Subscription.getPackage_Feature_Comparison);
 
 app.get("/HM_Customer", authenticate, HM_Customer.getHM_Customer);
 app.get("/HM_SendReminder", authenticate, HM_Customer.SendReminder);
