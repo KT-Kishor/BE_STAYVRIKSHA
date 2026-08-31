@@ -8,6 +8,7 @@ const {
   CommounMultipalUpdate,
   CommonSendEmail,
   CommonReadWithFilters,
+  CommonReadDateFilters
 } = require("./CommonController");
 
 var Stayvriksha = require("../sqlStayvriksha");
@@ -62,6 +63,7 @@ async function getHM_Customer(req, res, next) {
 
     if (req.query.StartDate && req.query.EndDate) {
       req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate];
+
     }
 
     if ((!req.query.BookingID)) {
@@ -83,6 +85,7 @@ async function getHM_Customer(req, res, next) {
           B.RoomNo,
           B.BookingDate,
           B.PaymentType,
+          B.PropertyType,
           B.MemberID,
           B.UserID,
           B.CouponCode,
@@ -1403,10 +1406,12 @@ async function SendReminder(req, res, next) {
   try {
 
     const branchCode = req.query.BranchCode;
-    const paymentType = req.query.PaymentType; // Per Month / Per Year
-    const month = req.query.Month;             // 08
-    const year = req.query.Year;               // 2026
-    const WMonth = req.query.WMonth;               // 2026
+    const paymentType = req.query.PaymentType;
+    const month = req.query.Month;       // 08
+    const year = req.query.Year;         // 2026
+    const WMonth = req.query.WMonth;
+    const PropertyType = req.query.PropertyType;
+
 
     // --------------------------------------------------
     // 1. Get Assigned bookings
@@ -1424,59 +1429,75 @@ async function SendReminder(req, res, next) {
       req.body.filters.PaymentType = [paymentType];
     }
 
+    // --------------------------------------------------
+    // Create date range
+    // --------------------------------------------------
+
+    let selectedYear = year ? Number(year) : null;
+    let selectedMonth = month ? Number(month) : null;
+
+    let filterStartDate = null;
+let filterEndDate = null;
+
+    if (selectedYear) {
+
+      let startDate;
+      let endDate;
+
+      if (selectedMonth) {
+        // Month-wise
+        startDate = new Date(selectedYear,selectedMonth - 1,1);
+        endDate = new Date(selectedYear,selectedMonth,0);
+      } else {
+        // Year-wise
+        startDate = new Date(selectedYear,0,1);
+        endDate = new Date(selectedYear,11,31);
+      }
+
+    filterStartDate = formatDate(startDate)
+        .split("/")
+        .reverse()
+        .join("-");
+
+    filterEndDate = formatDate(endDate)
+        .split("/")
+        .reverse()
+        .join("-");
+
+    if (filterStartDate && filterEndDate) {
+
+    req.body.filters.StartDate = {
+        lte: filterEndDate
+    };
+
+    req.body.filters.EndDate = {
+        gte: filterStartDate
+    };
+}
+    }
+
     req.body.selectedFields = [
       "BookingID",
       "BranchCode",
       "PaymentType",
       "Status",
       "CustomerEmail",
-      "StartDate"
+      "StartDate",
+      "EndDate"
     ];
 
     req.body.tableName = "HM_Booking";
 
-    const filteredBookings = await CommonReadWithFilters(req, res, next);
+    const Booking = await CommonReadDateFilters(
+      req,
+      res,
+      next
+    );
 
-
-    let Booking = filteredBookings;
-
-    
-     if (year) {
-
-            const selectedYear = Number(year);
-            const selectedMonth = month ? Number(month) : null;
-
-            Booking = filteredBookings.filter(item => {
-
-                if (!item.StartDate) {
-                    return false;
-                }
-
-                const startDate = new Date(item.StartDate);
-
-                // ------------------------------------------
-                // CASE 1: Month + Year
-                // ------------------------------------------
-
-                if (selectedMonth) {
-
-                    return (
-                        startDate.getMonth() + 1 === selectedMonth &&
-                        startDate.getFullYear() === selectedYear
-                    );
-                }
-
-                // ------------------------------------------
-                // CASE 2: Year only
-                // ------------------------------------------
-
-                return (
-                    startDate.getFullYear() === selectedYear
-                );
-            });
-        }
-
+    // --------------------------------------------------
     // No assigned bookings
+    // --------------------------------------------------
+
     if (!Booking || Booking.length === 0) {
       return res.send({
         success: true,
@@ -1495,95 +1516,104 @@ async function SendReminder(req, res, next) {
       .filter(Boolean);
 
     // --------------------------------------------------
-    // 3. Get invoices for these bookings
+    // 3. Get invoices
     // --------------------------------------------------
-    req.body.filters = {};
 
-    req.body.filters.BookingID = bookingIds;
+    req.body.filters = {
+      BookingID: bookingIds
+    };
+
+    // --------------------------------------------------
+    // Apply InvoiceDate filter
+    // --------------------------------------------------
+
+    if (selectedYear) {
+
+      let invoiceStartDate;
+      let invoiceEndDate;
+
+      if (selectedMonth) {
+        invoiceStartDate = new Date(selectedYear,selectedMonth - 1,1);
+        invoiceEndDate = new Date(selectedYear,selectedMonth,0);
+      } else {
+
+        invoiceStartDate = new Date(selectedYear, 0,1);
+        invoiceEndDate = new Date(selectedYear,11,31);
+      }
+
+      req.body.filters.MonthDate = [
+        formatDate(invoiceStartDate).split("/").reverse().join("-"),
+        formatDate(invoiceEndDate).split("/").reverse().join("-")
+      ];
+    }
 
     req.body.selectedFields = [
       "BookingID",
       "InvNo",
-      "InvoiceDate",
+      "MonthDate",
       "Status"
     ];
 
     req.body.tableName = "HM_ManageInvoice";
 
-    const Invoices = await CommonReadWithFilters(req, res, next);
+    const Invoices = await CommonReadWithFilters(req,res,next);
 
-        const selectedYear = year ? Number(year) : null;
-        const selectedMonth = month ? Number(month) : null;
+    // --------------------------------------------------
+    // 4. Find bookings without invoice / partial invoice
+    // --------------------------------------------------
 
-        const reminderData = [];
+    const invoiceBookingIds = new Set(
+      (Invoices || []).map(invoice => invoice.BookingID)
+    );
 
+    const partialInvoiceBookingIds = new Set(
+      (Invoices || [])
+        .filter(invoice =>
+          invoice.Status &&
+          (
+            invoice.Status.toLowerCase() === "payment partial" ||
+            invoice.Status.toLowerCase() === "submitted"
+          )
+        )
+        .map(invoice => invoice.BookingID)
+    );
 
-        for (const booking of Booking) {
+    const reminderData = Booking
+      .filter(booking => {
 
-            const bookingInvoices = (Invoices || []).filter(
-                invoice =>
-                    invoice.BookingID === booking.BookingID
-            );
+        // No invoice
+        if (!invoiceBookingIds.has(booking.BookingID)) {
+          return true;
+        }
 
-            const monthInvoice = bookingInvoices.find(invoice => {
+        // Invoice exists but partially paid/submitted
+        if (partialInvoiceBookingIds.has(booking.BookingID)) {
+          return true;
+        }
 
-                if (!invoice.InvoiceDate) {
-                    return false;
-                }
+        return false;
+      })
+      .map(booking => ({
+        CustomerEmail: booking.CustomerEmail
+      }));
 
-                const invoiceDate =
-                    new Date(invoice.InvoiceDate);
+    // --------------------------------------------------
+    // 5. Prepare emails
+    // --------------------------------------------------
 
-                if (selectedMonth) {
-
-                    return (
-                        invoiceDate.getMonth() + 1 === selectedMonth &&
-                        invoiceDate.getFullYear() === selectedYear
-                    );
-                }
-
-                return (
-                    invoiceDate.getFullYear() === selectedYear
-                );
-            });
-
-      // No invoice for selected month
-      if (!monthInvoice) {
-
-        reminderData.push({
-          CustomerEmail: booking.CustomerEmail,
-        });
-
-        continue;
-      }
-
-      // Invoice exists but is partially paid
-      if (
-        monthInvoice.Status &&
-        (monthInvoice.Status.toLowerCase() === "payment partial" ||
-          monthInvoice.Status.toLowerCase() === "submitted")
-      ) {
-
-        reminderData.push({
-          CustomerEmail: booking.CustomerEmail
-        });
-      }
-    }
     req.body.emails = reminderData
       .map(item => item.CustomerEmail)
       .filter(Boolean);
 
-      req.body.WMonth=WMonth
-      req.body.year=year
+    req.body.WMonth = WMonth;
+    req.body.year = year;
+    req.body.PropertyType = PropertyType;
 
 
-    // await sendreminderEmail(req, res, next);
-    // --------------------------------------------------
-    // 5. Return data
-    // --------------------------------------------------
+    await sendreminderEmail(req, res, next);
 
     return res.send({
-      success: true,
+      success: true
     });
 
   } catch (error) {
@@ -1611,11 +1641,17 @@ async function sendreminderEmail(req, res, next) {
     const toName = req.body.CustomerName;
     let subject = emailContent.Subject;
 
+    
+    subject = subject
+      .replaceAll("<PropertyType>", req.body.PropertyType || "");
+
     let body = emailContent.Body;
 
       body = body
       .replaceAll("<Month>", req.body.WMonth)
       .replaceAll("<Year>", req.body.year)
+      .replaceAll("<PropertyType>", req.body.PropertyType)
+
 
     const CC = [];
 

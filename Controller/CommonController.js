@@ -798,6 +798,349 @@ async function CommonReadWithJoins(req) {
 		throw error;
 	}
 }
+async function CommonReadDateFilters(req, res, next) {
+    try {
+        let dbConnProd;
+
+        const origin = req.get("origin") || "";
+
+        if (
+            origin.split("//")[1] === "stayvriksha.in" ||
+            origin.split("//")[1] === "www.stayvriksha.in"
+        ) {
+            dbConnProd = Stayvriksha;
+        } else {
+            dbConnProd = DemoStayvriksha;
+        }
+
+        const {
+            tableName,
+            top,
+            skip,
+            selectedFields
+        } = req.body;
+
+        const filters = req.body.filters || {};
+        const sort = req.body.sort || {};
+
+        if (!tableName) {
+            return res.status(400).send({
+                success: false,
+                message: "Table name is required"
+            });
+        }
+
+        // ----------------------------------------
+        // SELECT fields
+        // ----------------------------------------
+
+        let selectClause = "*";
+        const queryParams = [];
+
+        if (
+            Array.isArray(selectedFields) &&
+            selectedFields.length > 0
+        ) {
+            selectClause = selectedFields
+                .map(() => "??")
+                .join(", ");
+
+            queryParams.push(...selectedFields);
+        }
+
+        let query = `SELECT ${selectClause} FROM ??`;
+
+        queryParams.push(tableName);
+
+        const filterClauses = [];
+
+        // ----------------------------------------
+        // Date validation
+        // ----------------------------------------
+
+        const isDateTime = (v) =>
+            typeof v === "string" &&
+            (
+                /^\d{4}-\d{2}-\d{2}$/.test(v) ||
+                /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v) ||
+                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(v)
+            );
+
+        // ----------------------------------------
+        // Build filters
+        // ----------------------------------------
+
+        for (const column in filters) {
+
+            let value = filters[column];
+
+            // ----------------------------------------
+            // DATE OVERLAP
+            // ----------------------------------------
+            //
+            // Example:
+            //
+            // StartDate: {
+            //     lte: "2026-09-30"
+            // }
+            //
+            // EndDate: {
+            //     gte: "2026-09-01"
+            // }
+            //
+            // Generates:
+            //
+            // StartDate <= '2026-09-30'
+            // EndDate >= '2026-09-01'
+            //
+            // ----------------------------------------
+
+            if (
+                value &&
+                typeof value === "object" &&
+                !Array.isArray(value)
+            ) {
+
+                if (
+                    value.lte !== undefined &&
+                    isDateTime(value.lte)
+                ) {
+                    filterClauses.push(`?? <= ?`);
+
+                    queryParams.push(
+                        column,
+                        value.lte
+                    );
+                }
+
+                if (
+                    value.gte !== undefined &&
+                    isDateTime(value.gte)
+                ) {
+                    filterClauses.push(`?? >= ?`);
+
+                    queryParams.push(
+                        column,
+                        value.gte
+                    );
+                }
+
+                if (
+                    value.lt !== undefined &&
+                    isDateTime(value.lt)
+                ) {
+                    filterClauses.push(`?? < ?`);
+
+                    queryParams.push(
+                        column,
+                        value.lt
+                    );
+                }
+
+                if (
+                    value.gt !== undefined &&
+                    isDateTime(value.gt)
+                ) {
+                    filterClauses.push(`?? > ?`);
+
+                    queryParams.push(
+                        column,
+                        value.gt
+                    );
+                }
+
+                continue;
+            }
+
+            // ----------------------------------------
+            // Existing array logic
+            // ----------------------------------------
+
+            if (!Array.isArray(value)) {
+                value = [value];
+            }
+
+            // ----------------------------------------
+            // Normal date range
+            // ----------------------------------------
+
+            if (
+                value.length === 2 &&
+                isDateTime(value[0]) &&
+                isDateTime(value[1])
+            ) {
+
+                filterClauses.push(
+                    `?? BETWEEN ? AND ?`
+                );
+
+                queryParams.push(
+                    column,
+                    value[0],
+                    value[1]
+                );
+            }
+
+            // ----------------------------------------
+            // Single value
+            // ----------------------------------------
+
+            else if (value.length === 1) {
+
+                filterClauses.push(`?? = ?`);
+
+                queryParams.push(
+                    column,
+                    value[0]
+                );
+            }
+
+            // ----------------------------------------
+            // Multiple values
+            // ----------------------------------------
+
+            else if (value.length > 1) {
+
+                if (
+                    column === "BranchCode" ||
+                    column === "Status"
+                ) {
+
+                    const findClauses = value.map(
+                        () => `FIND_IN_SET(?, ??)`
+                    );
+
+                    filterClauses.push(
+                        `(${findClauses.join(" OR ")})`
+                    );
+
+                    value.forEach(v => {
+                        queryParams.push(
+                            v,
+                            column
+                        );
+                    });
+
+                } else {
+
+                    const placeholders = value
+                        .map(() => "?")
+                        .join(", ");
+
+                    filterClauses.push(
+                        `?? IN (${placeholders})`
+                    );
+
+                    queryParams.push(
+                        column,
+                        ...value
+                    );
+                }
+            }
+        }
+
+        // ----------------------------------------
+        // WHERE
+        // ----------------------------------------
+
+        if (filterClauses.length > 0) {
+            query +=
+                " WHERE " +
+                filterClauses.join(" AND ");
+        }
+
+        // ----------------------------------------
+        // Sorting
+        // ----------------------------------------
+
+        if (Object.keys(sort).length > 0) {
+
+            const sortClauses = [];
+
+            for (const col in sort) {
+
+                const dir =
+                    sort[col].toUpperCase() === "DESC"
+                        ? "DESC"
+                        : "ASC";
+
+                sortClauses.push(`?? ${dir}`);
+
+                queryParams.push(col);
+            }
+
+            query +=
+                " ORDER BY " +
+                sortClauses.join(", ");
+        }
+
+        // ----------------------------------------
+        // Pagination
+        // ----------------------------------------
+
+        if (!isNaN(top)) {
+
+            query += " LIMIT ?";
+
+            queryParams.push(
+                parseInt(top, 10)
+            );
+        }
+
+        if (!isNaN(skip)) {
+
+            query += " OFFSET ?";
+
+            queryParams.push(
+                parseInt(skip, 10)
+            );
+        }
+
+        // ----------------------------------------
+        // Execute
+        // ----------------------------------------
+
+        const results = await new Promise(
+            (resolve, reject) => {
+
+                dbConnProd.getConnection(
+                    (err, connection) => {
+
+                        if (err) {
+                            return reject(err);
+                        }
+
+                        connection.query(
+                            query,
+                            queryParams,
+                            (err, results) => {
+
+                                connection.release();
+
+                                if (err) {
+                                    return reject(err);
+                                }
+
+                                resolve(results);
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+        return results;
+
+    } catch (error) {
+
+        res.status(500).send({
+            success: false,
+            message:
+                error.message ||
+                "Technical error, please contact the administrator"
+        });
+    }
+}
 
 function CommonBulkUpdateWithIn(req) {
 	return new Promise((resolve, reject) => {
@@ -951,5 +1294,6 @@ module.exports = {
 	CommonTabledataReadCall,
 	CommonReadWithFilters,
 	CommonReadWithJoins,
-	CommonBulkUpdateWithIn
+	CommonBulkUpdateWithIn,
+	CommonReadDateFilters
 };
