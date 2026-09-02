@@ -729,6 +729,66 @@ async function getavailableRooms(req, res, next) {
   }
 }
 
+async function getConfirmavailableRooms(req, res, next) {
+  try {
+    // Read Bed Type
+    req.body.filters = {
+      BranchCode: req.query.BranchCode || "",
+      ACType: req.query.ACType || "",
+      Name: req.query.Name || "",
+    };
+
+    req.body.tableName = "HM_BedType";
+
+    const bedTypeResult = await CommonReadWithFilters(req, res, next);
+
+    const BedType = Array.isArray(bedTypeResult)
+      ? bedTypeResult[0]
+      : bedTypeResult;
+
+    const noOfPerson = Number(BedType?.NoOfPerson) || 0;
+    const maxBeds = Number(BedType?.MaxBeds) || 0;
+
+    // Property type
+    const propertyType = req.query.PropertyType || "";
+
+    const totalCapacity = ["Hostel", "PG"].includes(propertyType)
+      ? noOfPerson * maxBeds
+      : maxBeds;
+
+    // Read booking table
+    req.body.filters = {
+      BranchCode: req.query.BranchCode || "",
+      Bedtype: `${req.query.Name} - ${req.query.ACType}` || "",
+      Status: ["Assigned", "Confirmed"],
+    };
+
+    req.body.tableName = "HM_Booking";
+
+    const HM_Booking =
+      (await CommonReadWithFilters(req, res, next)) || [];
+
+  
+
+    return res.status(200).json({
+      success: true,
+      available: true,
+      totalCapacity,
+      bookedCount: HM_Booking.length,
+      availableCount: totalCapacity - HM_Booking.length,
+    });
+
+  } catch (error) {
+    console.error("Error in getConfirmavailableRooms:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong.",
+      error: error.message,
+    });
+  }
+}
+
 async function BookingSubmitEmail(req, res, next, pdfAttachment) {
   try {
     req.body.tableName = "EmailContent";
@@ -1676,5 +1736,6 @@ exports.HM_Customer = {
   getBranchHotelData,
   getHM_Members,
   getavailableRooms,
-  SendReminder
+  SendReminder,
+  getConfirmavailableRooms
 };
