@@ -1059,8 +1059,8 @@ async function putHM_Customer(req, res, next) {
           PropertyName: propertyName || "",
           PropertyMobileNo: propertyMobileNo || "",
           PropertyEmail: propertyEmail || "",
-          PropertyType: propertyType || "",
-          EditedSections: payload.EditedSections,
+          PropertyType: booking.PropertyType || "",
+          EditedSections: payload.EditedSections, 
           AdminUpdated: payload.Booking?.[0]?.AdminUpdated || "",
           Currency: booking.Currency || ""
 
