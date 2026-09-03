@@ -247,6 +247,7 @@ async function BookingRejectEmail(req, res, next,pdfAttachment) {
         .replaceAll("<PropertyType>", req.body.PropertyType || "");
         
     let propertyMobileNo = req.body.PropertyMobileNo || "";
+    const encodedBookingID = Buffer.from(String(req.body.BookingID)).toString("base64");
 
     // Ensure replacements are applied
     let body = `<p>Dear ${req.body.CustomerName},</p>
@@ -267,7 +268,9 @@ async function BookingRejectEmail(req, res, next,pdfAttachment) {
       .replaceAll("<PropertyType>", req.body.PropertyType || "")
       .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
       .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
-      .replaceAll("<RejectDesc>", req.body.RejectDesc || "");
+      .replaceAll("<RejectDesc>", req.body.RejectDesc || "")
+      .replaceAll("<encodedBookingID>", encodedBookingID);
+
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
