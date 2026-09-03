@@ -751,9 +751,7 @@ async function getConfirmavailableRooms(req, res, next) {
 
     const bedTypeResult = await CommonReadWithFilters(req, res, next);
 
-    const BedType = Array.isArray(bedTypeResult)
-      ? bedTypeResult[0]
-      : bedTypeResult;
+    const BedType = Array.isArray(bedTypeResult) ? bedTypeResult[0] : bedTypeResult;
 
     const noOfPerson = Number(BedType?.NoOfPerson) || 0;
     const maxBeds = Number(BedType?.MaxBeds) || 0;
@@ -763,9 +761,7 @@ async function getConfirmavailableRooms(req, res, next) {
     // --------------------------------------------------
     const propertyType = req.query.PropertyType || "";
 
-    const totalCapacity = ["Hostel", "PG"].includes(propertyType)
-      ? noOfPerson * maxBeds
-      : maxBeds;
+    const totalCapacity = ["Hostel", "PG"].includes(propertyType) ? noOfPerson * maxBeds : maxBeds;
 
     // --------------------------------------------------
     // 4. Read Booking Table
@@ -773,13 +769,12 @@ async function getConfirmavailableRooms(req, res, next) {
     req.body.filters = {
       BranchCode: req.query.BranchCode || "",
       BedType: `${bedTypeName} - ${acType}`,
-      Status: ["New", "Assigned", "Confirmed"],
+      Status: req.query.Status ? req.query.Status.split(",") : [],
     };
 
     req.body.tableName = "HM_Booking";
 
-    const HM_Booking =
-      (await CommonReadWithFilters(req, res, next)) || [];
+    const HM_Booking = (await CommonReadWithFilters(req, res, next)) || [];
 
     // --------------------------------------------------
     // 5. Filter bookings based on dates - OPTIONAL
@@ -789,13 +784,9 @@ async function getConfirmavailableRooms(req, res, next) {
 
     // If dates are provided, filter bookings
     if (requestedStartDate || requestedEndDate) {
-      const requestStart = requestedStartDate
-        ? new Date(requestedStartDate)
-        : null;
+      const requestStart = requestedStartDate ? new Date(requestedStartDate) : null;
 
-      const requestEnd = requestedEndDate
-        ? new Date(requestedEndDate)
-        : null;
+      const requestEnd = requestedEndDate ? new Date(requestedEndDate) : null;
 
       activeBookings = HM_Booking.filter((booking) => {
         if (!booking.StartDate || !booking.EndDate) {
@@ -833,10 +824,7 @@ async function getConfirmavailableRooms(req, res, next) {
 
     const bookedCount = activeBookings.length;
 
-    const availableCount = Math.max(
-      totalCapacity - bookedCount,
-      0
-    );
+    const availableCount = Math.max(totalCapacity - bookedCount,0);
 
     // --------------------------------------------------
     // 7. Room Status
@@ -857,16 +845,12 @@ async function getConfirmavailableRooms(req, res, next) {
     return res.status(200).json({
       success: true,
       available: availableCount > 0,
-
       totalCapacity,
       bookedCount,
       availableCount,
-
       roomStatus,
-
       StartDate: requestedStartDate || null,
       EndDate: requestedEndDate || null,
-
       bookings: activeBookings,
     });
 
