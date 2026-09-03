@@ -731,11 +731,20 @@ async function getavailableRooms(req, res, next) {
 
 async function getConfirmavailableRooms(req, res, next) {
   try {
-    // Read Bed Type
+    // 1. Get request dates - OPTIONAL
+    const requestedStartDate = req.query.StartDate || "";
+    const requestedEndDate = req.query.EndDate || "";
+
+    // --------------------------------------------------
+    // 2. Read Bed Type
+    // --------------------------------------------------
+    const bedTypeName = req.query.Name || "";
+    const acType = req.query.ACType || "";
+
     req.body.filters = {
       BranchCode: req.query.BranchCode || "",
-      ACType: req.query.ACType || "",
-      Name: req.query.Name || "",
+      ACType: acType,
+      Name: bedTypeName,
     };
 
     req.body.tableName = "HM_BedType";
@@ -749,18 +758,22 @@ async function getConfirmavailableRooms(req, res, next) {
     const noOfPerson = Number(BedType?.NoOfPerson) || 0;
     const maxBeds = Number(BedType?.MaxBeds) || 0;
 
-    // Property type
+    // --------------------------------------------------
+    // 3. Calculate total capacity
+    // --------------------------------------------------
     const propertyType = req.query.PropertyType || "";
 
     const totalCapacity = ["Hostel", "PG"].includes(propertyType)
       ? noOfPerson * maxBeds
       : maxBeds;
 
-    // Read booking table
+    // --------------------------------------------------
+    // 4. Read Booking Table
+    // --------------------------------------------------
     req.body.filters = {
       BranchCode: req.query.BranchCode || "",
-      Bedtype: `${req.query.Name} - ${req.query.ACType}` || "",
-      Status: ["Assigned", "Confirmed"],
+      BedType: `${bedTypeName} - ${acType}`,
+      Status: ["New", "Assigned", "Confirmed"],
     };
 
     req.body.tableName = "HM_Booking";
@@ -768,19 +781,96 @@ async function getConfirmavailableRooms(req, res, next) {
     const HM_Booking =
       (await CommonReadWithFilters(req, res, next)) || [];
 
-  
+    // --------------------------------------------------
+    // 5. Filter bookings based on dates - OPTIONAL
+    // --------------------------------------------------
+
+    let activeBookings = HM_Booking;
+
+    // If dates are provided, filter bookings
+    if (requestedStartDate || requestedEndDate) {
+      const requestStart = requestedStartDate
+        ? new Date(requestedStartDate)
+        : null;
+
+      const requestEnd = requestedEndDate
+        ? new Date(requestedEndDate)
+        : null;
+
+      activeBookings = HM_Booking.filter((booking) => {
+        if (!booking.StartDate || !booking.EndDate) {
+          return false;
+        }
+
+        const bookingStart = new Date(booking.StartDate);
+        const bookingEnd = new Date(booking.EndDate);
+
+        // StartDate + EndDate provided
+        if (requestStart && requestEnd) {
+          return (
+            bookingStart <= requestEnd &&
+            bookingEnd >= requestStart
+          );
+        }
+
+        // Only StartDate provided
+        if (requestStart) {
+          return bookingEnd >= requestStart;
+        }
+
+        // Only EndDate provided
+        if (requestEnd) {
+          return bookingStart <= requestEnd;
+        }
+
+        return true;
+      });
+    }
+
+    // --------------------------------------------------
+    // 6. Calculate available rooms/beds
+    // --------------------------------------------------
+
+    const bookedCount = activeBookings.length;
+
+    const availableCount = Math.max(
+      totalCapacity - bookedCount,
+      0
+    );
+
+    // --------------------------------------------------
+    // 7. Room Status
+    // --------------------------------------------------
+
+    let roomStatus = "Available";
+
+    if (availableCount === 0) {
+      roomStatus = "Fully Booked";
+    } else if (bookedCount > 0) {
+      roomStatus = "Partially Available";
+    }
+
+    // --------------------------------------------------
+    // 8. Response
+    // --------------------------------------------------
 
     return res.status(200).json({
       success: true,
-      available: true,
+      available: availableCount > 0,
+
       totalCapacity,
-      bookedCount: HM_Booking.length,
-      availableCount: totalCapacity - HM_Booking.length,
+      bookedCount,
+      availableCount,
+
+      roomStatus,
+
+      StartDate: requestedStartDate || null,
+      EndDate: requestedEndDate || null,
+
+      bookings: activeBookings,
     });
 
   } catch (error) {
-    console.error("Error in getConfirmavailableRooms:", error);
-
     return res.status(500).json({
       success: false,
       message: "Something went wrong.",
@@ -788,6 +878,7 @@ async function getConfirmavailableRooms(req, res, next) {
     });
   }
 }
+
 
 async function BookingSubmitEmail(req, res, next, pdfAttachment) {
   try {
