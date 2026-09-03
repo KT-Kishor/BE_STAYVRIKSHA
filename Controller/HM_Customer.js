@@ -1707,11 +1707,16 @@ async function sendreminderEmail(req, res, next) {
 
     let body = emailContent.Body;
 
-      body = body
-      .replaceAll("<Month>", req.body.WMonth ?? "")
-      .replaceAll("<Year>", req.body.year)
-      .replaceAll("<PropertyType>", req.body.PropertyType)
+    const month =
+    req.body.WMonth === "undefined" || req.body.WMonth == null
+        ? ""
+        : req.body.WMonth;
 
+
+      body = body
+        .replaceAll("<Month>", month)
+        .replaceAll("<Year>", req.body.year)
+        .replaceAll("<PropertyType>", req.body.PropertyType)
 
     const CC = [];
 
