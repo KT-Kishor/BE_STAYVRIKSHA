@@ -730,253 +730,395 @@ async function getavailableRooms(req, res, next) {
 }
 
 async function getConfirmavailableRooms(req, res, next) {
-  try {
-    // --------------------------------------------------
-    // 1. Request Parameters
-    // --------------------------------------------------
-    const requestedStartDate = req.query.StartDate || "";
-    const requestedEndDate = req.query.EndDate || "";
+    try {
 
-    const branchCode = req.query.BranchCode || "";
-    const bedTypeName = req.query.Name || "";
-    const acType = req.query.ACType || "";
-    const propertyType = req.query.PropertyType || "";
+        // --------------------------------------------------
+        // 1. Request Parameters
+        // --------------------------------------------------
+        const requestedStartDate = req.query.StartDate || "";
+        const requestedEndDate = req.query.EndDate || "";
 
-    const bedType = `${bedTypeName} - ${acType}`;
+        const branchCode = req.query.BranchCode || "";
+        const bedTypeName = req.query.Name || "";
+        const acType = req.query.ACType || "";
+        const propertyType = req.query.PropertyType || "";
 
-    // --------------------------------------------------
-    // 2. Read Bed Type
-    // --------------------------------------------------
-    req.body.filters = {
-      BranchCode: branchCode,
-      ACType: acType,
-      Name: bedTypeName,
-    };
+        const bedType = `${bedTypeName} - ${acType}`;
 
-    req.body.tableName = "HM_BedType";
 
-    const bedTypeResult =
-      await CommonReadWithFilters(req, res, next);
+        // --------------------------------------------------
+        // 2. Read Bed Type
+        // --------------------------------------------------
+        req.body.filters = {
+            BranchCode: branchCode,
+            ACType: acType,
+            Name: bedTypeName,
+        };
 
-    const BedType = Array.isArray(bedTypeResult)
-      ? bedTypeResult[0]
-      : bedTypeResult;
+        req.body.tableName = "HM_BedType";
 
-    const noOfPerson = Number(BedType?.NoOfPerson) || 0;
-    const maxBeds = Number(BedType?.MaxBeds) || 0;
+        const bedTypeResult =
+            await CommonReadWithFilters(req, res, next);
 
-    // --------------------------------------------------
-    // 3. Read Rooms
-    // --------------------------------------------------
-    req.body.filters = {
-      BranchCode: branchCode,
-      BedTypeName: `${bedTypeName} - ${acType}`
-    };
+        const BedType = Array.isArray(bedTypeResult)
+            ? bedTypeResult[0]
+            : bedTypeResult;
 
-    req.body.tableName = "HM_Rooms";
+        const noOfPerson = Number(BedType?.NoOfPerson) || 0;
+        const maxBeds = Number(BedType?.MaxBeds) || 0;
 
-    const HM_Rooms =
-      (await CommonReadWithFilters(req, res, next)) || [];
 
-    // --------------------------------------------------
-    // 4. Read Bookings
-    // --------------------------------------------------
-    req.body.filters = {
-      BranchCode: branchCode,
-      BedType: bedType,
-      Status: req.query.Status ? req.query.Status.split(",") : [],
-    };
+        // --------------------------------------------------
+        // 3. Read Rooms
+        // --------------------------------------------------
+        req.body.filters = {
+            BranchCode: branchCode,
+            BedTypeName: `${bedTypeName} - ${acType}`
+        };
 
-    req.body.tableName = "HM_Booking";
+        req.body.tableName = "HM_Rooms";
 
-    const HM_Booking =
-      (await CommonReadWithFilters(req, res, next)) || [];
+        const HM_Rooms =
+            (await CommonReadWithFilters(req, res, next)) || [];
 
-    // --------------------------------------------------
-    // 5. Requested Date Range
-    // --------------------------------------------------
-    const requestStart = requestedStartDate
-      ? new Date(requestedStartDate)
-      : null;
 
-    const requestEnd = requestedEndDate
-      ? new Date(requestedEndDate)
-      : null;
+        // --------------------------------------------------
+        // 4. Read Bookings
+        // --------------------------------------------------
+        req.body.filters = {
+            BranchCode: branchCode,
+            BedType: bedType,
+            Status: req.query.Status
+                ? req.query.Status.split(",")
+                : [],
+        };
 
-    // --------------------------------------------------
-    // 6. Check Date Overlap
-    // --------------------------------------------------
-    const isBookingActive = (booking) => {
+        req.body.tableName = "HM_Booking";
 
-      if (!booking.StartDate || !booking.EndDate) {
-        return false;
-      }
+        const HM_Booking =
+            (await CommonReadWithFilters(req, res, next)) || [];
 
-      // If no requested dates are supplied,
-      // consider all bookings
-      if (!requestStart && !requestEnd) {
-        return true;
-      }
 
-      const bookingStart = new Date(booking.StartDate);
-      const bookingEnd = new Date(booking.EndDate);
+        // --------------------------------------------------
+        // 5. Requested Date Range
+        // --------------------------------------------------
+        const requestStart = requestedStartDate
+            ? new Date(requestedStartDate)
+            : null;
 
-      // StartDate + EndDate
-      if (requestStart && requestEnd) {
-        return (
-          bookingStart <= requestEnd &&
-          bookingEnd >= requestStart
+        const requestEnd = requestedEndDate
+            ? new Date(requestedEndDate)
+            : null;
+
+
+        // --------------------------------------------------
+        // 6. Check Date Overlap
+        // --------------------------------------------------
+        const isBookingActive = (booking) => {
+
+            if (!booking.StartDate || !booking.EndDate) {
+                return false;
+            }
+
+            // If no requested dates are supplied,
+            // consider all bookings
+            if (!requestStart && !requestEnd) {
+                return true;
+            }
+
+            const bookingStart = new Date(booking.StartDate);
+            const bookingEnd = new Date(booking.EndDate);
+
+
+            // ----------------------------------------------
+            // StartDate + EndDate
+            // ----------------------------------------------
+            if (requestStart && requestEnd) {
+                return (
+                    bookingStart <= requestEnd &&
+                    bookingEnd >= requestStart
+                );
+            }
+
+
+            // ----------------------------------------------
+            // Only StartDate
+            // ----------------------------------------------
+            if (requestStart) {
+                return bookingEnd >= requestStart;
+            }
+
+
+            // ----------------------------------------------
+            // Only EndDate
+            // ----------------------------------------------
+            if (requestEnd) {
+                return bookingStart <= requestEnd;
+            }
+
+            return true;
+        };
+
+
+        // --------------------------------------------------
+        // 7. Room Wise Availability
+        // --------------------------------------------------
+        const roomDetails = HM_Rooms.map((room) => {
+
+            // ----------------------------------------------
+            // Room Number
+            // ----------------------------------------------
+            const roomNo = room.RoomNo;
+
+
+            // ----------------------------------------------
+            // Room Capacity
+            // ----------------------------------------------
+            let roomCapacity;
+
+            if (
+                propertyType === "PG" ||
+                propertyType === "Hostel"
+            ) {
+
+                // PG / Hostel
+                // Capacity based on NoOfPerson
+                roomCapacity = Number(noOfPerson) || 0;
+
+            } else if (propertyType === "Hotel") {
+
+                // Hotel
+                // Entire room is occupied by one booking
+                roomCapacity = 1;
+
+            } else {
+
+                // Other property types
+                roomCapacity = Number(maxBeds) || 0;
+            }
+
+
+            // ----------------------------------------------
+            // Find bookings for THIS ROOM
+            // ----------------------------------------------
+            const roomBookings = HM_Booking.filter((booking) => {
+
+                const bookingRoomNo = booking.RoomNo;
+
+                // Booking belongs to another room
+                if (
+                    String(bookingRoomNo) !==
+                    String(roomNo)
+                ) {
+                    return false;
+                }
+
+                // Check date overlap
+                return isBookingActive(booking);
+            });
+
+
+            // ----------------------------------------------
+            // Booked / Available Capacity
+            // ----------------------------------------------
+            let bookedCount;
+            let availableCount;
+
+
+            if (propertyType === "Hotel") {
+
+                /*
+                 * HOTEL LOGIC
+                 *
+                 * One booking means the entire room
+                 * is occupied.
+                 *
+                 * Example:
+                 *
+                 * Room 101
+                 * Booking Count = 1
+                 *
+                 * bookedCount    = 1
+                 * availableCount = 0
+                 */
+
+                bookedCount =
+                    roomBookings.length > 0
+                        ? 1
+                        : 0;
+
+                availableCount =
+                    bookedCount === 1
+                        ? 0
+                        : 1;
+
+            } else {
+
+                /*
+                 * PG / HOSTEL / OTHER
+                 *
+                 * Multiple people can occupy the room
+                 * according to its capacity.
+                 */
+
+                bookedCount =
+                    roomBookings.length;
+
+                availableCount = Math.max(
+                    roomCapacity - bookedCount,
+                    0
+                );
+            }
+
+
+            // ----------------------------------------------
+            // Room Status
+            // ----------------------------------------------
+            let roomStatus = "Available";
+
+
+            if (availableCount === 0) {
+
+                roomStatus = "Fully Booked";
+
+            } else if (bookedCount > 0) {
+
+                roomStatus = "Partially Available";
+            }
+
+
+            // ----------------------------------------------
+            // Return Room Details
+            // ----------------------------------------------
+            return {
+
+                RoomNo: roomNo,
+
+                BranchCode: room.BranchCode,
+
+                BedType: room.BedType,
+
+                ACType: room.ACType,
+
+                capacity: roomCapacity,
+
+                bookedCount: bookedCount,
+
+                availableCount: availableCount,
+
+                roomStatus: roomStatus,
+
+                // Uncomment if you want booking details
+                // bookings: roomBookings,
+            };
+        });
+
+
+        // --------------------------------------------------
+        // 8. Overall Capacity
+        // --------------------------------------------------
+        const totalCapacity = roomDetails.reduce(
+            (total, room) =>
+                total + room.capacity,
+            0
         );
-      }
 
-      // Only StartDate
-      if (requestStart) {
-        return bookingEnd >= requestStart;
-      }
 
-      // Only EndDate
-      if (requestEnd) {
-        return bookingStart <= requestEnd;
-      }
+        // --------------------------------------------------
+        // 9. Overall Booked Count
+        // --------------------------------------------------
+        const totalBooked = roomDetails.reduce(
+            (total, room) =>
+                total + room.bookedCount,
+            0
+        );
 
-      return true;
-    };
 
-    // --------------------------------------------------
-    // 7. Room Wise Availability
-    // --------------------------------------------------
-    const roomDetails = HM_Rooms.map((room) => {
+        // --------------------------------------------------
+        // 10. Overall Available Count
+        // --------------------------------------------------
+        const totalAvailable = roomDetails.reduce(
+            (total, room) =>
+                total + room.availableCount,
+            0
+        );
 
-      /*
-       * Change these field names according to your HM_Rooms table.
-       */
 
-      const roomNo =
-        room.RoomNo 
+        // --------------------------------------------------
+        // 11. Overall Status
+        // --------------------------------------------------
+        let roomStatus = "Available";
 
-      // Capacity of this room
-      const roomCapacity =
-        Number(
-          noOfPerson
-        ) || 0;
 
-      // ------------------------------------------------
-      // Find bookings for THIS ROOM
-      // ------------------------------------------------
-      const roomBookings = HM_Booking.filter((booking) => {
+        if (totalAvailable === 0) {
 
-        const bookingRoomNo =
-          booking.RoomNo
+            roomStatus = "Fully Booked";
 
-        if (String(bookingRoomNo) !== String(roomNo)) {
-          return false;
+        } else if (totalBooked > 0) {
+
+            roomStatus = "Partially Available";
         }
 
-        return isBookingActive(booking);
-      });
 
-      // ------------------------------------------------
-      // Booked Capacity
-      // ------------------------------------------------
-      const bookedCount = roomBookings.length;
+        // --------------------------------------------------
+        // 12. Response
+        // --------------------------------------------------
+        return res.status(200).json({
 
-      const availableCount = Math.max(
-        roomCapacity - bookedCount,
-        0
-      );
+            success: true,
 
-      // ------------------------------------------------
-      // Room Status
-      // ------------------------------------------------
-      let roomStatus = "Available";
+            available: totalAvailable > 0,
 
-      if (availableCount === 0) {
-        roomStatus = "Fully Booked";
-      } else if (bookedCount > 0) {
-        roomStatus = "Partially Available";
-      }
+            BranchCode: branchCode,
 
-      return {
-        RoomNo: roomNo,
+            BedType: bedType,
 
-        BranchCode: room.BranchCode,
-        BedType: room.BedType,
-        ACType: room.ACType,
+            ACType: acType,
 
-        capacity: roomCapacity,
-        bookedCount,
-        availableCount,
+            PropertyType: propertyType,
 
-        roomStatus,
+            StartDate:
+                requestedStartDate || null,
 
-        // bookings: roomBookings,
-      };
-    });
+            EndDate:
+                requestedEndDate || null,
 
-    // --------------------------------------------------
-    // 8. Overall Capacity
-    // --------------------------------------------------
-    const totalCapacity = roomDetails.reduce(
-      (total, room) => total + room.capacity,
-      0
-    );
+            totalRooms:
+                roomDetails.length,
 
-    const totalBooked = roomDetails.reduce(
-      (total, room) => total + room.bookedCount,
-      0
-    );
+            totalCapacity:
+                totalCapacity,
 
-    const totalAvailable = roomDetails.reduce(
-      (total, room) => total + room.availableCount,
-      0
-    );
+            bookedCount:
+                totalBooked,
 
-    // --------------------------------------------------
-    // 9. Overall Status
-    // --------------------------------------------------
-    let roomStatus = "Available";
+            availableCount:
+                totalAvailable,
 
-    if (totalAvailable === 0) {
-      roomStatus = "Fully Booked";
-    } else if (totalBooked > 0) {
-      roomStatus = "Partially Available";
+            roomStatus:
+                roomStatus,
+
+            rooms:
+                roomDetails,
+        });
+
+
+    } catch (error) {
+
+        // --------------------------------------------------
+        // Error Response
+        // --------------------------------------------------
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Something went wrong.",
+
+            error:
+                error.message,
+        });
     }
-
-    // --------------------------------------------------
-    // 10. Response
-    // --------------------------------------------------
-    return res.status(200).json({
-      success: true,
-
-      available: totalAvailable > 0,
-
-      BranchCode: branchCode,
-      BedType: bedType,
-      ACType: acType,
-      PropertyType: propertyType,
-
-      StartDate: requestedStartDate || null,
-      EndDate: requestedEndDate || null,
-
-      totalRooms: roomDetails.length,
-
-      totalCapacity,
-      bookedCount: totalBooked,
-      availableCount: totalAvailable,
-
-      roomStatus,
-
-      rooms: roomDetails,
-    });
-
-  } catch (error) {
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong.",
-      error: error.message,
-    });
-  }
 }
 
 
