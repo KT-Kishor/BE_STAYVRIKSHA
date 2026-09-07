@@ -96,6 +96,7 @@ app.get("/HM_SendReminder", authenticate, HM_Customer.SendReminder);
 
 app.get("/HM_AvailableRooms", authenticate, HM_Customer.getavailableRooms);
 app.get("/HM_ConfirmAvailableRooms", authenticate, HM_Customer.getConfirmavailableRooms);
+app.get("/HM_BookingSummary", authenticate, HM_Customer.getRoomBookingSummary);
 app.post("/HM_Customer", authenticate, HM_Customer.postHM_Customer);
 app.put("/HM_Customer", authenticate, HM_Customer.putHM_Customer);
 app.delete("/HM_Customer", authenticate, HM_Customer.deleteHM_Customer);
