@@ -195,11 +195,11 @@ async function getBranch(req, res, next) {
 
       // Convert landmark to proper case
       if (branch.LandMark) {
-          branch.LandMark = branch.LandMark.charAt(0).toUpperCase() +  branch.LandMark.slice(1).toLowerCase();
+          branch.LandMark = branch.LandMark;
       }
 
       if (branch.Name) {
-           branch.Name = branch.Name.charAt(0).toUpperCase() + branch.Name.slice(1).toLowerCase();
+           branch.Name = branch.Name;
       }
 
       const stat = feedbackMap[branch.BranchID];
@@ -332,14 +332,12 @@ async function getBranchImage(req, res, next) {
 
       if (branch.LandMark) {
         branch.LandMark =
-          branch.LandMark.charAt(0).toUpperCase() +
-          branch.LandMark.slice(1).toLowerCase();
+          branch.LandMark
       }
 
       if (branch.Name) {
         branch.Name =
-          branch.Name.charAt(0).toUpperCase() +
-          branch.Name.slice(1).toLowerCase();
+          branch.Name;
       }
 
       const stat = feedbackMap[branch.BranchID];
