@@ -516,6 +516,116 @@ async function HM_CustomerReadCall(req, res, next) {
   }
 }
 
+async function Documentcheck(req, res, next) {
+  try {
+    const {
+      MemberID,
+      CustomerEmail,
+      CustomerName,
+      UserID,
+      BookingID,
+      BranchName,
+      STDCode,
+      MobileNo,
+      AdminEmail
+    } = req.query;
+
+    if (!MemberID) {
+      return res.status(400).send({
+        success: false,
+        message: "MemberID is required for document validation"
+      });
+    }
+
+    // Split all Member IDs
+    const aMemberIDs = String(MemberID)
+      .split(",")
+      .map(id => id.trim())
+      .filter(Boolean);
+
+    // Store Member IDs whose document is missing
+    const aMissingMemberIDs = [];
+
+    // Check document for each MemberID
+    for (const sMemberID of aMemberIDs) {
+      req.body = {
+        tableName: "HM_CustomerDocument",
+        filters: {
+          MemberID: sMemberID
+        }
+      };
+
+      const oDocResult = await CommonReadCall(req, res, next);
+
+      // Check whether document exists
+      const bDocumentExists =
+        oDocResult &&
+        oDocResult.length > 0 &&
+        oDocResult[0].File &&
+        oDocResult[0].File.length > 0;
+
+      // If document does NOT exist
+      if (!bDocumentExists) {
+        aMissingMemberIDs.push(sMemberID);
+      }
+    }
+
+    // If any MemberID is missing document
+    if (aMissingMemberIDs.length > 0) {
+
+      // Send document upload email
+      if (CustomerEmail) {
+        try {
+          req.body = {
+            CustomerEmail,
+            CustomerName,
+            UserID,
+            BookingID,
+
+            // Send only missing Member IDs
+            MemberID: aMissingMemberIDs.join(","),
+
+            BranchName,
+            STDCode,
+            MobileNo,
+            AdminEmail
+          };
+
+          await documentUploadEmail(req, res, next);
+
+        } catch (emailError) {
+          console.error("Email sending failed:", emailError);
+        }
+      }
+
+      return res.status(400).send({
+        success: false,
+        document: false,
+        missingMemberIDs: aMissingMemberIDs,
+        message:
+          "Documents are missing for one or more members. Please upload the required documents to assign the room."
+      });
+    }
+
+    // All members have documents
+    return res.status(200).send({
+      success: true,
+      document: true,
+      missingMemberIDs: [],
+      message: "All required documents are available."
+    });
+
+  } catch (error) {
+    console.error("Dcoumentcheck Error:", error);
+
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+}
+
 async function putHM_Bookingdeposit(req, res, next) {
   try {
     const {
@@ -1108,4 +1218,5 @@ exports.HM_Booking = {
   HM_GetCurrentYearPaymentTypeBarChart,
   HM_EnquiryEmail,
   HM_BookingCustomerReadCall,
+  Documentcheck
 };
