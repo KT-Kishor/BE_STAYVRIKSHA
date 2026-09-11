@@ -38,9 +38,19 @@ async function getHM_Damage(req, res, next) {
   }
 }
 
+function formatAmount(amount) {
+  if (!amount) return "0.00";
+
+  return Number(amount).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
 async function postHM_Damage(req, res, next) {
   try {
     var Items = req.body.Items || [];
+    const damageData = { ...req.body.data };
     // Step 1: Set tableName and read existing HM_Damage data
     req.body.tableName = "HM_Damage";
     const existingInvoices = await CommonReadCall(req, res, next);
@@ -114,12 +124,44 @@ async function postHM_Damage(req, res, next) {
         });
       }
     }
+    try {
 
-    // Step 6: Send success response
-    res.status(200).send({
+      const emailReq = {
+        body: {
+          toEmailID: damageData.CustomerEmail,
+          CustomerName: damageData.CustomerName,
+          DamageID: newInvoiceNo,
+          BookingID: damageData.BookingID,
+          ActualCost: formatAmount(damageData.TotalCost),
+          RecoverCost: formatAmount(damageData.RecoverCost),
+          Currency: damageData.Currency,
+          Items: itemsWithInvoiceNo
+
+          // HM_DamageItem data
+
+        }
+      };
+      req.body = emailReq.body
+
+
+      await DamageEmail(req, res, next
+      );
+
+    } catch (emailError) {
+
+      console.error(
+        "Damage email failed:",
+        emailError
+      );
+
+      // Don't fail damage creation if email fails
+    }
+
+    return res.status(200).send({
       success: true,
-      message: "Damage Invoice saved!",
-      InvoiceNo: newInvoiceNo
+      message:
+        "Damage Invoice saved and email sent successfully!",
+      DamageID: newInvoiceNo
     });
 
   } catch (error) {
@@ -127,6 +169,144 @@ async function postHM_Damage(req, res, next) {
       success: false,
       message: error?.message || "Technical error, please contact the administrator"
     });
+  }
+}
+async function DamageEmail(req, res, next) {
+  try {
+
+    req.body.tableName = "EmailContent";
+    req.body.filters = {
+      Type: "HM_Damage"
+    };
+
+    const emailContentData =
+      await CommonReadCall(req, res, next);
+
+    if (!emailContentData ||
+      emailContentData.length === 0) {
+      return;
+    }
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+    const to = [req.body.toEmailID];
+    const toName = req.body.CustomerName;
+
+    let subject = emailContent.Subject;
+
+    subject = subject
+      .replaceAll(
+        "<PropertyName>",
+        req.body.PropertyName || ""
+      )
+      .replaceAll(
+        "<PropertyType>",
+        req.body.PropertyType || ""
+      );
+
+    let body = emailContent.Body;
+
+    // ==========================================
+    // DAMAGE ITEMS FROM HM_DamageItem
+    // ==========================================
+
+    const Items = req.body.Items || [];
+
+    const itemTemplate = body.match(
+      /<DamageItems>([\s\S]*?)<\/DamageItems>/
+    );
+
+    if (itemTemplate) {
+
+      const rowTemplate = itemTemplate[1];
+
+      const damageItemsHTML = Items.map((item, index) => {
+
+        return rowTemplate
+          .replaceAll("<SlNo>", String(index + 1))
+          .replaceAll("<ItemName>", item.ItemName || "")
+          .replaceAll("<Type>", item.Type || "")
+          .replaceAll("<Quantity>", item.Quantity || "0")
+          .replaceAll("<Description>", item.Description || "")
+          .replaceAll("<Cost>", formatAmount(item.Cost) || "0")
+          .replaceAll("<RecoverCost>", formatAmount(item.RecoverCost) || "0");
+
+      }).join("");
+
+      body = body.replace(
+        itemTemplate[0],
+        damageItemsHTML
+      );
+    }
+
+    // ==========================================
+    // HM_Damage DATA
+    // ==========================================
+
+    body = body
+      .replaceAll(
+        "<CustomerName>",
+        req.body.CustomerName || ""
+      )
+      .replaceAll(
+        "<DamageID>",
+        req.body.DamageID || ""
+      )
+      .replaceAll(
+        "<BookingID>",
+        req.body.BookingID || ""
+      )
+      .replaceAll(
+        "<TotalCost>",
+        req.body.ActualCost || "0"
+      )
+      .replaceAll(
+        "<RecoverCost>",
+        req.body.RecoverCost || "0"
+      )
+      .replaceAll(
+        "<Currency>",
+        req.body.Currency || "INR"
+      );
+
+    // ==========================================
+    // CC / REPLY TO
+    // ==========================================
+
+    const CC = emailContent.CCEmailId
+      ? emailContent.CCEmailId.split(",")
+      : [];
+
+    const replyTo =
+      emailContent.ReplyToEmailId;
+
+    // ==========================================
+    // SEND EMAIL
+    // ==========================================
+
+    await CommonSendEmail(
+      req,
+      from,
+      fromName,
+      to,
+      toName,
+      subject,
+      body,
+      CC,
+      replyTo
+    );
+
+  } catch (error) {
+
+    console.error(
+      "DamageEmail Error:",
+      error
+    );
+
+    throw error;
   }
 }
 
