@@ -529,39 +529,39 @@ async function postHM_Customer(req, res, next) {
       }
     }
 
-    req.body.filters = {
-      BranchCode: bookingPayload?.[0]?.BranchCode || "",
-      ACType:
-        bookingPayload?.[0]?.BedType.split("-").slice(1).join("-").trim() || "",
-      Name: bookingPayload?.[0]?.BedType.split("-")[0].trim() || "",
-    };
-    req.body.tableName = "HM_BedType";
-    const bedTypeResult = await CommonReadWithFilters(req, res, next);
-    const BedType = Array.isArray(bedTypeResult)
-      ? bedTypeResult[0]
-      : bedTypeResult;
-    const noOfPerson = Number(BedType?.NoOfPerson) || 0;
-    const maxBeds = Number(BedType?.MaxBeds) || 0;
+    // req.body.filters = {
+    //   BranchCode: bookingPayload?.[0]?.BranchCode || "",
+    //   ACType:
+    //     bookingPayload?.[0]?.BedType.split("-").slice(1).join("-").trim() || "",
+    //   Name: bookingPayload?.[0]?.BedType.split("-")[0].trim() || "",
+    // };
+    // req.body.tableName = "HM_BedType";
+    // const bedTypeResult = await CommonReadWithFilters(req, res, next);
+    // const BedType = Array.isArray(bedTypeResult)
+    //   ? bedTypeResult[0]
+    //   : bedTypeResult;
+    // const noOfPerson = Number(BedType?.NoOfPerson) || 0;
+    // const maxBeds = Number(BedType?.MaxBeds) || 0;
 
-    const propertyType = bookingPayload?.[0]?.PropertyType || "";
-    const totalCapacity = ["Hostel", "PG"].includes(propertyType)
-      ? noOfPerson * maxBeds
-      : maxBeds;
+    // const propertyType = bookingPayload?.[0]?.PropertyType || "";
+    // const totalCapacity = ["Hostel", "PG"].includes(propertyType)
+    //   ? noOfPerson * maxBeds
+    //   : maxBeds;
 
-    // Read booking table
-    req.body.filters = {
-      BranchCode: bookingPayload?.[0]?.BranchCode || "",
-      BedType: bookingPayload?.[0]?.BedType || "",
-      Status: ["New", "Assigned", "Confirmed"],
-    };
-    req.body.tableName = "HM_Booking";
-    const HM_Booking = (await CommonReadWithFilters(req, res, next)) || [];
-    // Condition
-    if (HM_Booking.length >= totalCapacity) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All rooms at this property are fully booked." });
-    }
+    // // Read booking table
+    // req.body.filters = {
+    //   BranchCode: bookingPayload?.[0]?.BranchCode || "",
+    //   BedType: bookingPayload?.[0]?.BedType || "",
+    //   Status: ["New", "Assigned", "Confirmed"],
+    // };
+    // req.body.tableName = "HM_Booking";
+    // const HM_Booking = (await CommonReadWithFilters(req, res, next)) || [];
+    // // Condition
+    // if (HM_Booking.length >= totalCapacity) {
+    //   return res
+    //     .status(400)
+    //     .json({ success: false, message: "All rooms at this property are fully booked." });
+    // }
 
     // else continue booking...
 
@@ -2053,6 +2053,8 @@ async function getRoomBookingSummary(req, res, next) {
         const bedTypeName = req.query.Name || "";
         const acType = req.query.ACType || "";
         const propertyType = req.query.PropertyType || "";
+        const bookingID = req.query.BookingID || "";
+
 
         const bedType = `${bedTypeName} - ${acType}`;
 
@@ -2130,6 +2132,13 @@ async function getRoomBookingSummary(req, res, next) {
         // 6. Date Overlap Check
         // --------------------------------------------------
         const isBookingActive = (booking) => {
+
+           if (
+        bookingID &&
+        String(booking.BookingID) === String(bookingID)
+    ) {
+        return false;
+    }
 
             if (!booking.StartDate || !booking.EndDate) {
                 return false;
