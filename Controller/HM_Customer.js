@@ -47,6 +47,9 @@ async function getHM_Customer(req, res, next) {
     if (req.query.BookingID)
       req.body.filters.BookingID = normalizeToArray(req.query.BookingID);
 
+     if (req.query.BedType)
+      req.body.filters.BedType = normalizeToArray(req.query.BedType);
+
     if (req.query.Status)
       req.body.filters.Status = normalizeToArray(req.query.Status);
 
@@ -61,11 +64,14 @@ async function getHM_Customer(req, res, next) {
         req.query.MemberID.split(","),
       );
 
-    if (req.query.StartDate && req.query.EndDate) {
-      req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate];
+    // if (req.query.StartDate && req.query.EndDate) {
+    //   req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate];
 
-    }
-
+    // }
+  if (req.query.StartDate && req.query.EndDate) {
+            req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate]
+            req.body.filters.EndDate = [req.query.StartDate, req.query.EndDate]
+        }
     if ((!req.query.BookingID)) {
       let query = `
         SELECT
@@ -118,6 +124,10 @@ async function getHM_Customer(req, res, next) {
         const list = req.body.filters.Status.map((v) => `'${v}'`).join(",");
         whereClauses.push(`B.Status IN (${list})`);
       }
+       if (req.body.filters.BedType) {
+        const list = req.body.filters.BedType.map((v) => `'${v}'`).join(",");
+        whereClauses.push(`B.BedType IN (${list})`);
+      }
 
       if (req.body.filters.RoomNo) {
         const list = req.body.filters.RoomNo.map((v) => `'${v}'`).join(",");
@@ -139,13 +149,21 @@ async function getHM_Customer(req, res, next) {
         });
         whereClauses.push(`(${conditions.join(" OR ")})`);
       }
+if (req.body.filters.StartDate) {
+    const [start, end] = req.body.filters.StartDate;
 
-      if (req.body.filters.StartDate) {
-        const [start, end] = req.body.filters.StartDate;
-        whereClauses.push(
-          `(B.StartDate <= '${end}' AND B.EndDate >= '${start}')`,
-        );
-      }
+    whereClauses.push(
+        `(B.StartDate >= '${start}' AND B.StartDate <= '${end}')`
+    );
+}
+
+if (req.body.filters.EndDate) {
+    const [start, end] = req.body.filters.EndDate;
+
+    whereClauses.push(
+        `(B.EndDate >= '${start}' AND B.EndDate <= '${end}')`
+    );
+}
 
       if (whereClauses.length > 0) {
         query += ` WHERE ` + whereClauses.join(" AND ");
