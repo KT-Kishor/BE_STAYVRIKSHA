@@ -303,7 +303,7 @@ async function putHM_Login(req, res, next) {
       data.Password = await bcrypt.hash(atob(data.Password), saltRounds);
       isCredentialUpdated = true;
     } else {
-      delete data.Password;
+       data.Password;
     }
 
     if (isCredentialUpdated) {

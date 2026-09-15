@@ -1188,13 +1188,28 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 
 ###
-POST http://localhost:3001/HM_getAllInvoiceData
+PUT http://localhost:3001/HM_Login
 Content-Type: application/json
 name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
   "data": {
-    "BookingID": "KVRKK2_2026/27-002"
+    "UserID": "00030",
+    "UserName": "matee",
+    "EmailID": "talkmateen@gmail.com",
+    "Gender": "Male",
+    "STDCode": "+91",
+    "MobileNo": "9090909090",
+    "Address": "fdf",
+    "Country": "India",
+    "State": "Karnataka",
+    "City": "Kalaburagi",
+    "DateOfBirth": "2000-01-19",
+    "Status": "Rejected",
+    "Password": ""
+  },
+  "filters": {
+    "UserID": "00030"
   }
 }
