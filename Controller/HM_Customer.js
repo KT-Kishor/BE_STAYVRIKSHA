@@ -1570,6 +1570,8 @@ async function BookingCancelledEmail(req, res, next, pdfAttachment) {
         contentType: pdfAttachment.mimeType || "application/pdf",
       });
     }
+        const encodedCustomerID = Buffer.from(String(req.body.BookingID)).toString("base64");
+
 
     subject = subject
       .replaceAll("<PropertyName>", req.body.PropertyName || "")
@@ -1594,7 +1596,9 @@ async function BookingCancelledEmail(req, res, next, pdfAttachment) {
       .replaceAll("<PropertyName>", req.body.PropertyName || "")
       .replaceAll("<PropertyType>", req.body.PropertyType || "")
       .replaceAll("<PropertyMobileNo>", propertyMobileNo || "")
-      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "");
+      .replaceAll("<PropertyEmail>", req.body.PropertyEmail || "")
+      .replaceAll("<EncodedCustomerID>", encodedCustomerID);
+
 
     const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
     const replyTo = emailContent.ReplyToEmailId;
