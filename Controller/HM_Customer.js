@@ -72,7 +72,7 @@ async function getHM_Customer(req, res, next) {
             req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate]
             req.body.filters.EndDate = [req.query.StartDate, req.query.EndDate]
         }
-    if ((!req.query.BookingID)) {
+    if ((!req.query.BookingID || req.query.flag==='true')) {
       let query = `
         SELECT
           C.BookingID,
