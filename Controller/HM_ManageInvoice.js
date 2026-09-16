@@ -15,6 +15,8 @@ async function getHM_ManageInvoice(req, res, next) {
   try {
     req.body.filters = {};
     req.body.tableName = "HM_ManageInvoice";
+
+    var flag = req.query.flag;
     if (req.query.InvNo) req.body.filters.InvNo = req.query.InvNo;
     if (req.query.CustomerName)
       req.body.filters.CustomerName = req.query.CustomerName;
@@ -34,6 +36,17 @@ async function getHM_ManageInvoice(req, res, next) {
     delete req.query.Role;
 
     var data = await CommonReadWithFilters(req, res, next);
+  if (flag === "true") {
+  // Format: KVRMP5/26/27-001
+  data = data.filter((item) => {
+    return /^[A-Za-z0-9]+\/\d{2}\/\d{2}-\d{3}$/.test(item.InvNo);
+  });
+} else {
+  // Format: KVRMP5/2026/27-001
+  data = data.filter((item) => {
+    return /^[A-Za-z0-9]+\/\d{4}\/\d{2}-\d{3}$/.test(item.InvNo);
+  });
+}
     data.sort((a, b) => {
       const invA = a.InvNo.split("-")[1];
       const invB = b.InvNo.split("-")[1];
@@ -53,6 +66,10 @@ async function postHM_ManageInvoice(req, res, next) {
     var Items = req.body.Items || [];
     var data = req.body.data || {};
     const branchCode = data.BranchCode;
+
+   var Inv =req.body.data.Inv
+
+   delete req.body.data.Inv
 
     if (!branchCode) {
       return res.status(400).send({
@@ -79,6 +96,32 @@ async function postHM_ManageInvoice(req, res, next) {
       nextYear -= 1;
     }
 
+   let invoiceRecord;
+   let newInvoiceNo;
+    if(Inv){
+       const financialYear = `${currentYear.toString().slice(-2)}/${nextYear.toString().slice(-2)}`;
+    const prefix = `${branchCode}/${financialYear}-`;
+
+    const branchFyInvoices = (existingInvoices || []).filter((inv) => inv.InvNo?.startsWith(prefix),);
+
+    let nextNumber = "001";
+    if (branchFyInvoices.length > 0) {
+      const lastInvoiceNum = Math.max(
+        ...branchFyInvoices.map((inv) => {
+          const match = inv.InvNo.match(/-(\d+)$/);
+          return match ? parseInt(match[1], 10) : 0;
+        }),
+      );
+      nextNumber = String(lastInvoiceNum + 1).padStart(3, "0");
+    }
+
+    newInvoiceNo = `${prefix}${nextNumber}`;
+    invoiceRecord = {
+      ...data,
+      InvNo: newInvoiceNo,
+    };
+
+    }else{
     const financialYear = `${currentYear}/${nextYear.toString().slice(-2)}`;
     const prefix = `${branchCode}/${financialYear}-`;
 
@@ -95,11 +138,12 @@ async function postHM_ManageInvoice(req, res, next) {
       nextNumber = String(lastInvoiceNum + 1).padStart(3, "0");
     }
 
-    const newInvoiceNo = `${prefix}${nextNumber}`;
-    const invoiceRecord = {
+    newInvoiceNo = `${prefix}${nextNumber}`;
+    invoiceRecord = {
       ...data,
       InvNo: newInvoiceNo,
     };
+  }
 
     req.body = {
       tableName: "HM_ManageInvoice",
@@ -679,6 +723,226 @@ async function postHM_InvoicePaymentDetail(req, res, next) {
   }
 }
 
+function calculateBookingallCycleAmounts(
+  bookings,
+  cycleStart,
+  cycleEnd,
+  invoiceIndex
+) {
+  const result = [];
+
+  bookings.forEach((booking) => {
+    const sDate = new Date(booking.StartDate);
+    const eDate = new Date(booking.EndDate);
+
+    sDate.setHours(0, 0, 0, 0);
+    eDate.setHours(0, 0, 0, 0);
+
+    const unit = booking.PaymentType?.toLowerCase();
+
+    // =====================================================
+    // PER DAY
+    // =====================================================
+    if (unit === "per day") {
+      const usedDays = Math.floor(
+        (eDate - sDate) / 86400000
+      );
+
+      const amount = truncate2(
+        (parseFloat(booking.RoomPrice) || 0) * usedDays
+      );
+
+      booking.StartDate = formatDateLocal(sDate);
+      booking.EndDate = formatDateLocal(eDate);
+      booking.UsedDays = usedDays;
+      booking.BookingPrice = amount;
+
+      booking.Discount =
+        invoiceIndex === 0
+          ? parseFloat(booking.Discount) || 0
+          : 0;
+
+      result.push(booking);
+      return;
+    }
+
+    // =====================================================
+    // CHECK WHETHER BOOKING OVERLAPS CURRENT CYCLE
+    // =====================================================
+    const hasOverlap =
+      sDate <= cycleEnd &&
+      eDate >= cycleStart;
+
+    let effectiveStart;
+    let effectiveEnd;
+
+    if (hasOverlap) {
+      effectiveStart =
+        sDate > cycleStart ? sDate : cycleStart;
+
+      effectiveEnd =
+        eDate < cycleEnd ? eDate : cycleEnd;
+    } else {
+      // Booking does not belong to this cycle.
+      // Still return BookingData.
+      effectiveStart = sDate;
+      effectiveEnd = eDate;
+    }
+
+    // =====================================================
+    // PER MONTH
+    // =====================================================
+    if (unit === "per month") {
+      const totalMonths = calculateTotalMonths(
+        sDate,
+        eDate
+      );
+
+      booking.BookingPrice = truncate2(
+        (parseFloat(booking.TotalRoomprice) || 0) /
+          totalMonths
+      );
+    }
+
+    // =====================================================
+    // PER YEAR
+    // =====================================================
+    else if (unit === "per year") {
+      const totalYears = Math.ceil(
+        calculateTotalMonths(sDate, eDate) / 12
+      );
+
+      booking.BookingPrice = truncate2(
+        (parseFloat(booking.TotalRoomprice) || 0) /
+          totalYears
+      );
+    }
+
+    booking.StartDate = formatDateLocal(effectiveStart);
+    booking.EndDate = formatDateLocal(effectiveEnd);
+
+    booking.UsedDays = Math.max(
+      0,
+      Math.floor(
+        (effectiveEnd - effectiveStart) / 86400000
+      )
+    );
+
+    booking.Discount =
+      invoiceIndex === 0
+        ? parseFloat(booking.Discount) || 0
+        : 0;
+
+    result.push(booking);
+  });
+
+  return result;
+}
+
+async function getAllheaderData(req, res, next) {
+  try {
+    const data = req.body.data;
+    req.body.filters = {};
+
+    if (data.BookingID) req.body.filters.BookingID = data.BookingID;
+
+    // EXISTING INVOICES
+    req.body.tableName = "HM_ManageInvoice";
+    const ManageInvoice = await CommonReadCall(req, res, next);
+    const invoiceIndex = ManageInvoice.length;
+
+    // BOOKINGS
+    req.body.tableName = "HM_Booking";
+    const BookingRaw = await CommonReadCall(req, res, next);
+
+    if (!BookingRaw.length) return res.send({ success: true, data: {} });
+
+    // READ BRANCH DATA
+    const branchCodes = [...new Set(BookingRaw.map(item => item.BranchCode).filter(Boolean))];
+
+    const branchCodeFilter = branchCodes.join(",");
+
+    if (branchCodes.length > 0) {
+      req.body.tableName = "HM_Branch";
+      req.body.filters = {
+        BranchID : branchCodeFilter
+      };
+
+      BranchData = await CommonReadCall(req, res, next);
+    }
+
+    // CREATE MAP
+    const branchMap = {};
+    BranchData.forEach(branch => {
+      branchMap[branch.BranchID] = branch;
+    });
+
+    // MERGE BRANCH DETAILS INTO BOOKING
+    BookingRaw.forEach(booking => {
+      const branch = branchMap[booking.BranchCode];
+
+      if (branch) {
+        booking.GSTIN = branch.GSTIN;
+        booking.GSTType = branch.Type;
+        booking.GSTValue = branch.Value;
+      }
+    });
+
+    const bookingStartDate = new Date(BookingRaw[0].StartDate);
+    bookingStartDate.setHours(0, 0, 0, 0);
+
+    // CYCLE TYPE DETECTION
+    const isYearly = BookingRaw.some((b) => b.PaymentType?.toLowerCase() === "per year",);
+
+    const { cycleStart, cycleEnd } = isYearly ? getYearlyCycle(bookingStartDate, invoiceIndex) : getMonthlyCycle(bookingStartDate, invoiceIndex);
+
+    // BOOKING CALCULATION
+    const BookingData = calculateBookingallCycleAmounts(BookingRaw, cycleStart, cycleEnd, invoiceIndex,);
+
+    //  FACILITY ITEMS
+    req.body.tableName = "HM_BookingFacilityItems";
+    req.body.filters = {
+      BookingID: data.BookingID,
+    };
+
+    let BookingFacilityItems = await CommonReadCall(req, res, next);
+
+    const bookingPaymentType = BookingRaw[0]?.PaymentType || "";
+    BookingFacilityItems = BookingFacilityItems.map((item) => ({
+      ...item,
+      PaymentType: bookingPaymentType,
+    }));
+
+    BookingFacilityItems = calculateFacilityCycleAmounts(BookingFacilityItems, cycleStart, cycleEnd, invoiceIndex,);
+
+    // CUSTOMER
+    req.body.tableName = "HM_Customer";
+    req.body.filters = { BookingID: data.BookingID };
+    const ManageCustomer = await CommonReadCall(req, res, next);
+
+    // PAYMENT (ONLY FIRST INVOICE)
+    let PerMonthTotalRent = 0;
+    if (invoiceIndex === 0) {
+      req.body.tableName = "HM_Payment";
+      req.body.filters = { BookingID: data.BookingID };
+      const ManagePayment = await CommonReadCall(req, res, next);
+
+      PerMonthTotalRent = ManagePayment.reduce((sum, pay) => sum + (parseFloat(pay.Amount) || 0), 0,);
+    }
+
+    res.send({
+      success: true,
+      data: { ManageInvoice, BookingData, BookingFacilityItems, ManageCustomer, PerMonthTotalRent, },
+    });
+  } catch (err) {
+    res.status(500).send({
+      success: false,
+      message:
+        err.message || "Technical error, please contact the administrator",
+    });
+  }
+}
+
 async function getAllInvoiceData(req, res, next) {
   try {
     const data = req.body.data;
@@ -1223,5 +1487,6 @@ exports.HM_ManageInvoice = {
   deleteHM_ManageInvoice,
   getAllInvoiceData,
   getHM_InvoiceFullData,
-  fetchHM_InvoicePaymentDetail
+  fetchHM_InvoicePaymentDetail,
+  getAllheaderData
 };

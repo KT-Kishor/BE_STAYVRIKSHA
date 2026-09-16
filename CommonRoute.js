@@ -269,6 +269,8 @@ app.get("/HM_InvoicePaymentDetail", authenticate, HM_ManageInvoice.getHM_Invoice
 app.get("/fetchHM_InvoicePaymentDetail", authenticate, HM_ManageInvoice.fetchHM_InvoicePaymentDetail);
 app.post("/HM_InvoicePaymentDetail", authenticate, HM_ManageInvoice.postHM_InvoicePaymentDetail);
 app.post("/HM_getAllInvoiceData", authenticate, HM_ManageInvoice.getAllInvoiceData);
+app.post("/HM_getAllheaderData", authenticate, HM_ManageInvoice.getAllheaderData);
+
 app.get("/HM_getInvoiceData", authenticate, HM_ManageInvoice.getHM_InvoiceFullData)
 
 //HM_Coupon Service
