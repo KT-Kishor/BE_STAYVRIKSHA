@@ -18,8 +18,9 @@ async function getHM_Bug(req, res, next) {
     if (req.query.StartDate && req.query.EndDate) req.body.filters.CreatedDate = [req.query.StartDate, req.query.EndDate]
     if (req.query.AppName) req.body.filters.AppName = req.query.AppName;
     if (req.query.RaisedBy) req.body.filters.RaisedBy = req.query.RaisedBy;
-    if (req.query.Email) req.body.filters.Email = req.query.Email;
     if (req.query.BranchCode) req.body.filters.BranchCode = req.query.BranchCode.split(",");
+    if (req.query.Email) req.body.filters.Email = req.query.Email.split(",");
+
     if (req.query.BranchCode === "" && req.query.Role === "Admin") return res.status(200).send({
       success: true,
       data: []
