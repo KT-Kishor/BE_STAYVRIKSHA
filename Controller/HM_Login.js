@@ -435,7 +435,7 @@ async function HostelSendOTPEmail(req, res, next) {
         if (LoginData[0].Type === "Customer" && LoginData[0].Status !== "Active") {
         return res.status(403).send({
           success: false,
-          message: "Account access restricted. Your account approval is pending or your account has been deactivated. Please contact the administrator"
+          message:"Your account has been deactivated. Please email the administrator from your registered email to regain access."
         });
       }
       // if (req.body.UserID === LoginData[0].UserID && req.body.UserName === LoginData[0].UserName) {
