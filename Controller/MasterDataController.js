@@ -265,6 +265,7 @@ async function getBranchImage(req, res, next) {
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;
     if (req.query.LandMark) req.body.filters.LandMark = req.query.LandMark;
+
     if (req.query.PropertyType) {
     req.body.filters.PropertyType = req.query.PropertyType.split(",");
     }
@@ -285,6 +286,7 @@ async function getBranchImage(req, res, next) {
     if (req.query.BranchID) {
       req.body.filters.BranchID = req.query.BranchID.split(",");
     }
+    req.body.filters.Status="Active"
 
     // ---------- Fetch Branches ----------
     let data = await CommonReadWithFilters(req, res, next);
@@ -386,6 +388,12 @@ async function HM_BranchData(req, res, next) {
     }
     if (req.query.BranchID) {
       req.body.filters.BranchID = req.query.BranchID.split(",");
+    }
+    if(req.query.Role === "Admin"){
+       req.body.filters.Status="Active"
+
+    }else{
+      
     }
     if (req.query.BranchID === "" && req.query.Role === "Admin") return res.status(200).send({ success: true, data: [] })
     delete req.query.Role;
