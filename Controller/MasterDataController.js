@@ -393,7 +393,7 @@ async function HM_BranchData(req, res, next) {
        req.body.filters.Status="Active"
 
     }else{
-      
+
     }
     if (req.query.BranchID === "" && req.query.Role === "Admin") return res.status(200).send({ success: true, data: [] })
     delete req.query.Role;
@@ -696,7 +696,7 @@ async function getLoginData(req, res, next) {
   try {
     req.body.tableName = "HM_Login";
     req.body.filters = {};
-    req.body.selectedFields = ["UserID", "Salutation", "UserName", "Role", "EmailID", "BranchCode", "STDCode", "MobileNo", "Status", "DateOfBirth", "Gender", "Country", "State", "City", "Address", "AdminComment", "Subscription_Role"];
+    req.body.selectedFields = ["UserID", "Salutation", "UserName", "Role", "EmailID", "BranchCode", "STDCode", "MobileNo", "Status", "DateOfBirth", "Gender", "Country", "State", "City", "Address", "AdminComment", "Subscription_Role","Type"];
 
     const data = await CommonReadWithFilters(req, res, next);
    
