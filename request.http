@@ -1195,21 +1195,12 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
   "data": {
-    "UserID": "00030",
-    "UserName": "matee",
-    "EmailID": "talkmateen@gmail.com",
-    "Gender": "Male",
-    "STDCode": "+91",
-    "MobileNo": "9090909090",
-    "Address": "fdf",
-    "Country": "India",
-    "State": "Karnataka",
-    "City": "Kalaburagi",
-    "DateOfBirth": "2000-01-19",
-    "Status": "Rejected",
-    "Password": ""
+    "EmailID": "telkarnaresh2674@gmail.com",
+    "Status": "Inactive",
+    "Password": "",
+    "role":"Customer"
   },
   "filters": {
-    "UserID": "00030"
+    "UserID": "00003"
   }
 }

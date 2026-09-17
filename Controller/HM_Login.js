@@ -7,7 +7,8 @@ const {
   CommonUpdateCall,
   CommonDeleteCall,
   CommonSendEmail,
-  CommonReadWithFilters
+  CommonReadWithFilters,
+  CommonDeleteCallWithMutiple
 } = require("./CommonController");
 
 
@@ -278,6 +279,116 @@ async function CustomerSignupEmail(req, res, next) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
+async function ActiveDeactivemail(req, res, next) {
+  try {
+    req.body.tableName = "HM_Login";
+
+    const data = req.body.data;
+    delete data.BranchName;
+    const filters = req.body.filters;
+
+    let isCredentialUpdated = false;
+    if (data.FileContent) {
+      data.FileContent = Buffer.from(data.FileContent, 'base64');
+    }
+
+    if (data.OTP) {
+      data.OTP = await bcrypt.hash(data.OTP, saltRounds);
+      isCredentialUpdated = true;
+    } else {
+      delete data.OTP;
+    }
+
+    if (data.Password) {
+      data.Password = await bcrypt.hash(atob(data.Password), saltRounds);
+      isCredentialUpdated = true;
+    } else {
+      data.Password;
+    }
+
+    if (isCredentialUpdated) {
+      data.Status = "Active";
+    }
+
+
+    if (!data || Object.keys(data).length === 0) return res.status(400).send({ success: false, message: "Data for update is required" });
+
+    if (!filters || Object.keys(filters).length === 0) return res.status(400).send({ success: false, message: "Filters for update are required" });
+
+    req.body.data = data;
+    req.body.filters = filters;
+
+    await CommonUpdateCall(req, res, next);
+    if (
+      data.Status === "Inactive" &&
+      data.Role  === "Admin" &&
+      data.Type === "Vendor"
+    ) {
+      const branchUpdateData = {
+        Status: "Inactive",
+        EmailID: data.EmailID
+
+      };
+
+      const branchFilters = {
+        EmailID: data.EmailID
+      };
+
+      req.body.data = branchUpdateData;
+      req.body.filters = branchFilters;
+      req.body.tableName = "HM_Branch";
+
+      await CommonUpdateCall(req, res, next);
+      await VendorDeactiveEmail(req, res, next);
+    }else if (data.Status === "Inactive" && data.Role  === "Customer") {
+
+  const userID = filters.UserID;
+
+  if (userID) {
+
+    // Delete all customer documents for this UserID
+    req.body.filters = {
+      UserID: userID
+    };
+    req.body.tableName = "HM_CustomerDocument";
+
+    await CommonDeleteCallWithMutiple(req, res, next);
+
+    // Delete all members for this UserID
+    req.body.filters = {
+      UserID: userID
+    };
+    req.body.tableName = "HM_Members";
+
+    await CommonDeleteCallWithMutiple(req, res, next);
+  }
+    await CustomerDeactiveEmail(req, res, next);
+
+}
+
+if (
+      data.Status === "Active" &&
+      data.Role  === "Admin" &&
+      data.Type === "Vendor"
+    ) {
+    
+      await VendorActiveEmail(req, res, next);
+    }else if (data.Status === "Active" && data.Role  === "Customer") {
+
+    const userID = filters.UserID;
+
+    await CustomerActiveEmail(req, res, next);
+
+}
+
+    res.status(200).send({ success: true, message: "Login Details Updated!" });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message || "An error occurred during update"
+    });
+  }
+}
 
 async function putHM_Login(req, res, next) {
   try {
@@ -332,6 +443,167 @@ async function putHM_Login(req, res, next) {
       success: false,
       message: error.message || "An error occurred during update"
     });
+  }
+}
+async function VendorActiveEmail(req, res, next) {
+  try {
+
+    // 1️⃣ Decide Email Type
+
+    // 2️⃣ Read Email Template
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_VendorActiveEmail" };
+    const emailContentData = await CommonReadCall(req, res, next);
+
+    if (!emailContentData || emailContentData.length === 0) {
+      throw new Error(`Email template not found for ${emailType}`);
+    }
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [req.body.data.EmailID];
+    const toName = req.body.data.UserName;
+
+    // 4️⃣ Subject
+    let subject = emailContent.Subject
+
+
+    let body =`<p>${emailContent.Body}</p>`
+      body = body
+      .replaceAll("<CustomerName>", req.body.data.UserName || "")
+
+   
+
+
+    const CC = [];
+    const replyTo = emailContent.ReplyToEmailId || "";
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    console.error("VendorApprovalEmail error:", error.message);
+  }
+}
+async function CustomerActiveEmail(req, res, next) {
+  try {
+
+    // 1️⃣ Decide Email Type
+
+    // 2️⃣ Read Email Template
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_CustomerActive" };
+    const emailContentData = await CommonReadCall(req, res, next);
+
+    if (!emailContentData || emailContentData.length === 0) {
+      throw new Error(`Email template not found for ${emailType}`);
+    }
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [req.body.data.EmailID];
+    const toName = req.body.data.UserName;
+
+    // 4️⃣ Subject
+    let subject = emailContent.Subject
+
+
+    let body =`<p>${emailContent.Body}</p>`
+
+      body = body
+      .replaceAll("<CustomerName>", req.body.data.UserName || "")
+
+   
+
+
+    const CC = [];
+    const replyTo = emailContent.ReplyToEmailId || "";
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    console.error("VendorApprovalEmail error:", error.message);
+  }
+}
+async function CustomerDeactiveEmail(req, res, next) {
+  try {
+
+    // 1️⃣ Decide Email Type
+
+    // 2️⃣ Read Email Template
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_CustomerDeactivate" };
+    const emailContentData = await CommonReadCall(req, res, next);
+
+    if (!emailContentData || emailContentData.length === 0) {
+      throw new Error(`Email template not found for ${emailType}`);
+    }
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [req.body.data.EmailID];
+    const toName = req.body.data.UserName;
+
+    // 4️⃣ Subject
+    let subject = emailContent.Subject
+
+
+    let body =`<p>${emailContent.Body}</p>`
+
+      body = body
+      .replaceAll("<CustomerName>", req.body.data.UserName || "")
+
+   
+
+
+    const CC = [];
+    const replyTo = emailContent.ReplyToEmailId || "";
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    console.error("VendorApprovalEmail error:", error.message);
+  }
+}
+
+async function VendorDeactiveEmail(req, res, next) {
+  try {
+
+    // 1️⃣ Decide Email Type
+
+    // 2️⃣ Read Email Template
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_VendorDeactivate" };
+    const emailContentData = await CommonReadCall(req, res, next);
+
+    if (!emailContentData || emailContentData.length === 0) {
+      throw new Error(`Email template not found for ${emailType}`);
+    }
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [req.body.data.EmailID];
+    const toName = req.body.data.UserName;
+
+    // 4️⃣ Subject
+    let subject = emailContent.Subject
+
+
+    let body =`<p>${emailContent.Body}</p>`
+
+     body = body
+      .replaceAll("<CustomerName>", req.body.data.UserName || "")
+
+    const CC = [];
+    const replyTo = emailContent.ReplyToEmailId || "";
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    console.error("VendorApprovalEmail error:", error.message);
   }
 }
 
@@ -957,5 +1229,6 @@ exports.HM_Login = {
   VerifyCustomerOTP,
   HM_Customerdata,
   HostelSendBackOTPEmail,
-  HM_StaffEmailIDs
+  HM_StaffEmailIDs,
+  ActiveDeactivemail
 };

@@ -155,6 +155,8 @@ app.delete("/HM_Feedback", authenticate, HM_Feedback.deleteHM_Feedback);
 app.get("/HM_Login", authenticate, HM_Login.getHM_Login);
 app.post("/HM_Login", authenticate, HM_Login.postHM_Login);
 app.put("/HM_Login", authenticate, HM_Login.putHM_Login);
+app.put("/HM_ActiveDeactive", authenticate, HM_Login.ActiveDeactivemail);
+
 app.delete("/HM_Login", authenticate, HM_Login.deleteHM_Login);
 app.post("/HostelSendOTP", authenticate, HM_Login.HostelSendOTPEmail);
 app.post("/HostelSendBackOTPEmail", authenticate, HM_Login.HostelSendBackOTPEmail);
