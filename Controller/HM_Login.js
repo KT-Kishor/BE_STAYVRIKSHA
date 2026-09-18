@@ -355,12 +355,26 @@ async function ActiveDeactivemail(req, res, next) {
     await CommonDeleteCallWithMutiple(req, res, next);
 
     // Delete all members for this UserID
-    req.body.filters = {
-      UserID: userID
-    };
+  req.body.tableName = "HM_Members";
+req.body.filters = {
+    UserID: userID
+};
+
+const members = await CommonReadWithFilters(req, res, next);
+
+const deleteMemberIDs = members
+    .filter(member => member.Relation !== "Self")
+    .map(member => member.MemberID);
+
+if (deleteMemberIDs.length > 0) {
     req.body.tableName = "HM_Members";
 
+    req.body.filters = {
+        MemberID: deleteMemberIDs
+    };
+
     await CommonDeleteCallWithMutiple(req, res, next);
+}
   }
     await CustomerDeactiveEmail(req, res, next);
 
