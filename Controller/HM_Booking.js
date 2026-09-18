@@ -565,7 +565,7 @@ async function Documentcheck(req, res, next) {
 
       // If document does NOT exist
       if (!bDocumentExists) {
-        aMissingMemberIDs.push(sMemberID);
+        aMissingMemberIDs.push(aMemberIDs[0]);
       }
 
     // If any MemberID is missing document
