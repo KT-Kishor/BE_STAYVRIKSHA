@@ -142,6 +142,8 @@ async function getBranch(req, res, next) {
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;
     if (req.query.LandMark) req.body.filters.LandMark = req.query.LandMark;
+    if (req.query.Status) req.body.filters.Status = req.query.Status;
+
 
     if (req.query.top) req.body.top = req.query.top;
     if (req.query.skip) req.body.skip = req.query.skip;
@@ -266,6 +268,7 @@ async function getBranchImage(req, res, next) {
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;
     if (req.query.LandMark) req.body.filters.LandMark = req.query.LandMark;
+
 
     if (req.query.PropertyType) {
     req.body.filters.PropertyType = req.query.PropertyType.split(",");
@@ -932,6 +935,7 @@ async function getLoginData(req, res, next) {
   try {
     req.body.tableName = "HM_Login";
     req.body.filters = {};
+    if (req.query.Status) req.body.filters.Status = req.query.Status;
     req.body.selectedFields = ["UserID", "Salutation", "UserName", "Role", "EmailID", "BranchCode", "STDCode", "MobileNo", "Status", "DateOfBirth", "Gender", "Country", "State", "City", "Address", "AdminComment", "Subscription_Role","Type"];
 
     const data = await CommonReadWithFilters(req, res, next);
