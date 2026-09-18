@@ -4,7 +4,8 @@ const {
   CommonUpdateCall,
   CommonDeleteCall,
   CommounMultipalUpdate,
-  CommonReadWithFilters
+  CommonReadWithFilters,
+  CommonSendEmail
 } = require("./CommonController");
 
 
