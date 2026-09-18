@@ -4,7 +4,8 @@ const {
   CommonUpdateCall,
   CommonDeleteCall,
   CommonDeleteCallWithMutiple,
-  CommonReadWithFilters
+  CommonReadWithFilters,
+  CommonSendEmail
 } = require("./CommonController");
 
 
@@ -544,24 +545,260 @@ async function generateBranchCode(name, pincode, state, city) {
 }
 
 async function putBranch(req, res, next) {
-  try {
-    req.body.tableName = "HM_Branch";
-    Object.keys(req.body.data).forEach((key) => {
-      if (key.startsWith("Photo") && typeof req.body.data[key] === "string" && !key.endsWith("Name") && !key.endsWith("Type")) {
-        req.body.data[key] = Buffer.from(req.body.data[key], "base64");
-      }
-      if (key.startsWith("Attachment") && typeof req.body.data[key] === "string" && !key.endsWith("Name") && !key.endsWith("Type")) {
-        req.body.data[key] = Buffer.from(req.body.data[key], "base64");
-      }
-    });
-    await CommonUpdateCall(req, res, next);
-    res.send({ success: true, message: "Updated successfully" });
-  } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: error || "Technical error, please contact the administrator",
-    });
-  }
+    try {
+
+        req.body.tableName = "HM_Branch";
+
+        const branchData = req.body.data;
+
+        // ==========================================
+        // GET EXISTING BRANCH GSTIN
+        // ==========================================
+
+        const originalTableName = req.body.tableName;
+        const originalFilters = req.body.filters;
+
+        req.body.tableName = "HM_Branch";
+        req.body.filters = {
+            BranchID: originalFilters.BranchID
+        };
+
+        const existingBranch =
+            await CommonReadCall(req, res, next);
+
+        // Restore request values
+        req.body.tableName = originalTableName;
+        req.body.filters = originalFilters;
+
+        if (!existingBranch || existingBranch.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: "Branch not found"
+            });
+        }
+
+        // ==========================================
+        // COMPARE GSTIN
+        // ==========================================
+
+        const oldGSTIN =
+            (existingBranch[0].GSTIN || "").trim();
+
+        const newGSTIN =
+            (branchData.GSTIN || "").trim();
+
+        const isGSTINChanged =
+            oldGSTIN !== newGSTIN;
+
+        // ==========================================
+        // PHOTO / ATTACHMENT
+        // ==========================================
+
+        Object.keys(branchData).forEach((key) => {
+
+            if (
+                key.startsWith("Photo") &&
+                typeof branchData[key] === "string" &&
+                !key.endsWith("Name") &&
+                !key.endsWith("Type")
+            ) {
+                branchData[key] =
+                    Buffer.from(branchData[key], "base64");
+            }
+
+            if (
+                key.startsWith("Attachment") &&
+                typeof branchData[key] === "string" &&
+                !key.endsWith("Name") &&
+                !key.endsWith("Type")
+            ) {
+                branchData[key] =
+                    Buffer.from(branchData[key], "base64");
+            }
+        });
+
+        // ==========================================
+        // UPDATE BRANCH
+        // ==========================================
+
+        await CommonUpdateCall(req, res, next);
+
+        // ==========================================
+        // GSTIN CHANGED
+        // ==========================================
+
+        if (isGSTINChanged) {
+
+            const savedTableName = req.body.tableName;
+            const savedFilters = req.body.filters;
+
+            req.body.tableName = "HM_Booking";
+            req.body.filters = {
+                BranchCode: savedFilters.BranchID
+            };
+
+            const bookingData =
+                await CommonReadCall(req, res, next);
+
+            // Restore request
+            req.body.tableName = savedTableName;
+            req.body.filters = savedFilters;
+
+            if (bookingData && bookingData.length > 0) {
+
+                const eligibleBookings =
+                    bookingData.filter((booking) =>
+                        [
+                            "Assigned",
+                            "New",
+                            "Confirmed"
+                        ].includes(
+                            (booking.Status || "").trim()
+                        )
+                    );
+
+                // ==========================================
+                // SEND EMAIL
+                // ==========================================
+             var email = [];
+
+for (const booking of eligibleBookings) {
+
+    if (!booking.CustomerEmail) {
+        continue;
+    }
+
+    // If CustomerEmail contains multiple emails separated by comma
+    const emailIds = booking.CustomerEmail
+        .split(",")
+        .map(e => e.trim())
+        .filter(Boolean);
+
+    email.push(...emailIds);
+}
+
+// Remove duplicate email IDs
+email = [...new Set(email)];
+
+console.log("Email Array:", email);
+
+await GSTINEmail(
+    req,
+    res,
+    next,
+    {
+        CustomerEmail: email,
+        PropertyName: branchData.Name || "",
+        PropertyType: branchData.PropertyType || "",
+        GSTIN: newGSTIN
+    }
+);
+            }
+        }
+
+        return res.send({
+            success: true,
+            message: "Updated successfully"
+        });
+
+    } catch (error) {
+
+        console.error("putBranch Error:", error);
+
+        return res.status(500).send({
+            success: false,
+            message:
+                error?.message ||
+                error ||
+                "Technical error, please contact the administrator"
+        });
+    }
+}
+
+async function GSTINEmail(req, res, next, emailData) {
+    try {
+
+        req.body.tableName = "EmailContent";
+        req.body.filters = {
+            Type: "HM_Branchupdate"
+        };
+
+        const emailContentData =
+            await CommonReadCall(req, res, next);
+
+        if (!emailContentData ||
+            emailContentData.length === 0) {
+            return;
+        }
+
+        const emailContent = emailContentData[0];
+
+        const from = emailContent.FormEmailId;
+        const fromName = emailContent.FormName;
+
+        const to = emailData.CustomerEmail;
+        const toName = emailData.CustomerName || "";
+
+        let subject = emailContent.Subject || "";
+
+        subject = subject
+            .replaceAll(
+                "<PropertyName>",
+                emailData.PropertyName || ""
+            )
+            .replaceAll(
+                "<PropertyType>",
+                emailData.PropertyType || ""
+            )
+            .replaceAll(
+                "<BookingID>",
+                emailData.BookingID || ""
+            );
+
+        let body = emailContent.Body || "";
+
+        body = body
+            .replaceAll(
+                "<PropertyName>",
+                emailData.PropertyName || ""
+            )
+            .replaceAll(
+                "<PropertyType>",
+                emailData.PropertyType || ""
+            )
+            .replaceAll(
+                "<GSTIN>",
+                emailData.GSTIN || ""
+            );
+
+        const CC = emailContent.CCEmailId
+            ? emailContent.CCEmailId.split(",")
+            : [];
+
+        const replyTo =
+            emailContent.ReplyToEmailId;
+
+        await CommonSendEmail(
+            req,
+            from,
+            fromName,
+            to,
+            toName,
+            subject,
+            body,
+            CC,
+            replyTo
+        );
+
+    } catch (error) {
+
+        console.error(
+            "GSTINEmail Error:",
+            error
+        );
+
+        throw error;
+    }
 }
 
 async function deleteBranch(req, res, next) {
