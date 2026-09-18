@@ -547,11 +547,10 @@ async function Documentcheck(req, res, next) {
     const aMissingMemberIDs = [];
 
     // Check document for each MemberID
-    for (const sMemberID of aMemberIDs) {
       req.body = {
         tableName: "HM_CustomerDocument",
         filters: {
-          MemberID: sMemberID
+          MemberID: aMemberIDs[0]
         }
       };
 
@@ -568,7 +567,6 @@ async function Documentcheck(req, res, next) {
       if (!bDocumentExists) {
         aMissingMemberIDs.push(sMemberID);
       }
-    }
 
     // If any MemberID is missing document
     if (aMissingMemberIDs.length > 0) {

@@ -3,7 +3,8 @@ const {
     CommonReadWithFilters,
     CommonCreateCall,
     CommonUpdateCall,
-    CommonDeleteCall
+    CommonDeleteCall,
+    CommonDeleteCallWithMutiple
 } = require("./CommonController");
 
 async function getHM_BookingFacilityItems(req, res, next) {
@@ -99,7 +100,7 @@ async function putHM_BookingFacilityItems(req, res, next) {
 async function deleteHM_BookingFacilityItems(req, res, next) {
     try {
         req.body.tableName = "HM_BookingFacilityItems";
-        var data = await CommonDeleteCall(req, res, next);
+        var data = await CommonDeleteCallWithMutiple(req, res, next);
         res.send({
             success: true,
             data,
