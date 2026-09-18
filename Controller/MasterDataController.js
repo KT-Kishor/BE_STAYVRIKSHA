@@ -389,11 +389,10 @@ async function HM_BranchData(req, res, next) {
     if (req.query.BranchID) {
       req.body.filters.BranchID = req.query.BranchID.split(",");
     }
-    if(req.query.Role === "Admin"){
-       req.body.filters.Status="Active"
+    if(req.query.Role === "Admin" || req.query.Role === "SuperAdmin"){
 
     }else{
-
+       req.body.filters.Status="Active"
     }
     if (req.query.BranchID === "" && req.query.Role === "Admin") return res.status(200).send({ success: true, data: [] })
     delete req.query.Role;
