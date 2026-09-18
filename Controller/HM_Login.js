@@ -326,8 +326,7 @@ async function ActiveDeactivemail(req, res, next) {
     ) {
       const branchUpdateData = {
         Status: "Inactive",
-        EmailID: data.EmailID
-
+        EmailID: data.EmailID,
       };
 
       const branchFilters = {
@@ -339,6 +338,7 @@ async function ActiveDeactivemail(req, res, next) {
       req.body.tableName = "HM_Branch";
 
       await CommonUpdateCall(req, res, next);
+      req.body.data.UserName=data.UserName
       await VendorDeactiveEmail(req, res, next);
     }else if (data.Status === "Inactive" && data.Role  === "Customer") {
 
