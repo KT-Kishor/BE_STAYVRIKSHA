@@ -64,10 +64,10 @@ async function getHM_Customer(req, res, next) {
         req.query.MemberID.split(","),
       );
 
-    // if (req.query.StartDate && req.query.EndDate) {
-    //   req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate];
+    if (req.query.BookingStartDate && req.query.BookingEndDate) {
+      req.body.filters.BookingDate = [req.query.BookingStartDate, req.query.BookingEndDate];
 
-    // }
+    }
   if (req.query.StartDate && req.query.EndDate) {
             req.body.filters.StartDate = [req.query.StartDate, req.query.EndDate]
             req.body.filters.EndDate = [req.query.StartDate, req.query.EndDate]
@@ -164,6 +164,15 @@ if (req.body.filters.EndDate) {
         `(B.EndDate >= '${start}' AND B.EndDate <= '${end}')`
     );
 }
+
+if (req.body.filters.BookingDate) {
+    const [start, end] = req.body.filters.BookingDate;
+
+    whereClauses.push(
+        `(B.BookingDate >= '${start}' AND B.BookingDate <= '${end}')`
+    );
+}
+
 
       if (whereClauses.length > 0) {
         query += ` WHERE ` + whereClauses.join(" AND ");
@@ -2128,7 +2137,8 @@ async function getRoomBookingSummary(req, res, next) {
             Status: [
                 "New",
                 "Assigned",
-                "Confirmed"
+                "Confirmed",
+                "Completed"
             ]
         };
 
@@ -2235,6 +2245,11 @@ async function getRoomBookingSummary(req, res, next) {
                 String(booking.Status).toLowerCase() === "confirmed"
         ).length;
 
+         const completedCount = activeBookings.filter(
+            (booking) =>
+                String(booking.Status).toLowerCase() === "completed"
+        ).length;
+
 
         // --------------------------------------------------
         // 9. Total Capacity
@@ -2294,7 +2309,8 @@ async function getRoomBookingSummary(req, res, next) {
     return (
         status === "new" ||
         status === "assigned" ||
-        status === "confirmed"
+        status === "confirmed" || 
+        status === "completed"
     );
 
 }).length;
@@ -2368,6 +2384,9 @@ async function getRoomBookingSummary(req, res, next) {
 
             confirmed:
                 confirmedCount,
+
+            completed:
+                completedCount,
 
             roomStatus:
                 roomStatus,
