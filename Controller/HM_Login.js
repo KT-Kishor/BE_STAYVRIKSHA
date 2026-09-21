@@ -715,7 +715,7 @@ async function HostelSendOTPEmail(req, res, next) {
       if (LoginData[0].Type === "Vendor" && LoginData[0].Status !== "Approved" && LoginData[0].Status !== "Active") {
         return res.status(403).send({
           success: false,
-          message: "Vendor account approval is pending. Please contact the administrator"
+          message: "Vendor account approval or activation is pending. Please contact the administrator"
         });
       }
         if (LoginData[0].Type === "Customer" && LoginData[0].Status !== "Active") {
