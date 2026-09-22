@@ -284,51 +284,97 @@ async function deleteHM_Support(req, res, next) {
   }
 }
 async function putHM_CustomerSupportSupport(req, res, next) {
-  try {
+    try {
 
-    // 1️⃣ Decide Email Type
+        // 1. Email Template Type
+        const emailType = "HM_CustomerSupportInfo";
 
-    // 2️⃣ Read Email Template
-    req.body.tableName = "EmailContent";
-    req.body.filters = { Type: "HM_CustomerSupportInfo" };
-    const emailContentData = await CommonReadCall(req, res, next);
+        // 2. Read Email Template
+        req.body.tableName = "EmailContent";
+        req.body.filters = {
+            Type: emailType
+        };
 
-    if (!emailContentData || emailContentData.length === 0) {
-      throw new Error(`Email template not found for ${emailType}`);
+        const emailContentData = await CommonReadCall(req, res, next);
+
+        if (!emailContentData || emailContentData.length === 0) {
+            throw new Error(`Email template not found for ${emailType}`);
+        }
+
+        const emailContent = emailContentData[0];
+
+        // 3. Customer / Email Details
+        const from = emailContent.FormEmailId || "";
+        const fromName = emailContent.FormName || "";
+
+        const toEmail = req.body.data?.RaisedByEmail || "";
+        const toName = req.body.data?.RaisedBy || "";
+
+        if (!toEmail) {
+            throw new Error("Customer email address is missing");
+        }
+
+        const to = [toEmail];
+
+        // 4. Subject
+        let subject = emailContent.Subject || "";
+
+        subject = subject
+            .replaceAll("<TicketID>", req.body.data?.TicketID || "");
+
+        // 5. Email Body
+        let body = emailContent.Body || "";
+
+        body = body
+            .replaceAll("<TicketID>", req.body.data?.TicketID || "")
+            .replaceAll("<IssueType>", req.body.data?.IssueType || "")
+            .replaceAll("<CustomerName>", req.body.data?.RaisedBy || "")
+            .replaceAll("<IssueName>", req.body.data?.IssueName || "")
+            .replaceAll("<Question>", req.body.data?.Question || "")
+            .replaceAll("<AssignedName>", req.body.data?.AssignedName || "")
+            .replaceAll("<RaisedBy>", req.body.data?.RaisedBy || "");
+
+        // 6. CC
+        const CC = [];
+
+        if (req.body.data?.AskedByEmail) {
+            CC.push(req.body.data.AskedByEmail);
+        }
+
+        // 7. Reply-To
+        const replyTo = emailContent.ReplyToEmailId || "";
+
+        // 8. Send Email
+        await CommonSendEmail(
+            req,
+            from,
+            fromName,
+            to,
+            toName,
+            subject,
+            body,
+            CC,
+            replyTo
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Customer support information email sent successfully"
+        });
+
+    } catch (error) {
+
+        console.error(
+            "CustomerSupportInfoEmail error:",
+            error.message
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-
-    const emailContent = emailContentData[0];
-
-    const from = emailContent.FormEmailId;
-    const fromName = emailContent.FormName;
-    const to = [req.body.data.RaisedByEmail];
-    const toName = req.body.data.RaisedBy;
-
-    // 4️⃣ Subject
-    let subject = emailContent.Subject
-            subject = subject.replaceAll("<TicketID>", req.body.data.TicketID || "");
-
-
-
-    let body = `<p>${emailContent.Body}</p>`
-    body = body
-        .replaceAll("<TicketID>", req.body.data.TicketID || "")
-            .replaceAll("<IssueType>", req.body.data.IssueType || "")
-            .replaceAll("<CustomerName>", req.body.data.RaisedBy || "")
-            .replaceAll("<IssueName>", req.body.data.IssueName || "")
-            .replaceAll("<Question>", req.body.data.Question || "")
-            .replaceAll("<AssignedName>", req.body.data.AssignedName || "")
-            .replaceAll("<RaisedBy>", req.body.data.RaisedBy || "")
-
-    const CC = [req.body.data.AskedByEmail];
-    const replyTo = emailContent.ReplyToEmailId || "";
-
-    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
-  } catch (error) {
-    console.error("VendorApprovalEmail error:", error.message);
-  }
 }
-
 
 exports.HM_Support = {
   getHM_Support,
