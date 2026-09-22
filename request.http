@@ -1188,24 +1188,20 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 
 ###
-PUT http://localhost:3001/HM_Support
+POST http://localhost:3001/HM_CustomerSupport
 Content-Type: application/json
 name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
   "data": {
-    "TicketID": "TCK-2026/27-005",
-    "IssueName": "UI Display Issue",
-    "IssueType": "UI Display Issue",
-    "IssueDescription": "UI Display Issue",
-    "RaisedBy": "Naresh",
-    "Email": "telkarnaresh2674@gmail.com",
-    "Status": "Assigned",
-    "AssignedTo": "telkarnaresh2674@gmail.com",
-    "AssignedDate": "2026-09-22"
-  },
-  "filters": {
-    "TicketID": "TCK-2026/27-005"
-  }
+  "AskedByEmail": "mateen.kt@outlook.com",
+  "AskedByName": "Mateen",
+  "RaisedByEmail": "telkarnaresh2674@gmail.com",
+  "IssueName": "Access Permission Issue",
+  "IssueType": "Access Permission Issue",
+  "Question": "Question for Customer\nQuestion for Customer\nQuestion for Customer\nQuestion for Customer",
+  "RaisedBy": "Naresh",
+  "TicketID": "TCK-2026/27-008"
+}
 }

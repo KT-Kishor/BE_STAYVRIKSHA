@@ -222,6 +222,7 @@ app.delete('/HM_BedTypeDetails', authenticate, HM_BedTypeDetails.deleteHM_BedTyp
 app.get('/HM_Support', authenticate, HM_Support.getHM_Support);
 app.post('/HM_Support', authenticate, HM_Support.postHM_Support);
 app.put('/HM_Support', authenticate, HM_Support.putHM_Support);
+app.post('/HM_AskSupport', authenticate, HM_Support.putHM_CustomerSupportSupport);
 app.delete('/HM_Support', authenticate, HM_Support.deleteHM_Support);
 app.get('/HM_Supportdata', authenticate, HM_Support.getSupportData);
 

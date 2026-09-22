@@ -283,6 +283,51 @@ async function deleteHM_Support(req, res, next) {
     });
   }
 }
+async function putHM_CustomerSupportSupport(req, res, next) {
+  try {
+
+    // 1️⃣ Decide Email Type
+
+    // 2️⃣ Read Email Template
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_CustomerSupportInfo" };
+    const emailContentData = await CommonReadCall(req, res, next);
+
+    if (!emailContentData || emailContentData.length === 0) {
+      throw new Error(`Email template not found for ${emailType}`);
+    }
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [req.body.data.RaisedByEmail];
+    const toName = req.body.data.RaisedBy;
+
+    // 4️⃣ Subject
+    let subject = emailContent.Subject
+            subject = subject.replaceAll("<TicketID>", req.body.data.TicketID || "");
+
+
+
+    let body = `<p>${emailContent.Body}</p>`
+    body = body
+        .replaceAll("<TicketID>", req.body.data.TicketID || "")
+            .replaceAll("<IssueType>", req.body.data.IssueType || "")
+            .replaceAll("<CustomerName>", req.body.data.RaisedBy || "")
+            .replaceAll("<IssueName>", req.body.data.IssueName || "")
+            .replaceAll("<Question>", req.body.data.Question || "")
+            .replaceAll("<AssignedName>", req.body.data.AssignedName || "")
+            .replaceAll("<RaisedBy>", req.body.data.RaisedBy || "")
+
+    const CC = [req.body.data.AskedByEmail];
+    const replyTo = emailContent.ReplyToEmailId || "";
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    console.error("VendorApprovalEmail error:", error.message);
+  }
+}
 
 
 exports.HM_Support = {
@@ -290,5 +335,6 @@ exports.HM_Support = {
   getSupportData,
   postHM_Support,
   putHM_Support,
-  deleteHM_Support
+  deleteHM_Support,
+  putHM_CustomerSupportSupport
 };
