@@ -12,7 +12,7 @@ async function getHM_Support(req, res, next) {
   try {
     req.body.filters = {};
     req.body.tableName = "HM_Support";
-    req.body.selectedFields = ["TicketID", "IssueName", "IssueType", "IssueDescription", "RaisedBy", "Email", "CreatedDate", "Status", "ResolvedDate", "ResolvedDescription"];
+    req.body.selectedFields = ["TicketID", "IssueName", "IssueType", "IssueDescription", "RaisedBy", "Email", "CreatedDate", "Status", "ResolvedDate", "ResolvedDescription","AssignedDate","AssignedTo","AssignedName"];
     if (req.query.TicketID) req.body.filters.TicketID  = req.query.TicketID;
     if (req.query.Status) req.body.filters.Status = req.query.Status;
     if (req.query.StartDate && req.query.EndDate) req.body.filters.CreatedDate = [req.query.StartDate, req.query.EndDate]
@@ -159,7 +159,7 @@ async function HM_SupportTicketRaised(req, res, next) {
         const fromName = emailContent.FormName;
         const to = [process.env.To_Email_ID];
         const toName = "";
-        const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+        const CC = [req.body.data[0].Email] || [];
         const replyTo = emailContent.ReplyToEmailId || "";
 
         let subject = emailContent.Subject;
@@ -221,7 +221,14 @@ async function putHM_Support(req, res, next) {
 async function HM_SupportTicketResolved(req, res, next) {
     try {
         req.body.tableName = "EmailContent";
+        var to;
+        if(req.body.data.Status==="Assigned"){
+        req.body.filters = { Type: "HM_AssignSupport" };
+           to = [req.body.data.AssignedTo]; 
+        }else{
         req.body.filters = { Type: "HM_SupportResolved" };
+          to = [req.body.data.Email]; 
+        }
 
         const emailContentData = await CommonReadCall(req, res, next);
 
@@ -233,9 +240,8 @@ async function HM_SupportTicketResolved(req, res, next) {
 
         const from = emailContent.FormEmailId;
         const fromName = emailContent.FormName;
-        const to = [req.body.data.Email];
         const toName = "";
-        const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+        const CC =  [process.env.To_Email_ID] || [];
         const replyTo = emailContent.ReplyToEmailId || "";
 
         let subject = emailContent.Subject;
@@ -247,7 +253,14 @@ async function HM_SupportTicketResolved(req, res, next) {
             .replaceAll("<TicketID>", req.body.data.TicketID || "")
             .replaceAll("<IssueType>", req.body.data.IssueType || "")
             .replaceAll("<ResolvedDate>", req.body.data.ResolvedDate || "")
-            .replaceAll("<ResolvedDescription>", req.body.data.ResolvedDescription || "");
+            .replaceAll("<ResolvedDescription>", req.body.data.ResolvedDescription || "")
+            .replaceAll("<CustomerName>", req.body.data.CustomerName || "")
+            .replaceAll("<IssueDescription>", req.body.data.IssueDescription || "")
+            .replaceAll("<IssueName>", req.body.data.IssueName || "")
+            .replaceAll("<Email>", req.body.data.Email || "")
+            .replaceAll("<AssignedName>", req.body.data.AssignedName || "")
+            .replaceAll("<RaisedBy>", req.body.data.RaisedBy || "")
+
 
         await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
 

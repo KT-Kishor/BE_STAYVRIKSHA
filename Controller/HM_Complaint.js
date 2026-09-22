@@ -87,8 +87,10 @@ async function ComplaintSubmitEmail(req, res, next) {
     req.body.tableName = "EmailContent";
     if(req.body.data.Status === "Resolved") {
       req.body.filters = { Type: "HM_ResolveComplaint" };
-    }else {
-      req.body.filters = { Type: "HM_Complaint" };
+    }else if(req.body.data.Status === "In Progress") {
+      req.body.filters = { Type: "HM_AssignComplaint" };
+    }else{
+            req.body.filters = { Type: "HM_Complaint" };
     }
 
     var emailContentData = await CommonReadCall(req, res, next);
@@ -125,6 +127,8 @@ async function ComplaintSubmitEmail(req, res, next) {
       .replaceAll("<ComplaintID>", req.body.data.ComplaintID)
       .replaceAll("<Status>", req.body.data.Status)
       .replaceAll("<Comment>", req.body.data.Comment)
+      .replaceAll("<AssignedTo>", req.body.data.AssignedBy)
+
 
 
       const CC = (req.body.data.ccmailids  || "")
@@ -169,9 +173,7 @@ async function putHM_Complaint(req, res, next) {
     req.body.data.ccmailids = ccemailIds;
 
     
-    if(req.body.data.Status !=="In Progress") {
      await ComplaintSubmitEmail(req, res, next);
-    }
 
 
     res.status(200).send({ success: true, message: "Complaint details updated!" });

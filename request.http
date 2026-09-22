@@ -1188,19 +1188,24 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 
 ###
-PUT http://localhost:3001/HM_Login
+PUT http://localhost:3001/HM_Support
 Content-Type: application/json
 name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
   "data": {
-    "EmailID": "telkarnaresh2674@gmail.com",
-    "Status": "Inactive",
-    "Password": "",
-    "role":"Customer"
+    "TicketID": "TCK-2026/27-005",
+    "IssueName": "UI Display Issue",
+    "IssueType": "UI Display Issue",
+    "IssueDescription": "UI Display Issue",
+    "RaisedBy": "Naresh",
+    "Email": "telkarnaresh2674@gmail.com",
+    "Status": "Assigned",
+    "AssignedTo": "telkarnaresh2674@gmail.com",
+    "AssignedDate": "2026-09-22"
   },
   "filters": {
-    "UserID": "00003"
+    "TicketID": "TCK-2026/27-005"
   }
 }
