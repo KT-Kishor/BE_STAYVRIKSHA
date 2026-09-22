@@ -936,7 +936,7 @@ async function getLoginData(req, res, next) {
     req.body.tableName = "HM_Login";
     req.body.filters = {};
     if (req.query.Status) req.body.filters.Status = req.query.Status;
-    if (req.query.Role) req.body.filters.Role = req.query.Rol.split(",");
+    if (req.query.Role) req.body.filters.Role = req.query.Role.split(",");
     req.body.selectedFields = ["UserID", "Salutation", "UserName", "Role", "EmailID", "BranchCode", "STDCode", "MobileNo", "Status", "DateOfBirth", "Gender", "Country", "State", "City", "Address", "AdminComment", "Subscription_Role","Type"];
 
     const data = await CommonReadWithFilters(req, res, next);
