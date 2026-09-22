@@ -260,7 +260,7 @@ async function HM_SupportTicketResolved(req, res, next) {
             .replaceAll("<Email>", req.body.data.Email || "")
             .replaceAll("<AssignedName>", req.body.data.AssignedName || "")
             .replaceAll("<RaisedBy>", req.body.data.RaisedBy || "")
-
+            .replaceAll("<Status>", req.body.data.Status || "");
 
         await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
 
