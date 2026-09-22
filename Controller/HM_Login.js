@@ -409,7 +409,9 @@ async function putHM_Login(req, res, next) {
     req.body.tableName = "HM_Login";
 
     const data = req.body.data;
+    var flag=data.flag
     delete data.BranchName;
+    delete data.flag;
     const filters = req.body.filters;
 
     let isCredentialUpdated = false;
@@ -450,6 +452,22 @@ async function putHM_Login(req, res, next) {
       } catch (emailError) {
         console.error("Vendor approval email failed:", emailError.message);
       }
+    }
+    if(data.Status==="Active" && flag==="ResendMail"){
+      await VendorActiveEmail(req, res, next);
+    }else if(data.Status==="Inactive"&& flag==="ResendMail"){
+       const branchUpdateData = {
+        Status: "Inactive",
+        EmailID: data.EmailID,
+      };
+
+      const branchFilters = {
+        EmailID: data.EmailID
+      };
+
+      req.body.data = branchUpdateData;
+      req.body.filters = branchFilters;
+      await VendorDeactiveEmail(req, res, next);
     }
     res.status(200).send({ success: true, message: "Login Details Updated!" });
   } catch (error) {
