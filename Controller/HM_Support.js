@@ -199,6 +199,10 @@ async function putHM_Support(req, res, next) {
 
     req.body.tableName = "HM_Support";
 
+    var SuperAdmin = req.body.data.SuperAdmin;
+
+    delete req.body.data.SuperAdmin;
+
     Object.keys(req.body.data).forEach((key) => {
       if (
         key.startsWith("Photo") &&
@@ -217,6 +221,19 @@ async function putHM_Support(req, res, next) {
         success: false,
         message: invoiceUpdateResponse?.error || "Failed to update support ticket",
       });
+    }
+
+    // Convert comma-separated emails into array
+    req.body.data.SuperAdmin = SuperAdmin
+      ? SuperAdmin
+          .split(",")
+          .map(email => email.trim())
+          .filter(email => email)
+      : [];
+
+    // Add support email
+    if (process.env.To_Email_ID) {
+      req.body.data.SuperAdmin.push(process.env.To_Email_ID);
     }
 
     await HM_SupportTicketResolved(req, res, next);
@@ -257,7 +274,7 @@ async function HM_SupportTicketResolved(req, res, next) {
         const from = emailContent.FormEmailId;
         const fromName = emailContent.FormName;
         const toName = "";
-        const CC =  [process.env.To_Email_ID] || [];
+        const CC =  req.body.data.SuperAdmin || [];
         const replyTo = emailContent.ReplyToEmailId || "";
 
         let subject = emailContent.Subject;

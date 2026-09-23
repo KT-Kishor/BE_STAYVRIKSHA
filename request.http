@@ -1188,20 +1188,25 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 
 ###
-POST http://localhost:3001/HM_CustomerSupport
+PUT http://localhost:3001/HM_Support
 Content-Type: application/json
 name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
   "data": {
-  "AskedByEmail": "mateen.kt@outlook.com",
-  "AskedByName": "Mateen",
-  "RaisedByEmail": "telkarnaresh2674@gmail.com",
-  "IssueName": "Access Permission Issue",
-  "IssueType": "Access Permission Issue",
-  "Question": "Question for Customer\nQuestion for Customer\nQuestion for Customer\nQuestion for Customer",
-  "RaisedBy": "Naresh",
-  "TicketID": "TCK-2026/27-008"
-}
+    "TicketID": "TCK-2026/27-009",
+    "IssueName": "unabel to access ricke",
+    "IssueType": "Access Permission Issue",
+    "IssueDescription": "Hello",
+    "RaisedBy": "Naresh",
+    "Email": "telkarnaresh2674@gmail.com",
+    "ResolvedDescription": "resolced",
+    "Status": "Resolved",
+    "ResolvedDate": "2026-09-23",
+    "SuperAdmin": "callmateen@gmail.com,telkarnaresh2674@gmail.com"
+  },
+  "filters": {
+    "TicketID": "TCK-2026/27-009"
+  }
 }
