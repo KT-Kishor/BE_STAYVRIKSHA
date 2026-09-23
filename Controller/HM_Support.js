@@ -128,6 +128,21 @@ async function postHM_Support(req, res, next) {
       });
     }
 
+
+   req.body.tableName = "HM_Login";
+req.body.filters = { ROle: "SuperAdmin" };
+
+const loginData = await CommonReadCall(req, res, next);
+
+const emailIds = loginData
+    .map(item => item.EmailID)
+    .filter(email => email);
+
+emailIds.push(process.env.To_Email_ID);
+
+req.body.data[0].toEmails = emailIds;
+    
+
     await HM_SupportTicketRaised(req, res, next);
 
     res.status(200).send({
@@ -157,7 +172,7 @@ async function HM_SupportTicketRaised(req, res, next) {
 
         const from = emailContent.FormEmailId;
         const fromName = emailContent.FormName;
-        const to = [process.env.To_Email_ID];
+        const to = req.body.data[0].toEmails;
         const toName = "";
         const CC = [req.body.data[0].Email] || [];
         const replyTo = emailContent.ReplyToEmailId || "";
@@ -167,6 +182,7 @@ async function HM_SupportTicketRaised(req, res, next) {
 
         body = body
             .replaceAll("<TicketID>", req.body.data[0].TicketID || "")
+            .replaceAll("<IssueName>", req.body.data[0].IssueName || "")
             .replaceAll("<IssueType>", req.body.data[0].IssueType || "")
             .replaceAll("<RaisedBy>", req.body.data[0].RaisedBy || "")
             .replaceAll("<CreatedDate>", req.body.data[0].CreatedDate || "")

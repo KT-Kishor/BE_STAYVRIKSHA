@@ -456,7 +456,7 @@ async function putHM_Login(req, res, next) {
     if(data.Status==="Active" && flag==="ResendMail"){
       await VendorActiveEmail(req, res, next);
     }else if(data.Status==="Inactive"&& flag==="ResendMail"){
-       const branchUpdateData = {
+      const branchUpdateData = {
         Status: "Inactive",
         EmailID: data.EmailID,
       };
@@ -467,6 +467,10 @@ async function putHM_Login(req, res, next) {
 
       req.body.data = branchUpdateData;
       req.body.filters = branchFilters;
+      req.body.tableName = "HM_Branch";
+
+      await CommonUpdateCall(req, res, next);
+      req.body.data.UserName=data.UserName
       await VendorDeactiveEmail(req, res, next);
     }
     res.status(200).send({ success: true, message: "Login Details Updated!" });
