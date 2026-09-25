@@ -1048,14 +1048,27 @@ async function getAllInvoiceData(req, res, next) {
 }
 
 function getMonthlyCycle(baseDate, index) {
-  const cycleStart = new Date(baseDate);
-  cycleStart.setMonth(cycleStart.getMonth() + index);
+  const startDay = baseDate.getDate();
+  const startMonth = baseDate.getMonth();
+  const startYear = baseDate.getFullYear();
 
-  const cycleEnd = new Date(cycleStart);
-  cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+  // Check if baseDate is the last day of its month
+  const baseMonthLastDay = new Date(startYear, startMonth + 1, 0).getDate();
+  const isBaseLastDay = (startDay === baseMonthLastDay);
 
-  cycleStart.setHours(0, 0, 0, 0);
-  cycleEnd.setHours(0, 0, 0, 0);
+  // Helper to construct a month-aligned date
+  function createAlignedDate(year, monthIndex) {
+    const calcYear = year + Math.floor(monthIndex / 12);
+    const calcMonth = (monthIndex % 12 + 12) % 12;
+
+    const targetMonthLastDay = new Date(calcYear, calcMonth + 1, 0).getDate();
+    const day = isBaseLastDay ? targetMonthLastDay : Math.min(startDay, targetMonthLastDay);
+
+    return new Date(calcYear, calcMonth, day, 0, 0, 0, 0);
+  }
+
+  const cycleStart = createAlignedDate(startYear, startMonth + index);
+  const cycleEnd = createAlignedDate(startYear, startMonth + index + 1);
 
   return { cycleStart, cycleEnd };
 }
@@ -1077,12 +1090,23 @@ function calculateTotalMonths(startDate, endDate) {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  let months =
-    (end.getFullYear() - start.getFullYear()) * 12 +
-    (end.getMonth() - start.getMonth());
+  const startDay = start.getDate();
+  const startMonthLastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+  const isStartLastDay = (startDay === startMonthLastDay);
 
-  if (end.getDate() > start.getDate()) {
-    months += 1;
+  const endDay = end.getDate();
+  const endMonthLastDay = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
+  const isEndLastDay = (endDay === endMonthLastDay);
+
+  let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+
+  // Treat end-of-month dates (e.g. Sept 30 -> Oct 31) as full months
+  if (isStartLastDay && isEndLastDay) {
+    return Math.max(months, 1);
+  }
+
+  if (endDay < startDay) {
+    months -= 1; // Month hasn't fully completed yet
   }
 
   return Math.max(months, 1);
