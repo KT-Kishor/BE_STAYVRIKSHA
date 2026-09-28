@@ -18,6 +18,7 @@ async function getHM_Bug(req, res, next) {
     if (req.query.StartDate && req.query.EndDate) req.body.filters.CreatedDate = [req.query.StartDate, req.query.EndDate]
     if (req.query.AppName) req.body.filters.AppName = req.query.AppName;
     if (req.query.RaisedBy) req.body.filters.RaisedBy = req.query.RaisedBy;
+    if (req.query.AssignedTo) req.body.filters.AssignedTo = req.query.AssignedTo;
     if (req.query.BranchCode) req.body.filters.BranchCode = req.query.BranchCode.split(",");
     if (req.query.Email) req.body.filters.Email = req.query.Email.split(",");
 
