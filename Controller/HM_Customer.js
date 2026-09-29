@@ -804,6 +804,7 @@ async function getConfirmavailableRooms(req, res, next) {
         };
 
         req.body.tableName = "HM_Rooms";
+        req.body.filters.Status="Active"
 
         const HM_Rooms =
             (await CommonReadWithFilters(req, res, next)) || [];
@@ -2121,6 +2122,7 @@ async function getRoomBookingSummary(req, res, next) {
         };
 
         req.body.tableName = "HM_Rooms";
+        req.body.filters.Status="Active"
 
         const HM_Rooms =
             (await CommonReadWithFilters(req, res, next)) || [];

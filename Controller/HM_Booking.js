@@ -366,7 +366,7 @@ async function BookingBedTypeRoomReadCall(req, res, next) {
       CommonReadWithFilters(
         createSubRequest({
           tableName: "HM_Rooms",
-          filters: { BranchCode: BranchCodes },
+          filters: { BranchCode: BranchCodes,Status:"Active" },
         }),
         res,
         next,
