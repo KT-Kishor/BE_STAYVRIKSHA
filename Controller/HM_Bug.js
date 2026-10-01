@@ -332,12 +332,16 @@ async function putHM_Bug(req, res, next) {
         message: invoiceUpdateResponse?.error || "Failed to update support ticket",
       });
     }
+    if (req.body.data.Status === "Resolved") {
+      await HM_BugTicketResolved(req, res, next);
+    }else if(req.body.data.Status === "Assigned") {
+      await HM_BugTicketAssigned(req, res, next);
+    }
 
-    await HM_BugTicketResolved(req, res, next);
 
     res.send({
       success: true,
-      message: "Bug resolved successfully",
+      message: "Bug updated successfully",
     });
 
   } catch (error) {
@@ -345,6 +349,47 @@ async function putHM_Bug(req, res, next) {
       success: false,
       message: error?.message || "Technical error, please contact the administrator",
     });
+  }
+}
+
+async function HM_BugTicketAssigned(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_BugAssigned" };
+
+    const emailContentData = await CommonReadCall(req, res, next);
+
+    if (!emailContentData || emailContentData.length === 0) return res.status(404).send({ success: false, message: "Email content not found" });
+
+    const emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+    const to = [req.body.data.AssignedTo];
+    const toName = "";
+    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const replyTo = emailContent.ReplyToEmailId || "";
+
+    let subject = emailContent.Subject || "";
+
+    subject = subject
+      .replaceAll("<BugID>", req.body.data.BugID || "")
+      .replaceAll("<AppName>", req.body.data.AppName || "");
+    let body = emailContent.Body;
+
+    body = body
+      .replaceAll("<BugID>", req.body.data.BugID || "")
+      .replaceAll("<AppName>", req.body.data.AppName || "")
+      .replaceAll("<RaisedBy>", req.body.data.RaisedBy || "")
+      .replaceAll("<CreatedDate>", req.body.data.CreatedDate || "")
+      .replaceAll("<BugDescription>", req.body.data.BugDescription || "")
+      .replaceAll("<AssignedName>", req.body.data.AssignedName || "")
+
+
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
 
