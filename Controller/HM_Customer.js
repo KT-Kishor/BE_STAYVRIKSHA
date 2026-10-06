@@ -2277,6 +2277,9 @@ const inactiveRooms = HM_Rooms.filter(
             totalCapacity =
                 activeRooms.length * noOfPerson;
 
+            totalinactiveCapacity =
+                inactiveRooms.length * noOfPerson;
+
         } else {
 
             // Hotel:
@@ -2284,6 +2287,8 @@ const inactiveRooms = HM_Rooms.filter(
 
             totalCapacity =
                 activeRooms.length;
+            totalinactiveCapacity =
+                inactiveRooms.length;
         }
 
 
@@ -2379,7 +2384,7 @@ const inactiveRooms = HM_Rooms.filter(
             totalCapacity:
                 totalCapacity,
 
-            InactiveRooms: inactiveRooms.length,
+            InactiveRooms: totalinactiveCapacity,
 
             bookedCount:
                 bookedCount,
