@@ -2122,12 +2122,19 @@ async function getRoomBookingSummary(req, res, next) {
         };
 
         req.body.tableName = "HM_Rooms";
-        req.body.filters.Status="Active"
 
         const HM_Rooms =
             (await CommonReadWithFilters(req, res, next)) || [];
 
+const activeRooms = HM_Rooms.filter(
+    (room) =>
+        String(room.Status || "").toLowerCase() === "active"
+);
 
+const inactiveRooms = HM_Rooms.filter(
+    (room) =>
+        String(room.Status || "").toLowerCase() === "inactive"
+);
         // --------------------------------------------------
         // 4. Read Bookings
         // --------------------------------------------------
@@ -2268,7 +2275,7 @@ async function getRoomBookingSummary(req, res, next) {
             // 10 rooms × 4 persons = 40 capacity
 
             totalCapacity =
-                HM_Rooms.length * noOfPerson;
+                activeRooms.length * noOfPerson;
 
         } else {
 
@@ -2276,7 +2283,7 @@ async function getRoomBookingSummary(req, res, next) {
             // Each room = 1 capacity
 
             totalCapacity =
-                HM_Rooms.length;
+                activeRooms.length;
         }
 
 
@@ -2371,6 +2378,8 @@ async function getRoomBookingSummary(req, res, next) {
 
             totalCapacity:
                 totalCapacity,
+
+            InactiveRooms: inactiveRooms.length,
 
             bookedCount:
                 bookedCount,
