@@ -104,6 +104,8 @@ app.get("/getBranchHotelData", authenticate, HM_Customer.getBranchHotelData);
 app.get("/HM_Member", authenticate, HM_Customer.getHM_Members);
 
 app.get("/HM_Booking", authenticate, HM_Booking.getHM_Booking);
+app.get("/HM_BookingHistory", authenticate, HM_Booking.getHM_BookingHistory);
+
 app.get("/HM_BookingDocumentCheck", authenticate, HM_Booking.Documentcheck);
 
 app.post("/HM_Booking", authenticate, HM_Booking.postHM_Booking);

@@ -626,6 +626,16 @@ async function postHM_Customer(req, res, next) {
         await CommonCreateCall(req, res, next);
       }
     }
+        req.body.tableName = "HM_BookingHistory";
+        req.body.data={
+        ID:randomUUID(),
+        BookingID: BookingData.BookingID || "",
+        name: BookingData.CustomerName || "",
+        Date: new Date().toISOString(),
+        Comment: "Booking created",
+        Status: BookingData.Status || "",
+       }
+      await CommonCreateCall(req, res, next);
 
     for (let i = 0; i < bookingPayload.length; i++) {
       const data = bookingPayload[i];
@@ -1208,10 +1218,13 @@ async function putHM_Customer(req, res, next) {
     const propertyEmail = req.body.data[0].PropertyEmail || "";
     const propertyType = req.body.data[0].PropertyType || "";
     const memberID = req.body.data?.[0]?.Booking?.[0]?.MemberID || "";
+    const LoginName = req.body.data[0].LoginName || "";
     delete req.body.data[0].Area;
     delete req.body.data[0].PropertySTD;
     delete req.body.data[0].PropertyMobileNo;
     delete req.body.data[0].PropertyEmail;
+    delete req.body.data[0].LoginName;
+
 
     if (!payload) {
       return res.status(400).send({
@@ -1364,7 +1377,7 @@ async function putHM_Customer(req, res, next) {
         }
       }
     }
-
+    
     // 6️⃣ Update HM_Payment (Only when PaymentDetails exist)
     if (payload.PaymentDetails && payload.PaymentDetails.length > 0) {
       req.body.tableName = "HM_Payment";
@@ -1374,6 +1387,17 @@ async function putHM_Customer(req, res, next) {
       }));
       await CommounMultipalUpdate(req, res, next);
     }
+ 
+       req.body.tableName = "HM_BookingHistory";
+       req.body.data={
+        ID:randomUUID(),
+        BookingID: payload.Booking?.[0]?.BookingID || "",
+        Date: new Date().toISOString(),
+        Comment: "Booking details updated",
+        Name: LoginName || "",
+        Status: payload.Booking?.[0]?.Status || "",
+       }
+      await CommonCreateCall(req, res, next);
 
     //  7️⃣ SEND CANCEL MAIL
     for (const booking of cancelledBookings) {

@@ -30,6 +30,23 @@ async function getHM_Booking(req, res, next) {
     });
   }
 }
+async function getHM_BookingHistory(req, res, next) {
+  try {
+    req.body.filters = {};
+    req.body.tableName = "HM_BookingHistory";
+    if (req.query.BookingID) req.body.filters.BookingID = req.query.BookingID; 
+    const commentData = await CommonReadWithFilters(req, res, next);
+    res.send({
+      success: true,
+      commentData,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error || "Technical error, please contact the administrator",
+    });
+  }
+}
 
 async function postHM_Booking(req, res, next) {
   try {
@@ -66,6 +83,8 @@ async function putHM_Booking(req, res, next) {
     const propertyMobileNo = `${data.PropertySTD || ""} ${data.PropertyMobileNo || ""}`;
     const propertyEmail = data.PropertyEmail 
     const Salutation=data.Salutation
+    const LoginName=data.LoginName
+
 
     // Remove Non-DB Fields Before Update
     delete data.CustomerEmail;
@@ -76,6 +95,8 @@ async function putHM_Booking(req, res, next) {
     delete data.PropertyMobileNo;
     delete data.PropertyEmail;
     delete data.Salutation;
+    delete data.LoginName;
+
 
 
     // Prepare Email Payload
@@ -121,11 +142,34 @@ async function putHM_Booking(req, res, next) {
 
         await BookingConfirmEmail(req, res, next, pdfAttachment);
 
+        req.body.tableName = "HM_BookingHistory";
+       req.body.data={
+        ID:randomUUID(),
+        BookingID: data.BookingID || "",
+        Date: new Date().toISOString(),
+        Comment: "Booking confirmed",
+        Name: LoginName || "",
+        Status: data.Status || "",
+       }
+      await CommonCreateCall(req, res, next);
+
       } else if (data.Status === "Rejected") {
 
         await BookingRejectEmail(req, res, next,pdfAttachment);
+
+        req.body.tableName = "HM_BookingHistory";
+        req.body.data={
+        ID:randomUUID(),
+        BookingID: data.BookingID || "",
+        Date: new Date().toISOString(),
+        Comment: "Booking rejected",
+        Name: LoginName || "",
+        Status: data.Status || "",
+       }
+      await CommonCreateCall(req, res, next);
       }
     }
+    
 
     return res.status(200).send({
       success: true,
@@ -1216,5 +1260,6 @@ exports.HM_Booking = {
   HM_GetCurrentYearPaymentTypeBarChart,
   HM_EnquiryEmail,
   HM_BookingCustomerReadCall,
-  Documentcheck
+  Documentcheck,
+  getHM_BookingHistory
 };

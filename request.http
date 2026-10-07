@@ -1174,16 +1174,13 @@ password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 }
 
 ###
-GET http://localhost:3001/HM_AvailableRooms
+GET http://localhost:3001/HM_BookingHistory
 Content-Type: application/json
 name:$2a$12$LC.eHGIEwcbEWhpi9gEA.umh8Psgnlva2aGfFlZLuMtPFjrMDwSui
 password:$2a$12$By8zKifvRcfxTbabZJ5ssOsheOLdAxA2p6/pdaNvv1xy1aHucPm0u
 
 {
-  "BranchCode": "KVRKK2",
-  "ACType": "AC",
-  "Name": "Double AC",
-  "PropertyType": "Hostel"
+  "BookingID": "APAKK2_2026/27-001"
 }
 
 
