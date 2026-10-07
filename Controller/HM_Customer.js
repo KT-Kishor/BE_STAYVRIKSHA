@@ -629,11 +629,11 @@ async function postHM_Customer(req, res, next) {
         req.body.tableName = "HM_BookingHistory";
         req.body.data={
         ID:randomUUID(),
-        BookingID: BookingData.BookingID || "",
-        name: BookingData.CustomerName || "",
+        BookingID: bookingPayload[0].BookingID || "",
+        name: customerList[0].CustomerName || "",
         Date: new Date().toISOString(),
         Comment: "Booking created",
-        Status: BookingData.Status || "",
+        Status: bookingPayload[0].Status || "",
        }
       await CommonCreateCall(req, res, next);
 

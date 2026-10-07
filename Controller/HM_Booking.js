@@ -162,7 +162,7 @@ async function putHM_Booking(req, res, next) {
         ID:randomUUID(),
         BookingID: data.BookingID || "",
         Date: new Date().toISOString(),
-        Comment: "Booking rejected",
+        Comment: data.RejectDesc || "Booking rejected",
         Name: LoginName || "",
         Status: data.Status || "",
        }
