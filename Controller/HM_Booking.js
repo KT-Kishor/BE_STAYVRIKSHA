@@ -688,6 +688,8 @@ async function putHM_Bookingdeposit(req, res, next) {
 
     const BranchName = req.body.data.BranchName;
     const STDCode = req.body.data.STDCode;
+    const LoginName = req.body.data.LoginName;
+
 
     const MobileNo = req.body.data.MobileNo;
     const AdminEmail = req.body.data.AdminEmail;
@@ -699,6 +701,7 @@ async function putHM_Bookingdeposit(req, res, next) {
 
     delete req.body.data.MobileNo
     delete req.body.data.AdminEmail
+    delete req.body.data.LoginName
 
     const { BookingID, flag } = req.body.filters;
 
@@ -802,6 +805,16 @@ for (const sMemberID of aMemberIDs) {
 
       await CommonCreateCall(req, res, next);
     }
+        req.body.tableName = "HM_BookingHistory";
+           req.body.data={
+            ID:randomUUID(),
+            BookingID: BookingID|| "",
+            Date: new Date().toISOString(),
+            Comment: "Booking Assigned",
+            Name: LoginName || "",
+            Status: Status || "",
+           }
+          await CommonCreateCall(req, res, next);
 
     res.status(200).send({
       success: true,
