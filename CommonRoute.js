@@ -105,6 +105,8 @@ app.get("/HM_Member", authenticate, HM_Customer.getHM_Members);
 
 app.get("/HM_Booking", authenticate, HM_Booking.getHM_Booking);
 app.get("/HM_BookingHistory", authenticate, HM_Booking.getHM_BookingHistory);
+app.post("/HM_Health", authenticate, HM_Booking.postHM_Health);
+
 
 app.get("/HM_BookingDocumentCheck", authenticate, HM_Booking.Documentcheck);
 

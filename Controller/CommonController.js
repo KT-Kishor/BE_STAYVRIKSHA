@@ -1274,7 +1274,7 @@ const CommonSendEmail = async (req, from, fromName, to, toName, subject, body, C
 		transporter = StayvrikshaEmail;
 
 		var emaildata = await transporter.sendMail(mailOptions);
-		return { success: true, message: emaildata };
+			return { success: true, message: emaildata };
 	} catch (error) {
 		return { success: false, error: error };
 	}

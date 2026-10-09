@@ -72,6 +72,73 @@ async function postHM_Booking(req, res, next) {
   }
 }
 
+async function postHM_Health(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_HealthInsurence" };
+
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res.status(404).send({ success: false, message: "Email content not found" });
+    }
+
+    var emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+    const to = [emailContent.ToEmailID];
+    const toName = req.body.CustomerName;
+    let subject = emailContent.Subject;
+    const oData = req.body.data;
+
+const sMembersRows = (oData.Members || []).map(function (oMember) {
+    return `
+        <tr>
+            <td style="border:1px solid #ccc; padding:8px;">
+                Person ${oMember.MemberNumber}
+            </td>
+            <td style="border:1px solid #ccc; padding:8px;">
+                ${oMember.DateOfBirth || ""}
+            </td>
+        </tr>
+    `;
+}).join("");
+
+const sMembersTable = `
+<table style="border-collapse: collapse; width: 60%; text-align: left;">
+        <tr>
+            <th style="border: 1px solid #ccc; padding: 8px; font-weight: bold; width: 30%;">Member</th>
+            <th style="border: 1px solid #ccc; padding: 8px; font-weight: bold; width: 30%;">Date of Birth</th>
+        </tr>
+        ${sMembersRows}
+    </table>
+`;
+
+       
+    // Ensure replacements are applied
+    let body = `<p>${emailContent.Body}</p>`;
+
+    body = body
+      .replaceAll("<CustomerName>", req.body.data.fullName)
+      .replaceAll("<MobileNumber>", req.body.data.mobileNumber)
+      .replaceAll("<Emailaddress>", req.body.data.email)
+      .replaceAll("<TotalMembers>", req.body.data.NumberOfMembers)
+      .replaceAll("<MembersDetails>", sMembersTable);
+
+    const CC = req.body.data.email ? [req.body.data.email] : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+    return res.status(200).send({
+  success: true,
+  message: "Health insurance information has been sent to the StayVriksha team. They will review and process your application."
+});
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
+
 async function putHM_Booking(req, res, next) {
   try {
     const data = req.body.data;
@@ -1274,5 +1341,6 @@ exports.HM_Booking = {
   HM_EnquiryEmail,
   HM_BookingCustomerReadCall,
   Documentcheck,
-  getHM_BookingHistory
+  getHM_BookingHistory,
+  postHM_Health
 };
