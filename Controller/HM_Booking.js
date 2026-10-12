@@ -124,6 +124,11 @@ const sMembersTable = `
       .replaceAll("<MobileNumber>", req.body.data.mobileNumber)
       .replaceAll("<Emailaddress>", req.body.data.email)
       .replaceAll("<TotalMembers>", req.body.data.NumberOfMembers)
+      .replaceAll("<BloodGroup>", req.body.data.BloodGroup)
+
+      .replaceAll("<Weight>", req.body.data.Weight)
+      .replaceAll("<diseases>", req.body.data.diseases)
+
       .replaceAll("<MembersDetails>", sMembersTable);
 
     const CC = req.body.data.email ? [req.body.data.email] : [];
@@ -133,6 +138,93 @@ const sMembersTable = `
     return res.status(200).send({
   success: true,
   message: "Health insurance information has been sent to the StayVriksha team. They will review and process your application."
+});
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
+async function postHM_Travel(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "HM_TravelInsurence" };
+
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res.status(404).send({ success: false, message: "Email content not found" });
+    }
+
+    var emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+    const to = [emailContent.ToEmailID];
+    const toName = req.body.CustomerName;
+    let subject = emailContent.Subject;
+    const oData = req.body.data;
+
+  const aAttachments = (req.body.data.passportAttachments || []).map(function (oFile) {
+    return {
+        filename: oFile.fileName,
+        content: Buffer.from(oFile.fileContent, "base64"),
+        contentType: oFile.fileType
+    };
+});
+
+
+const sMembersRows = (oData.travellersData || []).map(function (oMember) {
+    return `
+        <tr>
+            <td style="border:1px solid #ccc; padding:5px;">
+                Person ${oMember.fullName}
+            </td>
+            <td style="border:1px solid #ccc; padding:5px;">
+                ${oMember.dateOfBirth || ""}
+            </td>
+             <td style="border:1px solid #ccc; padding:5px;">
+                ${oMember.passportNumber || ""}
+            </td>
+              <td style="border:1px solid #ccc; padding:5px;">
+                ${oMember.passportExpiryDate || ""}
+            </td>
+        </tr>
+    `;
+}).join("");
+
+const sMembersTable = `
+<table style="border-collapse: collapse; width: 80%; text-align: left;">
+        <tr>
+            <th style="border: 1px solid #ccc; padding: 5px; font-weight: bold; width: 25%;">Name</th>
+            <th style="border: 1px solid #ccc; padding: 5px; font-weight: bold; width: 25%;">Date of Birth</th>
+            <th style="border: 1px solid #ccc; padding: 5px; font-weight: bold; width: 25%;">Passport Number</th>
+            <th style="border: 1px solid #ccc; padding: 5px; font-weight: bold; width: 25%;">Passport Expiry Date</th>
+        </tr>
+        ${sMembersRows}
+    </table>
+`;
+
+       
+    // Ensure replacements are applied
+    let body = `<p>${emailContent.Body}</p>`;
+
+    body = body
+      .replaceAll("<type>", req.body.data.type)
+      .replaceAll("<destination>", req.body.data.destination)
+      .replaceAll("<startDate>", req.body.data.startDate)
+      .replaceAll("<endDate>", req.body.data.endDate)
+      .replaceAll("<totalTravellers>", req.body.data.totalTravellers)
+      .replaceAll("<CustomerName>", req.body.data.Name)
+
+
+      .replaceAll("<CustomerDetails>", sMembersTable);
+
+    const CC = req.body.data.EmailID ? [req.body.data.EmailID] : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo, aAttachments);
+    return res.status(200).send({
+  success: true,
+  message: "Travel insurance information has been sent to the StayVriksha team. They will review and process your application."
 });
   } catch (error) {
     return res.status(500).send({ success: false, message: "Internal server error" });
@@ -1342,5 +1434,6 @@ exports.HM_Booking = {
   HM_BookingCustomerReadCall,
   Documentcheck,
   getHM_BookingHistory,
-  postHM_Health
+  postHM_Health,
+  postHM_Travel
 };
