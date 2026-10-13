@@ -92,6 +92,14 @@ async function postHM_Health(req, res, next) {
     let subject = emailContent.Subject;
     const oData = req.body.data;
 
+      const aAttachments = (req.body.data.aadhaarAttachments || []).map(function (oFile) {
+    return {
+        filename: oFile.fileName,
+        content: Buffer.from(oFile.content, "base64"),
+        contentType: oFile.mimeType
+    };
+});
+
 const sMembersRows = (oData.Members || []).map(function (oMember) {
     return `
         <tr>
@@ -99,7 +107,7 @@ const sMembersRows = (oData.Members || []).map(function (oMember) {
                 Person ${oMember.MemberNumber}
             </td>
             <td style="border:1px solid #ccc; padding:8px;">
-                ${oMember.DateOfBirth || ""}
+                ${formatDate(oMember.DateOfBirth) || ""}
             </td>
         </tr>
     `;
@@ -134,7 +142,7 @@ const sMembersTable = `
     const CC = req.body.data.email ? [req.body.data.email] : [];
     const replyTo = emailContent.ReplyToEmailId;
 
-    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo,aAttachments);
     return res.status(200).send({
   success: true,
   message: "Health insurance information has been sent to the StayVriksha team. They will review and process your application."
@@ -179,13 +187,13 @@ const sMembersRows = (oData.travellersData || []).map(function (oMember) {
                 Person ${oMember.fullName}
             </td>
             <td style="border:1px solid #ccc; padding:5px;">
-                ${oMember.dateOfBirth || ""}
+                ${formatDate(oMember.dateOfBirth) || ""}
             </td>
              <td style="border:1px solid #ccc; padding:5px;">
                 ${oMember.passportNumber || ""}
             </td>
               <td style="border:1px solid #ccc; padding:5px;">
-                ${oMember.passportExpiryDate || ""}
+                ${formatDate(oMember.passportExpiryDate) || ""}
             </td>
         </tr>
     `;
@@ -210,8 +218,8 @@ const sMembersTable = `
     body = body
       .replaceAll("<type>", req.body.data.type)
       .replaceAll("<destination>", req.body.data.destination)
-      .replaceAll("<startDate>", req.body.data.startDate)
-      .replaceAll("<endDate>", req.body.data.endDate)
+      .replaceAll("<startDate>", formatDate(req.body.data.startDate))
+      .replaceAll("<endDate>",formatDate(req.body.data.endDate))
       .replaceAll("<totalTravellers>", req.body.data.totalTravellers)
       .replaceAll("<CustomerName>", req.body.data.Name)
 
