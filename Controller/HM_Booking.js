@@ -87,7 +87,10 @@ async function postHM_Health(req, res, next) {
     const from = emailContent.FormEmailId;
     const fromName = emailContent.FormName;
 
-    const to = [emailContent.ToEmailID];
+    const to = emailContent.ToEmailID
+    .split(",")
+    .map(email => email.trim())
+    .filter(Boolean);
     const toName = req.body.CustomerName;
     let subject = emailContent.Subject;
     const oData = req.body.data;
@@ -166,7 +169,10 @@ async function postHM_Travel(req, res, next) {
     const from = emailContent.FormEmailId;
     const fromName = emailContent.FormName;
 
-    const to = [emailContent.ToEmailID];
+        const to = emailContent.ToEmailID
+    .split(",")
+    .map(email => email.trim())
+    .filter(Boolean);
     const toName = req.body.CustomerName;
     let subject = emailContent.Subject;
     const oData = req.body.data;
@@ -210,18 +216,18 @@ const sMembersTable = `
         ${sMembersRows}
     </table>
 `;
-
+var destination=Array.isArray(req.body.data.destination)? req.body.data.destination.join(", ") : req.body.data.destination
        
     // Ensure replacements are applied
     let body = `<p>${emailContent.Body}</p>`;
 
     body = body
       .replaceAll("<type>", req.body.data.type)
-      .replaceAll("<destination>", req.body.data.destination)
+      .replaceAll("<destination>",destination)
       .replaceAll("<startDate>", formatDate(req.body.data.startDate))
       .replaceAll("<endDate>",formatDate(req.body.data.endDate))
       .replaceAll("<totalTravellers>", req.body.data.totalTravellers)
-      .replaceAll("<CustomerName>", req.body.data.Name)
+      .replaceAll("<CustomerName>", req.body.data.Name || "Valued Customer")
 
 
       .replaceAll("<CustomerDetails>", sMembersTable);
