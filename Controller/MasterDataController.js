@@ -269,6 +269,17 @@ async function getBranchImage(req, res, next) {
     if (req.query.City) req.body.filters.City = req.query.City;
     if (req.query.LandMark) req.body.filters.LandMark = req.query.LandMark;
 
+   if (req.query.priceRange === "Lowest") {
+    req.body.sort = {
+        StartingPrice: "ASC"
+    };
+    
+} else if (req.query.priceRange === "Highest") {
+    req.body.sort = {
+        StartingPrice: "DESC"
+    };
+}
+
 
     if (req.query.PropertyType) {
     req.body.filters.PropertyType = req.query.PropertyType.split(",");
@@ -297,6 +308,8 @@ async function getBranchImage(req, res, next) {
 
     delete req.body.top;
     delete req.body.skip;
+    delete req.body.sort;
+
 
     let feedbackMap = {};
 
