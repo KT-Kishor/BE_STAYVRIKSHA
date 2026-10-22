@@ -271,12 +271,12 @@ async function getBranchImage(req, res, next) {
 
    if (req.query.priceRange === "Lowest") {
     req.body.sort = {
-        StartingPrice: "ASC"
+        StartingPrice: "asc"
     };
     
 } else if (req.query.priceRange === "Highest") {
     req.body.sort = {
-        StartingPrice: "DESC"
+        StartingPrice: "desc"
     };
 }
 

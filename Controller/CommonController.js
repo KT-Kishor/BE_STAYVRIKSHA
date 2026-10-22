@@ -611,13 +611,24 @@ async function CommonReadWithFilters(req, res, next) {
 		// -----------------------------
 		// Sorting
 		// -----------------------------
-		if (Object.keys(sort).length > 0) {
+	if (Object.keys(sort).length > 0) {
 			const sortClauses = [];
+
 			for (const col in sort) {
-				const dir = sort[col].toUpperCase() === "DESC" ? "DESC" : "ASC";
-				sortClauses.push(`?? ${dir}`);
+				const dir =
+					String(sort[col]).toUpperCase() === "DESC"
+						? "DESC"
+						: "ASC";
+
+				if (col === "StartingPrice") {
+					sortClauses.push(`CAST(?? AS DECIMAL(15, 2)) ${dir}`);
+				} else {
+					sortClauses.push(`?? ${dir}`);
+				}
+
 				queryParams.push(col);
 			}
+
 			query += " ORDER BY " + sortClauses.join(", ");
 		}
 
