@@ -259,7 +259,8 @@ async function getBranchImage(req, res, next) {
       "EditBefore",
       "Attachment",
       "AttachmentType",
-      "AttachmentName"
+      "AttachmentName",
+      "TopBranch"
     ];
 
     req.body.filters = {};
@@ -268,18 +269,25 @@ async function getBranchImage(req, res, next) {
     if (req.query.Pincode) req.body.filters.Pincode = req.query.Pincode;
     if (req.query.City) req.body.filters.City = req.query.City;
     if (req.query.LandMark) req.body.filters.LandMark = req.query.LandMark;
+// ---------- Sorting ----------
+req.body.sort = {};
 
-   if (req.query.priceRange === "Lowest") {
+if (req.query.priceRange === "Lowest") {
     req.body.sort = {
+        TopBranch: "asc",
         StartingPrice: "asc"
     };
-    
 } else if (req.query.priceRange === "Highest") {
     req.body.sort = {
+        TopBranch: "asc",
         StartingPrice: "desc"
     };
+} else {
+    // Default sorting when no priceRange is passed
+    req.body.sort = {
+        TopBranch: "asc"
+    };
 }
-
 
     if (req.query.PropertyType) {
     req.body.filters.PropertyType = req.query.PropertyType.split(",");
