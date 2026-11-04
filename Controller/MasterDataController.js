@@ -274,12 +274,10 @@ req.body.sort = {};
 
 if (req.query.priceRange === "Lowest") {
     req.body.sort = {
-        TopBranch: "asc",
         StartingPrice: "asc"
     };
 } else if (req.query.priceRange === "Highest") {
     req.body.sort = {
-        TopBranch: "asc",
         StartingPrice: "desc"
     };
 } else {
