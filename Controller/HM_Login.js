@@ -281,41 +281,90 @@ async function CustomerSignupEmail(req, res, next) {
 }
 
 async function CustomerresendSignupEmail(req, res, next) {
-  try {
-    req.body.tableName = "EmailContent";
-    req.body.filters = { Type: "CustomerSignup" };
+    try {
 
-    var emailContentData = await CommonReadCall(req, res, next);
-    if (!emailContentData || emailContentData.length === 0) {
-      return res.status(404).send({ success: false, message: "Email content not found" });
+        const { toEmailID, UserName } = req.body;
+
+        // 1. Validate required fields
+        if (!toEmailID || !UserName) {
+            return res.status(400).send({
+                success: false,
+                message: "Email ID and User Name are required"
+            });
+        }
+
+        // 2. Read Email Content
+        req.body.tableName = "EmailContent";
+        req.body.filters = {
+            Type: "CustomerSignup"
+        };
+
+        const emailContentData = await CommonReadCall(req, res, next);
+
+        if (!emailContentData || emailContentData.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: "Email content not found"
+            });
+        }
+
+        const emailContent = emailContentData[0];
+
+        // 3. Email Configuration
+        const from = emailContent.FormEmailId;
+        const fromName = emailContent.FormName;
+
+        const to = [toEmailID];
+        const toName = UserName;
+
+        const subject = emailContent.Subject;
+
+        // 4. Prepare Email Body
+        let body = `
+            <p>Dear ${UserName},</p>
+            ${emailContent.Body || ""}
+        `;
+
+        // 5. Replace Dynamic Placeholders
+        body = body
+            .replaceAll("<EmailID>", toEmailID)
+            .replaceAll("<UserName>", UserName);
+
+        // 6. CC and Reply To
+        const CC = emailContent.CCEmailId
+            ? emailContent.CCEmailId.split(",").map(email => email.trim()).filter(Boolean)
+            : [];
+
+        const replyTo = emailContent.ReplyToEmailId || "";
+
+        // 7. Send Email
+        await CommonSendEmail(
+            req,
+            from,
+            fromName,
+            to,
+            toName,
+            subject,
+            body,
+            CC,
+            replyTo
+        );
+
+        // 8. Success Response
+        return res.status(200).send({
+            success: true,
+            message: "Signup email sent successfully"
+        });
+
+    } catch (error) {
+
+        console.error("CustomerresendSignupEmail Error:", error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to resend signup email"
+        });
     }
-
-    var emailContent = emailContentData[0];
-
-    const from = emailContent.FormEmailId;
-    const fromName = emailContent.FormName;
-
-    const to = [req.body.toEmailID];
-    const toName = req.body.UserName;
-
-    const subject = emailContent.Subject;
-
-    // Ensure replacements are applied
-    let body = `<p>Dear ${req.body.UserName},</p>
-                    <p>${emailContent.Body}</p>`;
-
-    body = body
-      .replaceAll("<EmailID>", req.body.toEmailID)
-      .replaceAll("<UserName>", req.body.UserName)
-
-    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
-    const replyTo = emailContent.ReplyToEmailId;
-
-    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
-
-  } catch (error) {
-    return res.status(500).send({ success: false, message: "Internal server error" });
-  }
 }
 async function ActiveDeactivemail(req, res, next) {
   try {
