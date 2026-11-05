@@ -279,6 +279,44 @@ async function CustomerSignupEmail(req, res, next) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
+
+async function CustomerresendSignupEmail(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "CustomerSignup" };
+
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res.status(404).send({ success: false, message: "Email content not found" });
+    }
+
+    var emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+    const to = [req.body.toEmailID];
+    const toName = req.body.UserName;
+
+    const subject = emailContent.Subject;
+
+    // Ensure replacements are applied
+    let body = `<p>Dear ${req.body.UserName},</p>
+                    <p>${emailContent.Body}</p>`;
+
+    body = body
+      .replaceAll("<EmailID>", req.body.toEmailID)
+      .replaceAll("<UserName>", req.body.UserName)
+
+    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo);
+
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
 async function ActiveDeactivemail(req, res, next) {
   try {
     req.body.tableName = "HM_Login";
@@ -1266,5 +1304,6 @@ exports.HM_Login = {
   HM_Customerdata,
   HostelSendBackOTPEmail,
   HM_StaffEmailIDs,
-  ActiveDeactivemail
+  ActiveDeactivemail,
+  CustomerresendSignupEmail
 };

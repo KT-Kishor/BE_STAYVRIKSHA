@@ -160,6 +160,7 @@ app.delete("/HM_Feedback", authenticate, HM_Feedback.deleteHM_Feedback);
 
 app.get("/HM_Login", authenticate, HM_Login.getHM_Login);
 app.post("/HM_Login", authenticate, HM_Login.postHM_Login);
+app.post("/CustomerresendSignupEmail", authenticate, HM_Login.CustomerresendSignupEmail);
 app.put("/HM_Login", authenticate, HM_Login.putHM_Login);
 app.put("/HM_ActiveDeactive", authenticate, HM_Login.ActiveDeactivemail);
 
