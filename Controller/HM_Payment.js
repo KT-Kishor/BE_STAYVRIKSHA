@@ -144,6 +144,17 @@ async function putHM_Deposit(req, res, next) {
     req.body.filters = FilterDate;
     req.body.tableName = "HM_Deposit";
     await CommonUpdateCall(req, res, next);
+
+      req.body.tableName = "HM_BookingHistory";
+           req.body.data={
+            ID:randomUUID(),
+            BookingID: req.body.data.BookingID|| "",
+            Date: new Date().toISOString(),
+            Comment: "Deposit Returned to customer",
+            Name: req.body.data.ReturnDepositBy || "",
+            Status: "Deposit Returned" || "",
+           }
+          await CommonCreateCall(req, res, next);
     res.status(200).send({ success: true, message: "Deposit details updated!" });
   } catch (error) {
     res.status(500).send({

@@ -172,6 +172,57 @@ async function postHM_Damage(req, res, next) {
     });
   }
 }
+async function DamageRecoverEmail(req, res, next) {
+  try {
+    req.body.tableName = "EmailContent";
+    req.body.filters = { Type: "RecoverDamage" };
+
+    var emailContentData = await CommonReadCall(req, res, next);
+    if (!emailContentData || emailContentData.length === 0) {
+      return res.status(404).send({ success: false, message: "Email content not found" });
+    }
+
+   
+      let attachments = [];
+
+    if (req.body.pdfAttachment && req.body.pdfAttachment.content) {
+      attachments.push({
+        filename: req.body.pdfAttachment.fileName || "RecoverDamage.pdf",
+        content: Buffer.from(req.body.pdfAttachment.content, "base64"),
+        contentType: req.body.pdfAttachment.mimeType || "application/pdf",
+      });
+    }
+
+    var emailContent = emailContentData[0];
+
+    const from = emailContent.FormEmailId;
+    const fromName = emailContent.FormName;
+
+    const to = [req.body.CustomerEmail];
+    const toName = req.body.CustomerName;
+
+    const subject = emailContent.Subject;
+
+    // Ensure replacements are applied
+    let body = `<p>${emailContent.Body}</p>`;
+
+    body = body
+      .replaceAll("<CustomerName>", req.body.CustomerName)
+      .replaceAll("<DamageID>", req.body.DamageID)
+       .replaceAll("<RecoverCost>", req.body.RecoverCost)
+      .replaceAll("<TotalCost>", req.body.TotalCost)
+      .replaceAll("<Status>", req.body.Status)
+
+
+    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const replyTo = emailContent.ReplyToEmailId;
+
+    await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo,attachments);
+
+  } catch (error) {
+    return res.status(500).send({ success: false, message: "Internal server error" });
+  }
+}
 async function DamageEmail(req, res, next) {
   try {
 
@@ -317,7 +368,11 @@ async function putHM_Damage(req, res, next) {
     req.body.tableName = "HM_Damage";
     req.body.data = req.body.data;
     req.body.filters = req.body.filters;
+   var spdfAttachment= req.body.data.pdfAttachment
+    delete req.body.data.pdfAttachment
     const invoiceUpdateResponse = await CommonUpdateCall(req, res, next);
+
+
 
     if (!invoiceUpdateResponse || invoiceUpdateResponse.error) {
       return res.status(500).send({
@@ -349,6 +404,7 @@ async function putHM_Damage(req, res, next) {
         };
         const createResponse = await CommonCreateCall(req, res, next);
 
+
         if (!createResponse || createResponse.error) {
           return res.status(500).send({
             success: false,
@@ -373,6 +429,19 @@ async function putHM_Damage(req, res, next) {
         }
       }
     }
+
+    req.body={
+     DamageID:  req.body.data.DamageID,
+     CustomerName:  req.body.data.CustomerName,
+     RecoverCost: req.body.data.RecoverCost,
+     TotalCost: req.body.data.TotalCost,
+     Status:req.body.data.Status,
+     pdfAttachment:spdfAttachment,
+     CustomerEmail:req.body.data.CustomerEmail
+    }
+     await DamageRecoverEmail(req, res, next);
+
+
     res.send({ success: true, message: "Updated successfully" });
   } catch (error) {
     res.status(500).send({

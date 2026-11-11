@@ -977,7 +977,19 @@ for (const sMemberID of aMemberIDs) {
       };
 
       await CommonCreateCall(req, res, next);
+
+       req.body.tableName = "HM_BookingHistory";
+           req.body.data={
+            ID:randomUUID(),
+            BookingID: BookingID|| "",
+            Date: new Date().toISOString(),
+            Comment: "Deposited",
+            Name: LoginName || "",
+            Status: "Deposited" || "",
+           }
+          await CommonCreateCall(req, res, next);
     }
+    
         req.body.tableName = "HM_BookingHistory";
            req.body.data={
             ID:randomUUID(),
