@@ -983,7 +983,7 @@ for (const sMemberID of aMemberIDs) {
             ID:randomUUID(),
             BookingID: BookingID|| "",
             Date: new Date().toISOString(),
-            Comment: "Deposited",
+            Comment: `${DepositAmount} ${DepositCurrency} deposited successfully.`,
             Name: LoginName || "",
             Status: "Deposited" || "",
            }
