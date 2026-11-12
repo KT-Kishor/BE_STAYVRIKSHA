@@ -214,7 +214,7 @@ async function DamageRecoverEmail(req, res, next) {
       .replaceAll("<Status>", req.body.Status)
 
 
-    const CC = emailContent.CCEmailId ? emailContent.CCEmailId.split(",") : [];
+    const CC = [req.body.BranchEmail];
     const replyTo = emailContent.ReplyToEmailId;
 
     await CommonSendEmail(req, from, fromName, to, toName, subject, body, CC, replyTo,attachments);
@@ -369,7 +369,11 @@ async function putHM_Damage(req, res, next) {
     req.body.data = req.body.data;
     req.body.filters = req.body.filters;
    var spdfAttachment= req.body.data.pdfAttachment
+   var sBranchEmail= req.body.data.BranchEmail
+
     delete req.body.data.pdfAttachment
+    delete req.body.data.BranchEmail
+
     const invoiceUpdateResponse = await CommonUpdateCall(req, res, next);
 
 
@@ -437,7 +441,8 @@ async function putHM_Damage(req, res, next) {
      TotalCost: req.body.data.TotalCost,
      Status:req.body.data.Status,
      pdfAttachment:spdfAttachment,
-     CustomerEmail:req.body.data.CustomerEmail
+     CustomerEmail:req.body.data.CustomerEmail,
+     BranchEmail:sBranchEmail
     }
      await DamageRecoverEmail(req, res, next);
 
