@@ -150,7 +150,7 @@ async function putHM_Deposit(req, res, next) {
             ID:randomUUID(),
             BookingID: req.body.data.BookingID|| "",
             Date: new Date().toISOString(),
-            Comment: `${req.body.data.ReturnDepositAmount} ${req.body.data.ReturnDepositCurrency} deposit amount has been successfully returned to the customer.`,
+            Comment: `${req.body.data.ReturnDepositAmount} ${req.body.data.ReturnDepositCurrency} deposit successfully refunded to the customer.`,
             Name: req.body.data.ReturnDepositBy || "",
             Status: "Deposit Returned" || "",
            }
