@@ -862,6 +862,7 @@ async function putHM_Bookingdeposit(req, res, next) {
     const BranchName = req.body.data.BranchName;
     const STDCode = req.body.data.STDCode;
     const LoginName = req.body.data.LoginName;
+    var PreviousRoomNo=req.body.data.PreviousRoomNo
 
 
     const MobileNo = req.body.data.MobileNo;
@@ -871,6 +872,7 @@ async function putHM_Bookingdeposit(req, res, next) {
 
     delete req.body.data.BranchName
     delete req.body.data.STDCode
+    delete req.body.data.PreviousRoomNo
 
     delete req.body.data.MobileNo
     delete req.body.data.AdminEmail
@@ -995,9 +997,14 @@ for (const sMemberID of aMemberIDs) {
             ID:randomUUID(),
             BookingID: BookingID|| "",
             Date: new Date().toISOString(),
-            Comment: "Booking Assigned",
+            Comment: `Room No ${RoomNo} is Assigned`,
             Name: LoginName || "",
             Status: Status || "",
+           }
+           if(PreviousRoomNo){
+            req.body.data.Comment=`Room No Change From ${RoomNo} to ${PreviousRoomNo}`
+           }else{
+            req.body.data.Comment=`Room No ${RoomNo} is Assigned`
            }
           await CommonCreateCall(req, res, next);
 
