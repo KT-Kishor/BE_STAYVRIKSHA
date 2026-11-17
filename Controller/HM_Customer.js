@@ -1214,12 +1214,15 @@ async function putHM_Customer(req, res, next) {
     const filters = req.body.filters;
     const pdfAttachment = req.body.data?.[0].pdfAttachment || "";
     const propertyName = req.body.data[0].Area || "";
+    const sMessage = req.body.data[0].Message || "";
+
     const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}` || "";
     const propertyEmail = req.body.data[0].PropertyEmail || "";
     const propertyType = req.body.data[0].PropertyType || "";
     const memberID = req.body.data?.[0]?.Booking?.[0]?.MemberID || "";
     const LoginName = req.body.data[0].LoginName || "";
     delete req.body.data[0].Area;
+    delete req.body.data[0].Message;
     delete req.body.data[0].PropertySTD;
     delete req.body.data[0].PropertyMobileNo;
     delete req.body.data[0].PropertyEmail;
@@ -1393,7 +1396,7 @@ async function putHM_Customer(req, res, next) {
         ID:randomUUID(),
         BookingID: payload.Booking?.[0]?.BookingID || "",
         Date: new Date().toISOString(),
-        Comment: "Booking details updated",
+        Comment: sMessage ? sMessage : "Booking details updated",
         Name: LoginName || "",
         Status: payload.Booking?.[0]?.Status || "",
        }
