@@ -744,7 +744,11 @@ async function Documentcheck(req, res, next) {
       BranchName,
       STDCode,
       MobileNo,
-      AdminEmail
+      AdminEmail,
+      StartDate,
+      EndDate,
+      BookingDate,
+      BedType
     } = req.query;
 
     if (!MemberID) {
@@ -803,7 +807,11 @@ async function Documentcheck(req, res, next) {
             BranchName,
             STDCode,
             MobileNo,
-            AdminEmail
+            AdminEmail,
+            StartDate:formatDate(StartDate),
+            EndDate:formatDate(EndDate),
+            BookingDate:formatDate(EndDate),
+            BedType
           };
 
           await documentUploadEmail(req, res, next);
@@ -1056,6 +1064,10 @@ async function documentUploadEmail(req, res, next) {
       .replaceAll("<BookingID>", req.body.BookingID || "")
       .replaceAll("<BranchName>", req.body.BranchName || "")
       .replaceAll("<CustomerName>", req.body.CustomerName || "Customer")
+      .replaceAll("<StartDate>", req.body.StartDate || "")
+      .replaceAll("<EndDate>", req.body.EndDate || "")
+      .replaceAll("<BookingDate>", req.body.BookingDate || "")
+      .replaceAll("<BedType>", req.body.BedType || "")
       .replaceAll("<STDCode>", req.body.STDCode || "")
       .replaceAll("<MobileNo>", req.body.MobileNo || "")
       .replaceAll("<AdminEmail>", req.body.AdminEmail || "")
