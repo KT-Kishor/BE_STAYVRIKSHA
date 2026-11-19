@@ -258,6 +258,10 @@ async function putHM_Booking(req, res, next) {
     const Salutation=data.Salutation
     const LoginName=data.LoginName
     const smessage=data.Message
+    const sTextmessage=data.Textmessage
+    const sGSTStatus=data.GSTStatus
+
+
 
 
     // Remove Non-DB Fields Before Update
@@ -271,6 +275,10 @@ async function putHM_Booking(req, res, next) {
     delete data.Salutation;
     delete data.LoginName;
     delete data.Message;
+    delete data.Textmessage;
+    delete data.GSTStatus;
+
+
 
 
 
@@ -301,9 +309,9 @@ async function putHM_Booking(req, res, next) {
         ID:randomUUID(),
         BookingID: data.BookingID || "",
         Date: new Date().toISOString(),
-        Comment: `Customer GSTIN ${data.CustomerGSTIN} has been updated to the booking.`,
+        Comment: sTextmessage,
         Name: LoginName || "",
-        Status: "Customer GST Updated" || "",
+        Status: sGSTStatus || "",
        }
       await CommonCreateCall(req, res, next);
     }
