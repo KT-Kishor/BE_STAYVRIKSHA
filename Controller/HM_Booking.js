@@ -257,6 +257,7 @@ async function putHM_Booking(req, res, next) {
     const propertyEmail = data.PropertyEmail 
     const Salutation=data.Salutation
     const LoginName=data.LoginName
+    const smessage=data.Message
 
 
     // Remove Non-DB Fields Before Update
@@ -269,6 +270,8 @@ async function putHM_Booking(req, res, next) {
     delete data.PropertyEmail;
     delete data.Salutation;
     delete data.LoginName;
+    delete data.Message;
+
 
 
 
@@ -291,7 +294,19 @@ async function putHM_Booking(req, res, next) {
       PropertyType : data.PropertyType,
       Currency:data.Currency  || ""
     };
-
+     
+    if(smessage && data.CustomerGSTIN){
+      req.body.tableName = "HM_BookingHistory";
+       req.body.data={
+        ID:randomUUID(),
+        BookingID: data.BookingID || "",
+        Date: new Date().toISOString(),
+        Comment: `Customer GSTIN ${data.CustomerGSTIN} has been updated to the booking.`,
+        Name: LoginName || "",
+        Status: "Customer GST Updated" || "",
+       }
+      await CommonCreateCall(req, res, next);
+    }
     // Update Booking Table First
     req.body.tableName = "HM_Booking";
 
@@ -311,7 +326,7 @@ async function putHM_Booking(req, res, next) {
       req.body = emailPayload;
 
 
-      if (data.Status === "Confirmed") {
+      if (data.Status === "Confirmed" && !smessage) {
 
         await BookingConfirmEmail(req, res, next, pdfAttachment);
 
@@ -996,6 +1011,17 @@ for (const sMemberID of aMemberIDs) {
             Comment: `${DepositAmount} ${DepositCurrency} deposited successfully.`,
             Name: LoginName || "",
             Status: "Deposited" || "",
+           }
+          await CommonCreateCall(req, res, next);
+    }else{
+        req.body.tableName = "HM_BookingHistory";
+           req.body.data={
+            ID:randomUUID(),
+            BookingID: BookingID|| "",
+            Date: new Date().toISOString(),
+            Comment: "Deposit not collected for this booking.",
+            Name: LoginName || "",
+            Status: "Deposit Unpaid" || "",
            }
           await CommonCreateCall(req, res, next);
     }
