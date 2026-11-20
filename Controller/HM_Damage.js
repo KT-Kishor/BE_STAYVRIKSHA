@@ -136,7 +136,8 @@ async function postHM_Damage(req, res, next) {
           ActualCost: formatAmount(damageData.TotalCost),
           RecoverCost: formatAmount(damageData.RecoverCost),
           Currency: damageData.Currency,
-          Items: itemsWithInvoiceNo
+          Items: itemsWithInvoiceNo,
+          BranchCode:damageData.BranchCode
 
           // HM_DamageItem data
 
@@ -239,6 +240,13 @@ async function DamageEmail(req, res, next) {
       return;
     }
 
+   req.body.tableName = "HM_Branch";
+   req.body.filters = {
+      BranchID: req.body.BranchCode
+    };
+   const BranchData =await CommonReadCall(req, res, next);
+
+
     const emailContent = emailContentData[0];
 
     const from = emailContent.FormEmailId;
@@ -252,13 +260,25 @@ async function DamageEmail(req, res, next) {
     subject = subject
       .replaceAll(
         "<PropertyName>",
-        req.body.PropertyName || ""
+        BranchData[0].Name || ""
       )
       .replaceAll(
         "<PropertyType>",
-        req.body.PropertyType || ""
+        BranchData[0].PropertyType || ""
       );
-
+    if(req.body.Status==="Damage Raised"){
+      subject = subject
+        .replaceAll(
+          "<Message>",
+           "Updated" 
+      )
+           }else{
+               subject = subject
+        .replaceAll(
+          "<Message>",
+           "" 
+      )
+           }
     let body = emailContent.Body;
 
     // ==========================================
@@ -271,7 +291,7 @@ async function DamageEmail(req, res, next) {
       /<DamageItems>([\s\S]*?)<\/DamageItems>/
     );
 
-    if (itemTemplate) {
+    if (itemTemplate && req.body.Status!=="Damage Raised") {
 
       const rowTemplate = itemTemplate[1];
 
@@ -285,6 +305,27 @@ async function DamageEmail(req, res, next) {
           .replaceAll("<Description>", item.Description || "")
           .replaceAll("<Cost>", formatAmount(item.Cost) || "0")
           .replaceAll("<RecoverCost>", formatAmount(item.RecoverCost) || "0");
+
+      }).join("");
+
+      body = body.replace(
+        itemTemplate[0],
+        damageItemsHTML
+      );
+    }else{
+
+      const rowTemplate = itemTemplate[1];
+
+      const damageItemsHTML = Items.map((item, index) => {
+
+        return rowTemplate
+          .replaceAll("<SlNo>", String(index + 1))
+          .replaceAll("<ItemName>", item.data.ItemName || "")
+          .replaceAll("<Type>", item.data.Type || "")
+          .replaceAll("<Quantity>", item.data.Quantity || "0")
+          .replaceAll("<Description>", item.data.Description || "")
+          .replaceAll("<Cost>", formatAmount(item.data.Cost) || "0")
+          .replaceAll("<RecoverCost>", formatAmount(item.data.RecoverCost) || "0");
 
       }).join("");
 
@@ -319,6 +360,13 @@ async function DamageEmail(req, res, next) {
         "<RecoverCost>",
         req.body.RecoverCost || "0"
       )
+        .replaceAll(
+        "<PropertyName>",
+        BranchData[0].Name || ""
+      )
+      .replaceAll("<PropertyMobileNo>",BranchData[0].STD + " " + BranchData[0].Contact)
+      .replaceAll("<PropertyEmail>",BranchData[0].EmailID)
+
       .replaceAll(
         "<Currency>",
         req.body.Currency || "INR"
@@ -367,6 +415,9 @@ async function putHM_Damage(req, res, next) {
     // Ensure correct body structure
     req.body.tableName = "HM_Damage";
     req.body.data = req.body.data;
+     var data = req.body.data;
+     var Items=req.body.Items
+
     req.body.filters = req.body.filters;
    var spdfAttachment= req.body.data.pdfAttachment
    var sBranchEmail= req.body.data.BranchEmail
@@ -434,6 +485,30 @@ async function putHM_Damage(req, res, next) {
       }
     }
 
+    if(data.Status==="Damage Raised"){
+        const emailReq = {
+        body: {
+          toEmailID: data.CustomerEmail,
+          CustomerName: data.CustomerName,
+          DamageID: data.DamageID,
+          BookingID: data.BookingID,
+          RecoverCost: formatAmount(data.RecoverCost),
+          ActualCost: formatAmount(data.TotalCost),
+          Currency: data.Currency,
+          Status:data.Status,
+          BranchCode:data.BranchCode,
+          Items: Items
+
+          // HM_DamageItem data
+
+        }
+      };
+      req.body = emailReq.body
+
+
+      await DamageEmail(req, res, next);
+    }else{
+
     req.body={
      DamageID:  req.body.data.DamageID,
      CustomerName:  req.body.data.CustomerName,
@@ -445,6 +520,7 @@ async function putHM_Damage(req, res, next) {
      BranchEmail:sBranchEmail
     }
      await DamageRecoverEmail(req, res, next);
+  }
 
 
     res.send({ success: true, message: "Updated successfully" });

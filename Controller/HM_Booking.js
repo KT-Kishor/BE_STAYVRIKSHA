@@ -1021,7 +1021,7 @@ for (const sMemberID of aMemberIDs) {
             Status: "Deposited" || "",
            }
           await CommonCreateCall(req, res, next);
-    }else{
+    }else if(!PreviousRoomNo){
         req.body.tableName = "HM_BookingHistory";
            req.body.data={
             ID:randomUUID(),
