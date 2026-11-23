@@ -185,15 +185,21 @@ async function getHM_CouponMaxUsesBookingCheck(req, res, next) {
         const facilityData = await CommonReadWithFilters(req, res, next);
 
         /* ---------- Merge Data ---------- */
-        const responseData = Array.isArray(couponData)
-            ? couponData.map(coupon => ({
-                  ...coupon,
-                  couponUsedCount: facilityData.length
-              }))
-            : {
-                  ...couponData,
-                  couponUsedCount: facilityData.length
-              };
+      const couponUsedCount = Array.isArray(facilityData)
+    ? facilityData.filter(booking =>
+        !["Cancelled", "Rejected"].includes(booking.Status)
+      ).length
+    : 0;
+
+const responseData = Array.isArray(couponData)
+    ? couponData.map(coupon => ({
+        ...coupon,
+        couponUsedCount
+    }))
+    : {
+        ...couponData,
+        couponUsedCount
+    };
 
         res.send({success: true, data: responseData});
     } catch (error) {
