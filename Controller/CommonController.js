@@ -1235,7 +1235,7 @@ const StayvrikshaEmail = nodemailer.createTransport({
 	port: 465,
 	secure: true,
 	auth: {
-		user: "admin@stayvriksha.in",
+		user: "noreply@stayvriksha.in",
 		pass: "Admin@SV%2026",
 	},
 });
