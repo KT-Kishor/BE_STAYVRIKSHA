@@ -2236,8 +2236,7 @@ const inactiveRooms = HM_Rooms.filter(
     };
 
     const bookingStart = getDateOnly(booking.StartDate);
-       const bookingEnd = new Date(booking.EndDate);
-             bookingEnd.setDate(bookingEnd.getDate() - 1);
+    const bookingEnd = getDateOnly(booking.EndDate);
 
     const requestStartTime = requestStart
         ? getDateOnly(requestStart)
