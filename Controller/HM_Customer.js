@@ -2199,58 +2199,90 @@ const inactiveRooms = HM_Rooms.filter(
         // --------------------------------------------------
         // 6. Date Overlap Check
         // --------------------------------------------------
-        const isBookingActive = (booking) => {
+      const isBookingActive = (booking) => {
 
-           if (
+    // --------------------------------------------------
+    // 1. Exclude Current Booking While Editing
+    // --------------------------------------------------
+    if (
         bookingID &&
         String(booking.BookingID) === String(bookingID)
     ) {
         return false;
     }
 
-            if (!booking.StartDate || !booking.EndDate) {
-                return false;
-            }
+    if (!booking.StartDate || !booking.EndDate) {
+        return false;
+    }
 
-            // No date filter
-            if (!requestStart && !requestEnd) {
-                return true;
-            }
+    // --------------------------------------------------
+    // 2. No Date Filter
+    // --------------------------------------------------
+    if (!requestStart && !requestEnd) {
+        return true;
+    }
 
-            const bookingStart =
-                new Date(booking.StartDate);
+    // --------------------------------------------------
+    // 3. Normalize Dates (Ignore Time)
+    // --------------------------------------------------
+    const getDateOnly = (date) => {
+        const d = new Date(date);
 
-            
-            const bookingEnd = new Date(booking.EndDate);
+        return new Date(
+            d.getFullYear(),
+            d.getMonth(),
+            d.getDate()
+        ).getTime();
+    };
+
+    const bookingStart = getDateOnly(booking.StartDate);
+       const bookingEnd = new Date(booking.EndDate);
              bookingEnd.setDate(bookingEnd.getDate() - 1);
 
+    const requestStartTime = requestStart
+        ? getDateOnly(requestStart)
+        : null;
 
-            // Start + End
-            if (requestStart && requestEnd) {
+    const requestEndTime = requestEnd
+        ? getDateOnly(requestEnd)
+        : null;
 
-                return (
-                    bookingStart <= requestEnd &&
-                    bookingEnd >= requestStart
-                );
-            }
+    // Invalid dates
+    if (
+        Number.isNaN(bookingStart) ||
+        Number.isNaN(bookingEnd)
+    ) {
+        return false;
+    }
 
+    // --------------------------------------------------
+    // 4. Date Overlap Check
+    // --------------------------------------------------
 
-            // Only StartDate
-            if (requestStart) {
+    // Start Date + End Date
+    if (
+        requestStartTime !== null &&
+        requestEndTime !== null
+    ) {
+        return (
+            bookingStart < requestEndTime &&
+            bookingEnd > requestStartTime
+        );
+    }
 
-                return bookingEnd >= requestStart;
-            }
+    // Only Start Date
+    if (requestStartTime !== null) {
+        return bookingEnd > requestStartTime;
+    }
 
+    // Only End Date
+    if (requestEndTime !== null) {
+        return bookingStart < requestEndTime;
+    }
 
-            // Only EndDate
-            if (requestEnd) {
+    return true;
+};
 
-                return bookingStart <= requestEnd;
-            }
-
-
-            return true;
-        };
 
 
         // --------------------------------------------------
