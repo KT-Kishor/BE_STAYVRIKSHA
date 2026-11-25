@@ -114,12 +114,24 @@ async function ComplaintSubmitEmail(req, res, next) {
     const toName = req.body.data.UserName;
     let subject = emailContent.Subject;
 
+    if(req.body.data.Status==="Pending" && req.body.data.Updated===true){
+         subject = subject.replaceAll(
+        "<Subject>",
+        "Customer Complaint Updated Notification"
+    );
+    }else{
+        subject = subject.replaceAll(
+        "<Subject>",
+        "Customer Complaint Notification"
+    );
+    }
+
  if (req.body.data.Status === "In Progress" && req.body.data.Updated === false) {
     subject = subject.replaceAll(
         "<Subject>",
         "Your Complaint Has Been Assigned"
     );
-} else if (req.body.data.Updated === true) {
+} else if (req.body.data.Status === "In Progress" && req.body.data.Updated === true) {
     subject = subject.replaceAll(
         "<Subject>",
         "Your Complaint Details Have Been Modified"
@@ -141,6 +153,17 @@ async function ComplaintSubmitEmail(req, res, next) {
       .replaceAll("<AssignedTo>", req.body.data.AssignedBy)
       .replaceAll("<EstimatDate>", formatDate(req.body.data.EstimatDate))
 
+      if(req.body.data.Status==="Pending" && req.body.data.Updated===true){
+         body = body.replaceAll(
+        "<Message>",
+        "updated"
+    );
+    }else{
+        body = body.replaceAll(
+        "<Message>",
+        "Raised"
+    );
+    }
 
 
 
