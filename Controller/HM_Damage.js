@@ -183,6 +183,12 @@ async function DamageRecoverEmail(req, res, next) {
       return res.status(404).send({ success: false, message: "Email content not found" });
     }
 
+       req.body.tableName = "HM_Branch";
+   req.body.filters = {
+      BranchID: req.body.BranchCode
+    };
+   const BranchData =await CommonReadCall(req, res, next);
+
    
       let attachments = [];
 
@@ -202,7 +208,17 @@ async function DamageRecoverEmail(req, res, next) {
     const to = [req.body.CustomerEmail];
     const toName = req.body.CustomerName;
 
-    const subject = emailContent.Subject;
+    let subject = emailContent.Subject;
+
+      subject = subject
+      .replaceAll(
+        "<PropertyName>",
+        BranchData[0].Name || ""
+      )
+      .replaceAll(
+        "<PropertyType>",
+        BranchData[0].PropertyType || ""
+      );
 
     // Ensure replacements are applied
     let body = `<p>${emailContent.Body}</p>`;
@@ -213,6 +229,8 @@ async function DamageRecoverEmail(req, res, next) {
        .replaceAll("<RecoverCost>", req.body.RecoverCost)
       .replaceAll("<TotalCost>", req.body.TotalCost)
       .replaceAll("<Status>", req.body.Status)
+      .replaceAll("<PropertyName>", BranchData[0].Name)
+
 
 
     const CC = [req.body.BranchEmail];
@@ -517,7 +535,8 @@ async function putHM_Damage(req, res, next) {
      Status:req.body.data.Status,
      pdfAttachment:spdfAttachment,
      CustomerEmail:req.body.data.CustomerEmail,
-     BranchEmail:sBranchEmail
+     BranchEmail:sBranchEmail,
+     BranchCode:data.BranchCode,
     }
      await DamageRecoverEmail(req, res, next);
   }

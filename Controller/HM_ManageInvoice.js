@@ -1323,7 +1323,7 @@ function calculateFacilityCycleAmounts(items, cycleStart, cycleEnd, invoiceIndex
           break;
 
         case "per year":
-          facilityAmount = calculateYearAmount(qty);
+          facilityAmount = calculateYearAmount();
           break;
       }
 
