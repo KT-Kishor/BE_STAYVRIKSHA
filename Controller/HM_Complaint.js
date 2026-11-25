@@ -114,6 +114,17 @@ async function ComplaintSubmitEmail(req, res, next) {
     const toName = req.body.data.UserName;
     let subject = emailContent.Subject;
 
+ if (req.body.data.Status === "In Progress" && req.body.data.Updated === false) {
+    subject = subject.replaceAll(
+        "<Subject>",
+        "Your Complaint Has Been Assigned"
+    );
+} else if (req.body.data.Updated === true) {
+    subject = subject.replaceAll(
+        "<Subject>",
+        "Your Complaint Details Have Been Modified"
+    );
+}
     // Ensure replacements are applied
     let body= emailContent.Body;
 
@@ -128,6 +139,8 @@ async function ComplaintSubmitEmail(req, res, next) {
       .replaceAll("<Status>", req.body.data.Status)
       .replaceAll("<Comment>", req.body.data.Comment)
       .replaceAll("<AssignedTo>", req.body.data.AssignedBy)
+      .replaceAll("<EstimatDate>", formatDate(req.body.data.EstimatDate))
+
 
 
 
@@ -143,6 +156,16 @@ async function ComplaintSubmitEmail(req, res, next) {
     return res.status(500).send({ success: false, message: "Internal server error" });
   }
 }
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  if (isNaN(date)) return ""; // return empty if invalid date
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
 
 async function putHM_Complaint(req, res, next) {
   try {
@@ -157,6 +180,8 @@ async function putHM_Complaint(req, res, next) {
     let BranchName = req.body.data.BranchName;
     let AdminName = req.body.data.AdminName;
     let ccemailIds = req.body.data.ccmailids;
+    let sUpdated = req.body.data.Updated;
+
 
 
 
@@ -164,6 +189,8 @@ async function putHM_Complaint(req, res, next) {
     delete req.body.data.BranchName
     delete req.body.data.AdminName
     delete req.body.data.ccmailids 
+    delete req.body.data.Updated 
+
 
     await CommonUpdateCall(req, res, next);
 
@@ -171,6 +198,8 @@ async function putHM_Complaint(req, res, next) {
     req.body.data.BranchName = BranchName;
     req.body.data.AdminName = AdminName;
     req.body.data.ccmailids = ccemailIds;
+    req.body.data.Updated = sUpdated;
+
 
     
      await ComplaintSubmitEmail(req, res, next);

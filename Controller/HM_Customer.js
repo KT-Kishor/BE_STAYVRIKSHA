@@ -395,11 +395,15 @@ async function postHM_Customer(req, res, next) {
     const propertyName = req.body.data[0].Area || "";
     const propertyMobileNo = `${req.body.data[0].PropertySTD || ""} ${req.body.data[0].PropertyMobileNo || ""}`;
     const propertyEmail = req.body.data[0].PropertyEmail
+    const sLoginName = req.body.data[0].LoginName || "";
+
     const memberID = req.body.data?.[0]?.Booking?.[0]?.MemberID || "";
     delete req.body.data[0].Area;
     delete req.body.data[0].PropertySTD;
     delete req.body.data[0].PropertyMobileNo;
     delete req.body.data[0].PropertyEmail;
+    delete req.body.data[0].LoginName;
+
     req.body.tableName = "HM_Customer";
 
     if (!Array.isArray(customerList) || customerList.length === 0)
@@ -630,7 +634,7 @@ async function postHM_Customer(req, res, next) {
         req.body.data={
         ID:randomUUID(),
         BookingID: bookingPayload[0].BookingID || "",
-        name: customerList[0].CustomerName || "",
+        name: sLoginName || "",
         Date: new Date().toISOString(),
         Comment: "Booking created",
         Status: bookingPayload[0].Status || "",
