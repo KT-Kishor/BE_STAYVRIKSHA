@@ -378,7 +378,15 @@ async function getHM_MemberDoc(req, res, next) {
             }
         };
 
-        const documentData = await CommonReadWithFilters(req, res, next);
+
+          const bHasRequiredDocument = await CommonReadCall(req, res, next);
+
+      const documentData = (bHasRequiredDocument || []).some(item =>
+    item.DocumentType?.includes("Aadhaar Card") ||
+    item.DocumentType?.includes("Driving License") ||
+    item.DocumentType?.includes("Pan Card") ||
+    item.DocumentType?.includes("Passport")
+);
 
         // ================= MERGE DATA =================
         const mergedData = (memberData || []).map(member => {
