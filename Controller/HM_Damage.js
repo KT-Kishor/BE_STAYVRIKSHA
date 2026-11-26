@@ -230,6 +230,8 @@ async function DamageRecoverEmail(req, res, next) {
       .replaceAll("<TotalCost>", req.body.TotalCost)
       .replaceAll("<Status>", req.body.Status)
       .replaceAll("<PropertyName>", BranchData[0].Name)
+      .replaceAll("<PropertyMobileNo>",BranchData[0].STD + " " + BranchData[0].Contact)
+      .replaceAll("<PropertyEmail>",BranchData[0].EmailID)
 
 
 
