@@ -381,11 +381,10 @@ async function getHM_MemberDoc(req, res, next) {
 
           const bHasRequiredDocument = await CommonReadCall(req, res, next);
 
-      const documentData = (bHasRequiredDocument || []).some(item =>
-    item.DocumentType?.includes("Aadhaar Card") ||
-    item.DocumentType?.includes("Driving License") ||
-    item.DocumentType?.includes("Pan Card") ||
-    item.DocumentType?.includes("Passport")
+   
+  const documentData = (bHasRequiredDocument || []).filter(item =>
+    ["Aadhaar Card", "Driving License", "Pan Card", "Passport"]
+        .some(sType => item.DocumentType?.includes(sType))
 );
 
         // ================= MERGE DATA =================
