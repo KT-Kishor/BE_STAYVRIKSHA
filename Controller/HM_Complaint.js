@@ -47,6 +47,8 @@ async function postHM_Complaint(req, res, next) {
     let emailIds = req.body.data.emailIds;
     let BranchName = req.body.data.BranchName;
     let ccmailids = req.body.data.ccmailids;
+    let sUpdated = req.body.data.Updated;
+
 
 
     if (req.body.data.File) {
@@ -56,6 +58,8 @@ async function postHM_Complaint(req, res, next) {
    delete req.body.data.emailIds
    delete req.body.data.BranchName
    delete req.body.data.ccmailids;
+   delete req.body.data.Updated;
+
 
 
     // Step 4: Create main Allowance record
@@ -64,6 +68,7 @@ async function postHM_Complaint(req, res, next) {
     req.body.data.emailIds = emailIds;
     req.body.data.BranchName = BranchName;
     req.body.data.ccmailids=ccmailids;
+    req.body.data.Updated=sUpdated;
 
 
     await ComplaintSubmitEmail(req, res, next);
