@@ -998,7 +998,7 @@ async function HM_LoginReadCall(req, res, next) {
     req.body.tableName = "HM_CustomerDocument";
 
     if (req.query.UserID) {
-      req.body.filters.UserID = req.query.UserID;
+      req.body.filters.MemberID = req.query.UserID;
     }
 
     let documentData = await CommonReadWithFilters(req, res, next);
